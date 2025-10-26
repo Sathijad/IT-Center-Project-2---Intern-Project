@@ -15,6 +15,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     
     Optional<AppUser> findByEmail(String email);
     
+    Optional<AppUser> findByEmailIgnoreCase(String email);
+    
     Optional<AppUser> findByCognitoSub(String cognitoSub);
     
     @Query("SELECT u FROM AppUser u WHERE " +

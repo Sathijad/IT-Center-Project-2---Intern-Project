@@ -24,20 +24,29 @@ public class UserService {
     private final AppUserRepository userRepository;
     private final RoleRepository roleRepository;
     private final AuditService auditService;
+    private final UserProvisioningService provisioningService;
     
     public UserProfileResponse getCurrentUserProfile() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        AppUser user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+        org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (!(auth.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt)) {
+            throw new RuntimeException("Invalid authentication principal");
+        }
+        
+        org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth.getPrincipal();
+        AppUser user = provisioningService.findOrCreateFromJwt(jwt);
         
         return mapToProfileResponse(user);
     }
     
     @Transactional
     public UserProfileResponse updateCurrentUserProfile(UpdateProfileRequest request) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        AppUser user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+        org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (!(auth.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt)) {
+            throw new RuntimeException("Invalid authentication principal");
+        }
+        
+        org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth.getPrincipal();
+        AppUser user = provisioningService.findOrCreateFromJwt(jwt);
         
         if (request.getDisplayName() != null) {
             user.setDisplayName(request.getDisplayName());
@@ -97,9 +106,13 @@ public class UserService {
     }
     
     private AppUser getCurrentUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("Current user not found"));
+        org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (!(auth.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt)) {
+            throw new RuntimeException("Invalid authentication principal");
+        }
+        
+        org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth.getPrincipal();
+        return provisioningService.findOrCreateFromJwt(jwt);
     }
     
     private UserProfileResponse mapToProfileResponse(AppUser user) {
