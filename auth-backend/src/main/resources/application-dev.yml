@@ -1,0 +1,14 @@
+# Development profile override
+logging:
+  level:
+    com.itcenter: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+
+spring:
+  jpa:
+    show-sql: true
+
+debug: true
+
