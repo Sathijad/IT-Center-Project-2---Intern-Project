@@ -1,4 +1,5 @@
 // Cognito OIDC helper functions
+import { config } from '../config/env'
 
 export const getCognitoAuthUrl = () => {
   const { COGNITO_DOMAIN, OAUTH_REDIRECT_URI, COGNITO_CLIENT_ID } = config
@@ -71,6 +72,3 @@ function generateState() {
   localStorage.setItem('oauth_state', state)
   return state
 }
-
-import { config } from '../config/env'
-

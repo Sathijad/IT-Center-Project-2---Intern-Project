@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
+import Callback from './pages/Callback'
 import Dashboard from './pages/Dashboard'
 import Users from './pages/Users'
 import UserDetail from './pages/UserDetail'
@@ -26,6 +27,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<Callback />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<Dashboard />} />
               <Route

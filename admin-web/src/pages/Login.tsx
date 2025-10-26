@@ -5,13 +5,13 @@ import { getCognitoAuthUrl } from '../lib/auth'
 
 const Login: React.FC = () => {
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated: isAuthenticatedState } = useAuth()
 
   React.useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticatedState) {
       navigate('/')
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticatedState, navigate])
 
   const handleLogin = () => {
     window.location.href = getCognitoAuthUrl()

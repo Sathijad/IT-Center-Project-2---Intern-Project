@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import api from '../lib/api'
-import { isAuthenticated } from '../lib/auth'
+import { isAuthenticated as checkAuth } from '../lib/auth'
 
 interface User {
   id: number
@@ -13,6 +13,8 @@ interface AuthContextType {
   user: User | null
   loading: boolean
   isAdmin: boolean
+  isAuthenticated: boolean
+  setUser: React.Dispatch<React.SetStateAction<User | null>>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -22,7 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!isAuthenticated()) {
+    if (!checkAuth()) {
       setLoading(false)
       return
     }
@@ -41,9 +43,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const isAdmin = user?.roles?.includes('ADMIN') || false
+  const isAuthenticated = !!user
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, isAuthenticated, setUser }}>
       {children}
     </AuthContext.Provider>
   )
