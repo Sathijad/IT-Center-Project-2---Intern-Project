@@ -16,21 +16,22 @@ spring:
   
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: create
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         use_sql_comments: true
-    show-sql: ${DEBUG:false}
+        show_sql: true
+    show-sql: true
   
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
     baseline-on-migrate: true
-    baseline-version: 1
+    baseline-version: 0
     validate-on-migrate: false
-    clean-on-validation-error: true
+    repair-on-migrate: true
     out-of-order: true
   
   security:
