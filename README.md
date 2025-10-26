@@ -107,6 +107,17 @@ AWS_REGION: ap-southeast-2
 - ✅ Flutter mobile app
 - ✅ Docker Compose local dev stack
 
+## ⚠️ Important: AWS Cognito Configuration
+
+Before running the frontend, you **must** configure the redirect URIs in AWS Cognito:
+
+**See `COGNITO_SETUP.md` for detailed instructions.**
+
+Quick setup:
+1. Go to AWS Console → Cognito → User Pool `ap-southeast-2_hTAYJId8y`
+2. Add callback URL: `http://localhost:5173/auth/callback`
+3. Add sign-out URL: `http://localhost:5173`
+
 ## 🧪 Testing
 
 ```powershell
