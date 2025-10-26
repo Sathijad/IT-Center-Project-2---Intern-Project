@@ -1,0 +1,55 @@
+name: itcenter_auth
+description: IT Center Staff Authentication Mobile App
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.9.2 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # Networking
+  dio: ^5.4.0
+  
+  # AWS Amplify
+  amplify_auth_cognito: ^1.4.9
+  amplify_flutter: ^1.4.9
+  
+  # Storage
+  flutter_secure_storage: ^9.0.0
+  
+  # UI
+  flutter_svg: ^2.0.9
+  
+  # Routing
+  go_router: ^13.0.0
+  
+  # Utils
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+
