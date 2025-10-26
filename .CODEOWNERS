@@ -1,0 +1,17 @@
+# Code owners for Phase 1: Staff Authentication
+
+# Backend
+/auth-backend/ @itcenter-backend-team
+
+# Frontend
+/admin-web/ @itcenter-frontend-team
+
+# Mobile
+/mobile-app/ @itcenter-mobile-team
+
+# Infrastructure
+/infra/ @itcenter-devops-team
+
+# Documentation
+/docs/ @itcenter-tech-leads
+
