@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { getCognitoAuthUrl } from '../lib/auth'
+import { startLogin } from '../lib/auth'
 
 const Login: React.FC = () => {
   const navigate = useNavigate()
@@ -14,7 +14,7 @@ const Login: React.FC = () => {
   }, [isAuthenticatedState, navigate])
 
   const handleLogin = () => {
-    window.location.href = getCognitoAuthUrl()
+    startLogin()
   }
 
   return (

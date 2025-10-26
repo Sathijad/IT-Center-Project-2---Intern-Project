@@ -1,59 +1,69 @@
-import React, { useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { exchangeCodeForTokens } from '../lib/auth'
-import { useAuth } from '../contexts/AuthContext'
-import api from '../lib/api'
+import { useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { COGNITO } from '../lib/cognito';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../lib/api';
 
-const Callback: React.FC = () => {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const { setUser } = useAuth()
+export default function Callback() {
+  const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
-      const code = searchParams.get('code')
-      const state = searchParams.get('state')
-      const error = searchParams.get('error')
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const state = params.get('state');
 
-      if (error) {
-        console.error('OAuth error:', error)
-        navigate('/login?error=' + encodeURIComponent(error))
-        return
+      const savedState = sessionStorage.getItem('pkce_state');
+      if (!code || !state || state !== savedState) {
+        console.error('State mismatch or missing code');
+        navigate('/login?error=state');
+        return;
       }
 
-      if (!code || !state) {
-        navigate('/login?error=missing_parameters')
-        return
-      }
+      const codeVerifier = sessionStorage.getItem('pkce_code_verifier') || '';
+
+      const form = new URLSearchParams();
+      form.set('grant_type', 'authorization_code');
+      form.set('client_id', COGNITO.clientId);
+      form.set('code', code);
+      form.set('redirect_uri', COGNITO.redirectUri);
+      form.set('code_verifier', codeVerifier);
 
       try {
-        // Exchange authorization code for tokens
-        const data = await exchangeCodeForTokens(code, state)
+        const tokenRes = await axios.post(
+          `${COGNITO.domain}/oauth2/token`,
+          form,
+          { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        );
 
-        // Exchange code for tokens will handle storage
-        // Now fetch user details from backend
-        const userResponse = await api.get('/api/v1/me')
-        setUser(userResponse.data)
+        const { id_token, access_token, refresh_token, expires_in } = tokenRes.data;
+        localStorage.setItem('id_token', id_token);
+        localStorage.setItem('access_token', access_token);
+        if (refresh_token) localStorage.setItem('refresh_token', refresh_token);
+        localStorage.setItem('expires_at', String(Date.now() + expires_in * 1000));
+
+        sessionStorage.removeItem('pkce_code_verifier');
+        sessionStorage.removeItem('pkce_state');
         
-        // Redirect to dashboard
-        navigate('/')
-      } catch (error) {
-        console.error('Failed to exchange code:', error)
-        navigate('/login?error=exchange_failed')
+        // Fetch user details from backend
+        try {
+          const userResponse = await api.get('/api/v1/me');
+          setUser(userResponse.data);
+        } catch (err) {
+          console.error('Failed to fetch user details', err);
+        }
+        
+        navigate('/');
+      } catch (err) {
+        console.error('Token exchange failed', err);
+        navigate('/login?error=exchange_failed');
       }
-    }
+    };
 
-    handleCallback()
-  }, [searchParams, navigate, setUser])
+    handleCallback();
+  }, [navigate, setUser]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="text-gray-600">Completing sign in...</p>
-      </div>
-    </div>
-  )
+  return <div>Finishing login…</div>;
 }
-
-export default Callback
