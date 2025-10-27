@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,8 +47,9 @@ public class AuditService {
     
     /**
      * Overloaded method that accepts AppUser directly for better performance
+     * Uses REQUIRES_NEW to isolate audit logging from main transaction
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logEvent(AppUser user, String eventType, String ipAddress, 
                         String userAgent, String metadata) {
         try {
@@ -65,6 +67,7 @@ public class AuditService {
                 user.getId(), user.getEmail(), eventType);
         } catch (Exception e) {
             log.error("Failed to log audit event", e);
+            // Don't rethrow - audit failures shouldn't break main flow
         }
     }
     

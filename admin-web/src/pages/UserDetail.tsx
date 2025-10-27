@@ -1,11 +1,18 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../lib/api'
+import { Settings } from 'lucide-react'
 
 const UserDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([])
+  const [isLoadingRoles, setIsLoadingRoles] = useState(false)
+  const [showRoleModal, setShowRoleModal] = useState(false)
+
+  const allRoles = ['ADMIN', 'EMPLOYEE']
 
   const { data: user, isLoading } = useQuery({
     queryKey: ['user', id],
@@ -14,6 +21,37 @@ const UserDetail: React.FC = () => {
       return response.data
     },
   })
+
+  const openRoleModal = () => {
+    setSelectedRoles(user?.roles || [])
+    setShowRoleModal(true)
+  }
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles(prev =>
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+    )
+  }
+
+  const saveRoles = async () => {
+    if (!user) return
+    
+    setIsLoadingRoles(true)
+    try {
+      await api.patch(`/api/v1/admin/users/${user.id}/roles`, {
+        roles: selectedRoles,
+      })
+      
+      queryClient.invalidateQueries({ queryKey: ['user', id] })
+      setShowRoleModal(false)
+      alert('Roles updated successfully!')
+    } catch (error) {
+      console.error('Failed to update roles:', error)
+      alert('Failed to update roles')
+    } finally {
+      setIsLoadingRoles(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -64,8 +102,17 @@ const UserDetail: React.FC = () => {
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700">Roles</label>
-          <div className="mt-1 flex space-x-2">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium text-gray-700">Roles</label>
+            <button
+              onClick={openRoleModal}
+              className="text-green-600 hover:text-green-900 flex items-center gap-1 text-sm"
+            >
+              <Settings className="w-4 h-4" />
+              Manage Roles
+            </button>
+          </div>
+          <div className="flex space-x-2">
             {user.roles?.map((role: string) => (
               <span
                 key={role}
@@ -93,6 +140,48 @@ const UserDetail: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Role Management Modal */}
+      {showRoleModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">
+              Manage Roles for {user?.displayName || user?.email}
+            </h2>
+            
+            <div className="space-y-3 mb-6">
+              {allRoles.map((role) => (
+                <label key={role} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedRoles.includes(role)}
+                    onChange={() => toggleRole(role)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-900">{role}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowRoleModal(false)}
+                disabled={isLoadingRoles}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveRoles}
+                disabled={isLoadingRoles}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isLoadingRoles ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

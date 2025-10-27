@@ -113,27 +113,67 @@ public class UserService {
     
     @Transactional
     public UserSummaryResponse updateUserRoles(Long userId, UpdateRolesRequest request) {
+        log.info("Updating roles for user ID: {}, requested roles: {}", userId, request.getRoles());
+        
+        // Load managed entity - don't create new instances
         AppUser targetUser = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> {
+                log.error("User not found with ID: {}", userId);
+                return new RuntimeException("User not found");
+            });
         
         AppUser currentUser = getCurrentUser();
         
-        // Validate and get roles
-        List<Role> roles = request.getRoles().stream()
+        // Normalize and validate role names
+        List<String> newRoleNames = request.getRoles().stream()
+            .filter(role -> role != null && !role.isBlank())
+            .map(String::trim)
+            .map(String::toUpperCase)
+            .collect(Collectors.toList());
+        
+        // Validate all roles exist and load as managed entities
+        List<Role> targetRoles = newRoleNames.stream()
             .map(roleName -> roleRepository.findByName(roleName)
                 .orElseThrow(() -> new RuntimeException("Role not found: " + roleName)))
             .collect(Collectors.toList());
         
-        // Update user roles
-        targetUser.setRoles(roles);
+        // Get current roles from the many-to-many relationship
+        List<String> existingRoleNames = targetUser.getRoles().stream()
+            .map(Role::getName)
+            .collect(Collectors.toList());
+        
+        // Determine roles to add and remove
+        List<String> rolesToAdd = newRoleNames.stream()
+            .filter(role -> !existingRoleNames.contains(role))
+            .collect(Collectors.toList());
+        List<String> rolesToRemove = existingRoleNames.stream()
+            .filter(role -> !newRoleNames.contains(role))
+            .collect(Collectors.toList());
+        
+        // Update user roles using the @ManyToMany relationship (JPA handles the join table)
+        targetUser.setRoles(targetRoles);
         targetUser = userRepository.save(targetUser);
         
-        // Log role change
-        String eventType = request.getRoles().contains("ADMIN") 
-            ? "ROLE_ASSIGNED" 
-            : "ROLE_REMOVED";
-        auditService.logEvent(userId, eventType, null, null, 
-            String.format("Updated by: %s", currentUser.getEmail()));
+        // Log audit events for role changes (with transaction isolation)
+        try {
+            // Log role additions
+            for (String roleName : rolesToAdd) {
+                auditService.logEvent(currentUser, "ROLE_ASSIGNED", null, null,
+                    String.format("Assigned %s to %s", roleName, targetUser.getEmail()));
+            }
+            
+            // Log role removals
+            for (String roleName : rolesToRemove) {
+                auditService.logEvent(currentUser, "ROLE_REMOVED", null, null,
+                    String.format("Removed %s from %s", roleName, targetUser.getEmail()));
+            }
+            
+            log.info("Updated roles for user {}: added={}, removed={}", 
+                targetUser.getEmail(), rolesToAdd, rolesToRemove);
+        } catch (Exception e) {
+            log.error("Failed to log audit events for role changes", e);
+            // Don't fail the update if audit logging fails
+        }
         
         return mapToSummaryResponse(targetUser);
     }

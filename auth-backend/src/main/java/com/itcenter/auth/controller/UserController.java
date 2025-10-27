@@ -57,10 +57,16 @@ public class UserController {
     
     @PatchMapping("/admin/users/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserSummaryResponse> updateUserRoles(
+    public ResponseEntity<?> updateUserRoles(
             @PathVariable Long id,
             @Valid @RequestBody UpdateRolesRequest request) {
-        return ResponseEntity.ok(userService.updateUserRoles(id, request));
+        try {
+            return ResponseEntity.ok(userService.updateUserRoles(id, request));
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
     }
 }
 
