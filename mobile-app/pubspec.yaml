@@ -4,21 +4,21 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.9.2 <4.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
   
-  # State Management
-  provider: ^6.1.1
+  # AWS Amplify
+  amplify_flutter: ^2.4.2
+  amplify_auth_cognito: ^2.4.2
   
   # Networking
-  dio: ^5.4.0
+  http: ^1.2.2
   
-  # AWS Amplify
-  amplify_auth_cognito: ^1.4.9
-  amplify_flutter: ^1.4.9
+  # State Management
+  provider: ^6.1.1
   
   # Storage
   flutter_secure_storage: ^9.0.0
