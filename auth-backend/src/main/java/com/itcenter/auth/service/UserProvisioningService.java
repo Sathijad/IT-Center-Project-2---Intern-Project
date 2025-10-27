@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
@@ -85,17 +86,18 @@ public class UserProvisioningService {
 
         final String finalDisplayName = displayName;
 
-        return userRepository.findByCognitoSub(sub).orElseGet(() -> {
+        // Find existing user or create new one
+        AppUser user = userRepository.findByCognitoSub(sub).orElseGet(() -> {
             log.info("Creating new user via JIT provisioning for sub: {}, email: {}", sub, finalEmail);
             
-            AppUser user = new AppUser();
-            user.setCognitoSub(sub);
-            user.setEmail(finalEmail);
-            user.setDisplayName(finalDisplayName);
-            user.setIsActive(true);
-            user.setLocale("en");
+            AppUser newUser = new AppUser();
+            newUser.setCognitoSub(sub);
+            newUser.setEmail(finalEmail);
+            newUser.setDisplayName(finalDisplayName);
+            newUser.setIsActive(true);
+            newUser.setLocale("en");
             
-            AppUser savedUser = userRepository.save(user);
+            AppUser savedUser = userRepository.save(newUser);
 
             // Optional: Assign default role
             roleRepository.findByName("EMPLOYEE").ifPresent(role -> {
@@ -106,6 +108,32 @@ public class UserProvisioningService {
             log.info("Created user with ID: {} for email: {}", savedUser.getId(), finalEmail);
             return savedUser;
         });
+        
+        // ✅ Update user information and last login time every time profile is accessed
+        boolean needsUpdate = false;
+        
+        // Update email if changed
+        if (email != null && !email.equals(user.getEmail())) {
+            user.setEmail(finalEmail);
+            needsUpdate = true;
+        }
+        
+        // Update display name if changed
+        if (displayName != null && !displayName.equals(user.getDisplayName())) {
+            user.setDisplayName(finalDisplayName);
+            needsUpdate = true;
+        }
+        
+        // Always update last login timestamp
+        user.setLastLogin(LocalDateTime.now());
+        needsUpdate = true;
+        
+        if (needsUpdate) {
+            log.debug("Updating user profile for sub: {}, setting last_login", sub);
+            return userRepository.save(user);
+        }
+        
+        return user;
     }
     
     private Map<String, Object> fetchUserInfoFromCognito(String accessToken) {
