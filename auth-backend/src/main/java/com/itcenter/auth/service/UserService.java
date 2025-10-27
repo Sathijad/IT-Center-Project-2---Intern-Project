@@ -60,6 +60,9 @@ public class UserService {
     
     @Transactional
     public UserProfileResponse updateCurrentUserProfile(UpdateProfileRequest request) {
+        log.info("UpdateProfileRequest received - displayName: '{}', locale: '{}'", 
+            request.getDisplayName(), request.getLocale());
+        
         org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (!(auth.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt)) {
             throw new RuntimeException("Invalid authentication principal");
@@ -68,22 +71,42 @@ public class UserService {
         org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth.getPrincipal();
         AppUser user = provisioningService.findOrCreateFromJwt(jwt);
         
-        log.info("Updating profile for user ID: {}, current displayName: {}, current locale: {}", 
+        log.info("Updating profile for user ID: {}, current displayName: '{}', current locale: '{}'", 
             user.getId(), user.getDisplayName(), user.getLocale());
         
-        if (request.getDisplayName() != null) {
-            log.info("Setting displayName from '{}' to '{}'", user.getDisplayName(), request.getDisplayName());
-            user.setDisplayName(request.getDisplayName());
-        }
-        if (request.getLocale() != null) {
-            log.info("Setting locale from '{}' to '{}'", user.getLocale(), request.getLocale());
-            user.setLocale(request.getLocale());
+        boolean changed = false;
+        
+        if (request.getDisplayName() != null && !request.getDisplayName().trim().isEmpty()) {
+            String newDisplayName = request.getDisplayName().trim();
+            if (!newDisplayName.equals(user.getDisplayName())) {
+                log.info("Changing displayName from '{}' to '{}'", user.getDisplayName(), newDisplayName);
+                user.setDisplayName(newDisplayName);
+                changed = true;
+            } else {
+                log.info("Display name unchanged: '{}'", newDisplayName);
+            }
         }
         
-        // Force save and flush to ensure persistence
-        user = userRepository.saveAndFlush(user);
-        log.info("Saved user with ID: {}, new displayName: {}, new locale: {}", 
-            user.getId(), user.getDisplayName(), user.getLocale());
+        if (request.getLocale() != null && !request.getLocale().trim().isEmpty()) {
+            String newLocale = request.getLocale().trim();
+            if (!newLocale.equals(user.getLocale())) {
+                log.info("Changing locale from '{}' to '{}'", user.getLocale(), newLocale);
+                user.setLocale(newLocale);
+                changed = true;
+            } else {
+                log.info("Locale unchanged: '{}'", newLocale);
+            }
+        }
+        
+        if (changed) {
+            log.info("Changes detected, saving user to database...");
+            // Force save and flush to ensure persistence
+            user = userRepository.saveAndFlush(user);
+            log.info("User saved successfully. ID: {}, displayName: '{}', locale: '{}'", 
+                user.getId(), user.getDisplayName(), user.getLocale());
+        } else {
+            log.info("No changes detected, skipping save operation");
+        }
         
         // Log profile update (with error handling)
         try {

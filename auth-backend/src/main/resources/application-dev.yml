@@ -5,12 +5,16 @@ logging:
     org.springframework.security: DEBUG
     org.springframework.web: INFO
     org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 spring:
   jpa:
     hibernate:
       ddl-auto: update  # Ensure dev profile also uses 'update', not 'create'
     show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
 
 debug: true
 
