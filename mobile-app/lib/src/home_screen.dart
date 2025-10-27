@@ -93,57 +93,113 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Welcome Card
                       Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Profile',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
+                                Theme.of(context).colorScheme.surface,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.person,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 16),
-                              if (userData?['displayName'] != null)
-                                _buildInfoRow('Name', userData!['displayName']),
-                              if (userData?['email'] != null)
-                                _buildInfoRow('Email', userData!['email']),
-                              if (userData?['locale'] != null)
-                                _buildInfoRow('Locale', userData!['locale']),
-                              if (userData?['roles'] != null)
-                                _buildInfoRow('Roles', (userData!['roles'] as List).join(', ')),
-                            ],
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Welcome',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        userData?['displayName'] ?? 'User',
+                                        style: const TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      if (userData?['email'] != null)
+                                        Text(
+                                          userData!['email'],
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey[600],
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _loadUser,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Refresh'),
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              icon: Icons.person_outline,
+                              title: 'Profile',
+                              subtitle: 'View your profile',
+                              color: Colors.blue,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ProfileScreen(),
+                                  ),
+                                ).then((_) => _loadUser());
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              icon: Icons.refresh_rounded,
+                              title: 'Refresh',
+                              subtitle: 'Reload data',
+                              color: Colors.green,
+                              onTap: _loadUser,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ProfileScreen(),
-                              ),
-                            ).then((_) => _loadUser());
-                          },
-                          icon: const Icon(Icons.person),
-                          label: const Text('Edit Profile'),
-                        ),
-                      ),
+                      _buildInfoCard(context),
                       const SizedBox(height: 12),
                       _buildSecuritySection(),
                     ],
@@ -152,9 +208,107 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildActionCard(BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Card(
+        elevation: 1,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(BuildContext context) {
+    if (userData == null) return const SizedBox.shrink();
+    
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ExpansionTile(
+        leading: const Icon(Icons.info_outline),
+        title: const Text(
+          'Account Information',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        children: [
+          if (userData?['locale'] != null)
+            ListTile(
+              leading: Icon(Icons.language, color: Colors.blue[300]),
+              title: const Text('Locale'),
+              trailing: Chip(
+                label: Text(
+                  userData!['locale'],
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          if (userData?['roles'] != null && (userData!['roles'] as List).isNotEmpty)
+            ListTile(
+              leading: Icon(Icons.verified_user, color: Colors.green[300]),
+              title: const Text('Roles'),
+              trailing: Wrap(
+                spacing: 4,
+                children: (userData!['roles'] as List).map((role) => Chip(
+                      label: Text(role.toString()),
+                      labelStyle: const TextStyle(fontSize: 11),
+                    )).toList(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSecuritySection() {
     return Card(
-      color: Colors.blue[50],
+      elevation: 1,
+      color: Colors.blue[50]?.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: const Padding(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -181,28 +335,5 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-          Expanded(
-            child: SelectableText(value),
-          ),
-        ],
-      ),
-    );
-  }
 }
 

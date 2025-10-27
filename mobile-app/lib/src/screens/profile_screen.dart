@@ -75,89 +75,240 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Profile')),
+      appBar: AppBar(
+        title: const Text('My Profile'),
+        elevation: 0,
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (err != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                err!,
-                                style: const TextStyle(color: Colors.red),
-                              ),
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (err != null)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.red[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.red[200]!),
                             ),
-                          Text('Email',
-                              style: Theme.of(context).textTheme.labelMedium),
-                          const SizedBox(height: 4),
-                          Text(me?.email ?? '-',
-                              style: Theme.of(context).textTheme.bodyLarge),
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: nameCtl,
-                            decoration: const InputDecoration(
-                              labelText: 'Display name',
-                              hintText: 'e.g., John Doe',
-                              border: OutlineInputBorder(),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline,
+                                    color: Colors.red[700]),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    err!,
+                                    style: TextStyle(color: Colors.red[900]),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          InputDecorator(
-                            decoration: const InputDecoration(
-                              labelText: 'Locale',
-                              border: OutlineInputBorder(),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: locale,
-                                items: locales
-                                    .map((l) => DropdownMenuItem(
-                                        value: l, child: Text(l)))
-                                    .toList(),
-                                onChanged: (v) =>
-                                    setState(() => locale = v ?? 'en'),
-                              ),
-                            ),
+                        Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: FilledButton(
-                                  onPressed: saving ? null : _save,
-                                  child: saving
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        Icons.email_outlined,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Email',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall,
                                           ),
-                                        )
-                                      : const Text('Save'),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            me?.email ?? '-',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.person_outline,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      'Profile Details',
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                TextField(
+                                  controller: nameCtl,
+                                  decoration: InputDecoration(
+                                    labelText: 'Display Name',
+                                    hintText: 'Enter your display name',
+                                    prefixIcon: const Icon(Icons.person),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                DropdownButtonFormField<String>(
+                                  initialValue: locale,
+                                  decoration: InputDecoration(
+                                    labelText: 'Locale',
+                                    prefixIcon: const Icon(Icons.language),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  items: locales
+                                      .map((l) => DropdownMenuItem(
+                                          value: l, child: Text(l)))
+                                      .toList(),
+                                  onChanged: (v) =>
+                                      setState(() => locale = v ?? 'en'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (me?.roles != null && me!.roles.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          Card(
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.verified_user,
+                                      color: Colors.green[600]),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Your Roles:',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Wrap(
+                                      spacing: 8,
+                                      children: me!.roles
+                                          .map((role) => Chip(
+                                                label: Text(role),
+                                                backgroundColor: Colors.green[50],
+                                                labelStyle: TextStyle(
+                                                  color: Colors.green[900],
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ))
+                                          .toList(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: FilledButton.icon(
+                                onPressed: saving ? null : _save,
+                                icon: saving
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<
+                                                  Color>(Colors.white),
+                                        ),
+                                      )
+                                    : const Icon(Icons.save),
+                                label: Text(saving ? 'Saving...' : 'Save'),
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              OutlinedButton(
-                                  onPressed: loading ? null : _load,
-                                  child: const Text('Refresh')),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text('Roles: ${me?.roles.join(", ") ?? "-"}',
-                              style: Theme.of(context).textTheme.bodySmall),
-                        ],
-                      ),
+                            ),
+                            const SizedBox(width: 12),
+                            OutlinedButton.icon(
+                              onPressed: loading ? null : _load,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Refresh'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
