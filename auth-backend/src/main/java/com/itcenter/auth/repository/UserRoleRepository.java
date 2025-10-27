@@ -1,0 +1,41 @@
+package com.itcenter.auth.repository;
+
+import com.itcenter.auth.entity.UserRole;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
+    
+    /**
+     * Find all role names for a given user ID
+     */
+    @Query("SELECT r.name FROM UserRole ur " +
+           "JOIN ur.role r " +
+           "WHERE ur.user.id = :userId")
+    List<String> findRoleNamesByUserId(@Param("userId") Long userId);
+    
+    /**
+     * Find all user roles with eager loading of related entities
+     */
+    @Query("SELECT ur FROM UserRole ur " +
+           "LEFT JOIN FETCH ur.user u " +
+           "LEFT JOIN FETCH ur.role r " +
+           "LEFT JOIN FETCH ur.assignedBy ab " +
+           "ORDER BY ur.assignedAt DESC")
+    List<UserRole> findAllWithUsersAndRoles();
+    
+    /**
+     * Find all user roles for a specific user
+     */
+    @Query("SELECT ur FROM UserRole ur " +
+           "LEFT JOIN FETCH ur.role r " +
+           "LEFT JOIN FETCH ur.assignedBy ab " +
+           "WHERE ur.user.id = :userId")
+    List<UserRole> findByUserIdWithDetails(@Param("userId") Long userId);
+}
+

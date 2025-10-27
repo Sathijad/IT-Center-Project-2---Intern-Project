@@ -25,6 +25,7 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final AuditService auditService;
     private final UserProvisioningService provisioningService;
+    private final com.itcenter.auth.repository.UserRoleRepository userRoleRepository;
     
     public UserProfileResponse getCurrentUserProfile() {
         org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();

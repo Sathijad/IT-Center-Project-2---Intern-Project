@@ -25,11 +25,16 @@ export async function startLogin() {
 }
 
 export function logout() {
+  // Clear all local storage items
   localStorage.removeItem('id_token');
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('expires_at');
-
+  
+  // Clear all session storage items (PKCE verifier, state, etc.)
+  sessionStorage.clear();
+  
+  // Redirect to Cognito logout endpoint to clear Cognito session
   const url = new URL(`${COGNITO.domain}/logout`);
   url.searchParams.set('client_id', COGNITO.clientId);
   url.searchParams.set('logout_uri', COGNITO.logoutUri);

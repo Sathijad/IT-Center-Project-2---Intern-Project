@@ -40,7 +40,7 @@ public class UserController {
             @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "created_at") String sort) {
+            @RequestParam(defaultValue = "createdAt") String sort) {
         
         Sort.Direction direction = Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort));

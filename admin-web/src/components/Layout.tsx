@@ -1,5 +1,5 @@
 import React from 'react'
-import { Outlet, Link, useNavigate } from 'react-router-dom'
+import { Outlet, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { logout } from '../lib/auth'
 import { 
@@ -15,12 +15,13 @@ import { useState } from 'react'
 
 const Layout: React.FC = () => {
   const { user, isAdmin } = useAuth()
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
-    navigate('/login')
+    // Don't navigate here - logout() redirects to Cognito logout URL
+    // which then redirects back to home page
   }
 
   const navigation = [
