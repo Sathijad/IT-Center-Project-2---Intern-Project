@@ -8,6 +8,8 @@ logging:
 
 spring:
   jpa:
+    hibernate:
+      ddl-auto: update  # Ensure dev profile also uses 'update', not 'create'
     show-sql: true
 
 debug: true

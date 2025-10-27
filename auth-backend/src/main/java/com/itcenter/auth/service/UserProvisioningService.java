@@ -109,19 +109,22 @@ public class UserProvisioningService {
             return savedUser;
         });
         
-        // ✅ Update user information and last login time every time profile is accessed
+        // ✅ Only fill from Cognito on first creation - preserve manual edits
         boolean needsUpdate = false;
         
-        // Update email if changed
-        if (email != null && !email.equals(user.getEmail())) {
+        // Update email only if it's missing (first time)
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
             user.setEmail(finalEmail);
             needsUpdate = true;
+            log.debug("Setting email for first time: {}", finalEmail);
         }
         
-        // Update display name if changed
-        if (displayName != null && !displayName.equals(user.getDisplayName())) {
+        // Update display name only if it's missing or blank (first time)
+        // Do NOT overwrite existing display name - it may have been customized by user
+        if (user.getDisplayName() == null || user.getDisplayName().isBlank()) {
             user.setDisplayName(finalDisplayName);
             needsUpdate = true;
+            log.debug("Setting display name for first time: {}", finalDisplayName);
         }
         
         // Always update last login timestamp

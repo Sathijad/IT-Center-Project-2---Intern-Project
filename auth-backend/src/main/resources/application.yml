@@ -16,7 +16,7 @@ spring:
   
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update  # Changed from 'create' to preserve data across restarts
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
