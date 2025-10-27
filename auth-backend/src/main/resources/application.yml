@@ -86,5 +86,5 @@ logging:
 app:
   bootstrap-admin-email: ${BOOTSTRAP_ADMIN_EMAIL:admin@itcenter.com}
   audit-retention-days: ${AUDIT_RETENTION_DAYS:180}
-  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,http://localhost:56956,http://localhost:8080}
 
