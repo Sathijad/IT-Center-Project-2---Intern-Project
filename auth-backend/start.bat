@@ -39,4 +39,4 @@ echo JAVA_HOME=%JAVA_HOME%
 echo.
 
 REM Build and run
-mvnw.cmd clean spring-boot:run
+mvnw.cmd spring-boot:run

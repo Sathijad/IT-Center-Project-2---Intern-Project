@@ -20,53 +20,60 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ApiProvider()),
-      ],
-      child: MaterialApp.router(
-        title: 'IT Center Auth',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.light,
-          ),
+        ChangeNotifierProxyProvider<AuthProvider, ApiProvider>(
+          create: (_) => ApiProvider(AuthProvider()),
+          update: (_, authProvider, __) => ApiProvider(authProvider),
         ),
-        routerConfig: _router,
+      ],
+      child: Builder(
+        builder: (context) => MaterialApp.router(
+          title: 'IT Center Auth',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.blue,
+              brightness: Brightness.light,
+            ),
+          ),
+          routerConfig: _buildRouter(context),
+        ),
       ),
     );
   }
 }
 
-final GoRouter _router = GoRouter(
-  initialLocation: '/login',
-  routes: [
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
-    ),
-    GoRoute(
-      path: '/dashboard',
-      builder: (context, state) => const DashboardScreen(),
-    ),
-    GoRoute(
-      path: '/profile',
-      builder: (context, state) => const ProfileScreen(),
-    ),
-  ],
-  redirect: (context, state) {
-    final authProvider = AuthProvider();
-    final isLoggedIn = authProvider.isAuthenticated;
-    final isLoggingIn = state.uri.path == '/login';
+GoRouter _buildRouter(BuildContext context) {
+  return GoRouter(
+    initialLocation: '/login',
+    routes: [
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard',
+        builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+    ],
+    redirect: (context, state) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final isLoggedIn = authProvider.isAuthenticated;
+      final isLoggingIn = state.uri.path == '/login';
 
-    if (!isLoggedIn && !isLoggingIn) {
-      return '/login';
-    }
-    if (isLoggedIn && isLoggingIn) {
-      return '/dashboard';
-    }
-    return null;
-  },
-);
+      if (!isLoggedIn && !isLoggingIn) {
+        return '/login';
+      }
+      if (isLoggedIn && isLoggingIn) {
+        return '/dashboard';
+      }
+      return null;
+    },
+  );
+}
 

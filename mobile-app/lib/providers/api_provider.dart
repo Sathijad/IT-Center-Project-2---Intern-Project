@@ -7,11 +7,10 @@ class ApiProvider extends ChangeNotifier {
   final AuthProvider _authProvider;
 
   ApiProvider(this._authProvider) {
-    _dio = Dio(BaseOptions(
-      baseURL: 'http://10.0.2.2:8080', // Android emulator localhost
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-    ));
+    _dio = Dio();
+    _dio.options.baseUrl = 'http://10.0.2.2:8080'; // Android emulator localhost
+    _dio.options.connectTimeout = const Duration(seconds: 30);
+    _dio.options.receiveTimeout = const Duration(seconds: 30);
 
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
