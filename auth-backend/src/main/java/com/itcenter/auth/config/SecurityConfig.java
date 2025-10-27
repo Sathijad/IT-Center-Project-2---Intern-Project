@@ -1,5 +1,6 @@
 package com.itcenter.auth.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,10 +21,13 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     @Value("${app.cors-allowed-origins}")
     private String allowedOrigins;
+    
+    private final JwtAuthConverter jwtAuthConverter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,13 +37,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/healthz", "/actuator/health").permitAll()
                 .requestMatchers("/api/v1/me").authenticated()
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")  // Only ADMIN role
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> {
-                    // JWT configuration is handled via application.yml
-                })
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
             )
             .headers(headers -> {
                 headers.frameOptions(frameOptions -> frameOptions.deny());
