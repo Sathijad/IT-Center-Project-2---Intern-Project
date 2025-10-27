@@ -12,7 +12,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +38,22 @@ public class UserService {
         
         org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth.getPrincipal();
         AppUser user = provisioningService.findOrCreateFromJwt(jwt);
+        
+        // Log login success event
+        try {
+            HttpServletRequest request = getHttpServletRequest();
+            if (request != null) {
+                String ipAddress = AuditService.getClientIp(request);
+                String userAgent = request.getHeader("User-Agent");
+                auditService.logEvent(user, "LOGIN_SUCCESS", ipAddress, userAgent, null);
+                log.debug("Logged LOGIN_SUCCESS for user: {}, IP: {}", user.getEmail(), ipAddress);
+            } else {
+                log.warn("HttpServletRequest not available, skipping audit logging");
+            }
+        } catch (Exception e) {
+            log.error("Failed to log login audit event", e);
+            // Don't fail the request if audit logging fails
+        }
         
         return mapToProfileResponse(user);
     }
@@ -127,6 +146,17 @@ public class UserService {
         
         org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth.getPrincipal();
         return provisioningService.findOrCreateFromJwt(jwt);
+    }
+    
+    private HttpServletRequest getHttpServletRequest() {
+        try {
+            ServletRequestAttributes requestAttributes = 
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            return requestAttributes != null ? requestAttributes.getRequest() : null;
+        } catch (Exception e) {
+            log.debug("Could not get HttpServletRequest", e);
+            return null;
+        }
     }
     
     private UserProfileResponse mapToProfileResponse(AppUser user) {
