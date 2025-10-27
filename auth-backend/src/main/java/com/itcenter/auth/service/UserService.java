@@ -48,17 +48,30 @@ public class UserService {
         org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth.getPrincipal();
         AppUser user = provisioningService.findOrCreateFromJwt(jwt);
         
+        log.info("Updating profile for user ID: {}, current displayName: {}, current locale: {}", 
+            user.getId(), user.getDisplayName(), user.getLocale());
+        
         if (request.getDisplayName() != null) {
+            log.info("Setting displayName from '{}' to '{}'", user.getDisplayName(), request.getDisplayName());
             user.setDisplayName(request.getDisplayName());
         }
         if (request.getLocale() != null) {
+            log.info("Setting locale from '{}' to '{}'", user.getLocale(), request.getLocale());
             user.setLocale(request.getLocale());
         }
         
-        user = userRepository.save(user);
+        // Force save and flush to ensure persistence
+        user = userRepository.saveAndFlush(user);
+        log.info("Saved user with ID: {}, new displayName: {}, new locale: {}", 
+            user.getId(), user.getDisplayName(), user.getLocale());
         
-        // Log profile update
-        auditService.logEvent(user.getId(), "PROFILE_UPDATED", null, null, null);
+        // Log profile update (with error handling)
+        try {
+            auditService.logEvent(user.getId(), "PROFILE_UPDATED", null, null, null);
+        } catch (Exception e) {
+            log.error("Failed to log audit event: {}", e.getMessage());
+            // Don't fail the update if audit logging fails
+        }
         
         return mapToProfileResponse(user);
     }
