@@ -38,5 +38,12 @@ echo Starting Spring Boot application...
 echo JAVA_HOME=%JAVA_HOME%
 echo.
 
+REM Set development profile explicitly
+set SPRING_PROFILES_ACTIVE=dev
+
+echo.
+echo Running with profile: dev
+echo.
+
 REM Build and run
 mvnw.cmd spring-boot:run

@@ -50,7 +50,11 @@ if (-not (Test-Path $javaExe)) {
     exit 1
 }
 
+# Set development profile explicitly
+$env:SPRING_PROFILES_ACTIVE = "dev"
+
 Write-Host ""
+Write-Host "Running with profile: dev" -ForegroundColor Cyan
 Write-Host "Building and running application..." -ForegroundColor Green
 Write-Host ""
 
