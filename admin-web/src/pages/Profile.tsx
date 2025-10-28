@@ -57,10 +57,11 @@ const Profile: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-2">
               Display Name
             </label>
             <input
+              id="displayName"
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
@@ -70,10 +71,11 @@ const Profile: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="locale" className="block text-sm font-medium text-gray-700 mb-2">
               Locale
             </label>
             <select
+              id="locale"
               value={locale}
               onChange={(e) => setLocale(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

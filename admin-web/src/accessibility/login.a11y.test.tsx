@@ -1,10 +1,8 @@
-import { describe, it } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { axe, toHaveNoViolations } from 'vitest-axe'
+import { axe } from 'vitest-axe'
 import Login from '../pages/Login'
-
-expect.extend(toHaveNoViolations)
 
 // Mock the auth context
 vi.mock('../contexts/AuthContext', () => ({
@@ -28,7 +26,11 @@ describe('Login Accessibility Tests', () => {
     )
     
     const results = await axe(container)
-    expect(results).toHaveNoViolations()
+    // Check for violations - accessibility tests pass if no violations found
+    if (results.violations && results.violations.length > 0) {
+      console.log('Accessibility violations:', results.violations)
+    }
+    expect(results.violations).toHaveLength(0)
   })
 
   it('login form is accessible', async () => {
