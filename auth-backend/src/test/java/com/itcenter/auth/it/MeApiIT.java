@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class MeApiIT {
 
     @Autowired
@@ -43,19 +45,25 @@ class MeApiIT {
 
     @BeforeEach
     void setUp() {
-        // Create test roles
-        adminRole = new Role();
-        adminRole.setName("ADMIN");
-        adminRole = roleRepository.save(adminRole);
+        // Find or create roles to avoid duplicates across tests
+        adminRole = roleRepository.findByName("ADMIN").orElseGet(() -> {
+            Role r = new Role();
+            r.setName("ADMIN");
+            r.setDescription("Admin role");
+            return roleRepository.save(r);
+        });
 
-        employeeRole = new Role();
-        employeeRole.setName("EMPLOYEE");
-        employeeRole = roleRepository.save(employeeRole);
+        employeeRole = roleRepository.findByName("EMPLOYEE").orElseGet(() -> {
+            Role r = new Role();
+            r.setName("EMPLOYEE");
+            r.setDescription("Employee role");
+            return roleRepository.save(r);
+        });
 
-        // Create test user with ADMIN role
+        // Create test user with ADMIN role (unique email)
         testUser = new AppUser();
         testUser.setCognitoSub("test-sub-" + System.currentTimeMillis());
-        testUser.setEmail("test@example.com");
+        testUser.setEmail("test+" + java.util.UUID.randomUUID() + "@example.com");
         testUser.setDisplayName("Test User");
         testUser.setLocale("en");
         testUser.setIsActive(true);

@@ -50,29 +50,35 @@ class AdminUsersApiIT {
 
     @BeforeEach
     void setUp() {
-        // Create test roles
-        adminRole = new Role();
-        adminRole.setName("ADMIN");
-        adminRole = roleRepository.save(adminRole);
+        // Find or create test roles to avoid unique constraint violations
+        adminRole = roleRepository.findByName("ADMIN").orElseGet(() -> {
+            Role r = new Role();
+            r.setName("ADMIN");
+            r.setDescription("Admin role");
+            return roleRepository.save(r);
+        });
 
-        employeeRole = new Role();
-        employeeRole.setName("EMPLOYEE");
-        employeeRole = roleRepository.save(employeeRole);
+        employeeRole = roleRepository.findByName("EMPLOYEE").orElseGet(() -> {
+            Role r = new Role();
+            r.setName("EMPLOYEE");
+            r.setDescription("Employee role");
+            return roleRepository.save(r);
+        });
 
-        // Create admin user
+        // Create admin user (unique email)
         adminUser = new AppUser();
         adminUser.setCognitoSub("admin-sub-" + System.currentTimeMillis());
-        adminUser.setEmail("admin@test.com");
+        adminUser.setEmail("admin+" + java.util.UUID.randomUUID() + "@test.com");
         adminUser.setDisplayName("Admin User");
         adminUser.setLocale("en");
         adminUser.setIsActive(true);
         adminUser.setRoles(List.of(adminRole));
         adminUser = userRepository.save(adminUser);
 
-        // Create target user
+        // Create target user (unique email)
         targetUser = new AppUser();
         targetUser.setCognitoSub("target-sub-" + System.currentTimeMillis());
-        targetUser.setEmail("target@test.com");
+        targetUser.setEmail("target+" + java.util.UUID.randomUUID() + "@test.com");
         targetUser.setDisplayName("Target User");
         targetUser.setLocale("en");
         targetUser.setIsActive(true);

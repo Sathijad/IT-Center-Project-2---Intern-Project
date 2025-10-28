@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -27,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class AuditControllerIT {
 
     @Autowired
@@ -46,15 +48,18 @@ class AuditControllerIT {
 
     @BeforeEach
     void setUp() {
-        // Create admin role
-        adminRole = new Role();
-        adminRole.setName("ADMIN");
-        adminRole = roleRepository.save(adminRole);
+        // Find or create admin role to avoid duplicates
+        adminRole = roleRepository.findByName("ADMIN").orElseGet(() -> {
+            Role r = new Role();
+            r.setName("ADMIN");
+            r.setDescription("Admin role");
+            return roleRepository.save(r);
+        });
 
-        // Create admin user
+        // Create admin user (unique email)
         adminUser = new AppUser();
         adminUser.setCognitoSub("admin-sub-" + System.currentTimeMillis());
-        adminUser.setEmail("admin@test.com");
+        adminUser.setEmail("admin+" + java.util.UUID.randomUUID() + "@test.com");
         adminUser.setDisplayName("Admin User");
         adminUser.setLocale("en");
         adminUser.setIsActive(true);
