@@ -120,16 +120,46 @@ Quick setup:
 
 ## 🧪 Testing
 
-```powershell
-# Backend tests
-cd auth-backend
-./mvnw test
+### Backend Testing (Comprehensive)
 
-# Frontend tests
+See **[TESTING.md](./auth-backend/TESTING.md)** for complete testing guide.
+
+```powershell
+# Run all tests with coverage
+cd auth-backend
+mvn clean verify
+
+# View coverage report
+start target/site/jacoco/index.html
+
+# Run only unit tests
+mvn clean test
+
+# Run only integration tests  
+mvn clean verify -Dtest="*IT"
+```
+
+**Test Coverage:**
+- ✅ Unit tests (Mockito) - Service layer, 80%+ coverage
+- ✅ Integration tests (MockMvc) - API endpoints, security
+- ✅ Repository tests (@DataJpaTest) - Database queries
+- ✅ Edge cases - Non-existent roles, duplicate roles, invalid input
+
+**Coverage Requirements:**
+- Minimum 80% instruction and branch coverage
+- Build fails if below threshold
+- Excludes DTOs and configuration classes
+
+### Frontend Tests
+
+```powershell
 cd admin-web
 npm test
+```
 
-# Mobile tests
+### Mobile Tests
+
+```powershell
 cd mobile-app
 flutter test
 ```
