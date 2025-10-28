@@ -11,10 +11,16 @@ auth-backend/
       unit/          # Unit tests (mocked dependencies)
         - AuditServiceTest.java
         - UserProvisioningServiceTest.java
+        - UserServiceTest.java
       it/            # Integration tests (real database + components)
         - HealthControllerIT.java
         - SecurityRulesIT.java
         - UserControllerIT.java
+        - AuditControllerIT.java
+        - MeApiIT.java
+        - AdminUsersApiIT.java
+      repository/
+        - AppUserRepositoryTest.java
     resources/
       application-test.yml  # Test configuration
 ```
@@ -25,12 +31,18 @@ auth-backend/
 
 ```bash
 cd auth-backend
-./mvnw test
+./mvnw test -Dspring.profiles.active=test
 ```
 
-Run with test profile:
-```bash
-./mvnw test -Dspring.profiles.active=test
+**Expected Output:**
+```
+[INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO] Results:
+[INFO]   Tests run: 18
+[INFO]   Failures: 0
+[INFO]   Errors: 0
+[INFO]   Skipped: 0
 ```
 
 Run specific test class:
@@ -40,12 +52,18 @@ Run specific test class:
 
 ### Test Coverage
 
-JaCoCo code coverage reports are generated automatically:
+JaCoCo code coverage reports are generated automatically with 80% minimum requirement:
 ```bash
-./mvnw test jacoco:report
+./mvnw test jacoco:report jacoco:check
 ```
 
+**Expected Coverage:**
+- Line coverage: ≥80%
+- Branch coverage: ≥70%
+
 View report: `target/site/jacoco/index.html`
+
+Coverage reports are automatically uploaded as CI artifacts.
 
 ## Test Types
 
