@@ -4,17 +4,29 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password: ''
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
   
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
+        show_sql: false
+    show-sql: false
   
   flyway:
     enabled: false
+  
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9000/auth/realms/test
+          jwk-set-uri: http://localhost:9000/auth/realms/test/protocol/openid-connect/certs
   
   sql:
     init:
@@ -22,8 +34,26 @@ spring:
 
 logging:
   level:
+    root: WARN
     org.springframework.security: WARN
     org.springframework.web: WARN
-    com.itcenter: DEBUG
+    org.springframework.boot: WARN
+    com.itcenter: INFO
     org.hibernate: WARN
+    org.testcontainers: WARN
+    org.jacoco: WARN
+
+server:
+  port: 0  # Random port for tests
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  bootstrap-admin-email: admin@itcenter.com
+  audit-retention-days: 180
+  cors-allowed-origins: http://localhost:5173
 
