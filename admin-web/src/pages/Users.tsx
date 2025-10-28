@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import api from '../lib/api'
-import { Search, UserPlus, Settings } from 'lucide-react'
+import api, { deleteUser as deleteUserApi } from '../lib/api'
+import { Search, UserPlus, Settings, Trash2 } from 'lucide-react'
 
 const Users: React.FC = () => {
   const navigate = useNavigate()
@@ -62,6 +62,19 @@ const Users: React.FC = () => {
       alert('Failed to update roles')
     } finally {
       setIsLoadingRoles(false)
+    }
+  }
+
+  const onDeleteUser = async (user: any) => {
+    const email = user.email
+    const confirmInput = window.prompt(`Type the user's email to confirm permanent deletion: ${email}`)
+    if (confirmInput !== email) return
+    try {
+      await deleteUserApi(user.id)
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      alert('User permanently deleted')
+    } catch (e: any) {
+      alert(e?.response?.data?.message || 'Failed to delete user')
     }
   }
 
@@ -162,6 +175,12 @@ const Users: React.FC = () => {
                         >
                           <Settings className="w-4 h-4" />
                           Roles
+                        </button>
+                        <button
+                          onClick={() => onDeleteUser(user)}
+                          className="text-red-600 hover:text-red-800 inline-flex items-center gap-1"
+                        >
+                          <Trash2 className="w-4 h-4" /> Delete
                         </button>
                       </div>
                     </td>

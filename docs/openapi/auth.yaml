@@ -141,6 +141,33 @@ paths:
           $ref: '#/components/responses/Forbidden'
 
   /api/v1/admin/users/{id}:
+    delete:
+      summary: Permanently delete user and all related data
+      description: |
+        Hard delete: permanently removes the user row from app_users and all related data:
+        - user_roles entries
+        - login_audit entries
+        - Any other data referencing the user via foreign keys with ON DELETE CASCADE
+      operationId: deleteUser
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: User ID to delete
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: User permanently deleted
+        '403':
+          description: Forbidden - ADMIN role required
+        '404':
+          description: User not found
     get:
       summary: Get user details (ADMIN only)
       operationId: getUserById

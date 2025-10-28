@@ -52,5 +52,48 @@ class ApiClient {
     }
     return UserProfile.fromJson(json.decode(r.body));
   }
+
+  /// Mark login for this session (idempotent per JWT token)
+  /// Call this once after successful sign-in to record login in audit log
+  Future<void> markLoginOnce() async {
+    developer.log('[MARK-LOGIN] Method called from mobile app');
+    
+    final token = await AuthService.instance.getAccessToken();
+    developer.log('[MARK-LOGIN] Access token length: ${token?.length ?? 0}');
+    
+    if (token == null || token.isEmpty) {
+      developer.log('[MARK-LOGIN] ERROR: No access token available, skipping');
+      return;
+    }
+
+    final url = '${ApiBase.base}/api/v1/sessions/mark-login';
+    developer.log('[MARK-LOGIN] URL: $url');
+    developer.log('[MARK-LOGIN] Authorization header: Bearer ${token.substring(0, token.length > 20 ? 20 : token.length)}...');
+
+    try {
+      final r = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({}),
+      );
+      
+      developer.log('[MARK-LOGIN] Response status: ${r.statusCode}');
+      developer.log('[MARK-LOGIN] Response body: ${r.body}');
+      developer.log('[MARK-LOGIN] Response headers: ${r.headers}');
+      
+      if (r.statusCode != 204 && r.statusCode != 200) {
+        developer.log('[MARK-LOGIN] WARNING: Unexpected status code: ${r.statusCode}');
+      } else {
+        developer.log('[MARK-LOGIN] SUCCESS: Login marked successfully');
+      }
+    } catch (e, stackTrace) {
+      developer.log('[MARK-LOGIN] ERROR: Failed to mark login: $e');
+      developer.log('[MARK-LOGIN] Stack trace: $stackTrace');
+      // Don't fail the login flow if this fails
+    }
+  }
 }
 

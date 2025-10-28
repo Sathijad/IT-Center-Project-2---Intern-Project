@@ -2,10 +2,13 @@ package com.itcenter.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
+@EntityListeners(AuditingEntityListener.class)
 @Entity
 @Table(name = "user_roles",
     uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"})
@@ -29,12 +32,12 @@ public class UserRole {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_by")
-    private AppUser assignedBy;
+    @CreatedDate
+    @Column(name = "assigned_at", nullable = false, updatable = false)
+    private Instant assignedAt;
     
-    @CreationTimestamp
-    @Column(name = "assigned_at")
-    private LocalDateTime assignedAt;
+    @CreatedBy
+    @Column(name = "assigned_by")
+    private Long assignedBy;
 }
 

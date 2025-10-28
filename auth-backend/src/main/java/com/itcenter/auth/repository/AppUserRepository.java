@@ -20,9 +20,13 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     Optional<AppUser> findByCognitoSub(String cognitoSub);
     
     @Query("SELECT u FROM AppUser u WHERE " +
+           "u.isActive = true AND (" +
            "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           "LOWER(u.displayName) LIKE LOWER(CONCAT('%', :query, '%'))")
+           "LOWER(u.displayName) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<AppUser> searchUsers(@Param("query") String query, Pageable pageable);
+
+    @Query("SELECT u FROM AppUser u WHERE u.isActive = true")
+    Page<AppUser> findAllActive(Pageable pageable);
     
     boolean existsByEmail(String email);
     

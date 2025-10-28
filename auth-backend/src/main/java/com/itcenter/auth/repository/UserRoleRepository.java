@@ -40,7 +40,6 @@ public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
     @Query("SELECT ur FROM UserRole ur " +
            "LEFT JOIN FETCH ur.user u " +
            "LEFT JOIN FETCH ur.role r " +
-           "LEFT JOIN FETCH ur.assignedBy ab " +
            "ORDER BY ur.assignedAt DESC")
     List<UserRole> findAllWithUsersAndRoles();
     
@@ -49,8 +48,14 @@ public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
      */
     @Query("SELECT ur FROM UserRole ur " +
            "LEFT JOIN FETCH ur.role r " +
-           "LEFT JOIN FETCH ur.assignedBy ab " +
            "WHERE ur.user.id = :userId")
     List<UserRole> findByUserIdWithDetails(@Param("userId") Long userId);
+
+    /**
+     * Delete all user role mappings for a user (used for soft/hard delete)
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM UserRole ur WHERE ur.user.id = :userId")
+    int deleteAllByUserId(@Param("userId") Long userId);
 }
 

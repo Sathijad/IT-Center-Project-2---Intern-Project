@@ -136,6 +136,9 @@ public class UserProvisioningService {
             return userRepository.save(user);
         }
         
+        if (Boolean.FALSE.equals(user.getIsActive())) {
+            throw new RuntimeException("User account is deactivated");
+        }
         return user;
     }
     

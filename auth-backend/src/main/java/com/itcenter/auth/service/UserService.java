@@ -39,21 +39,8 @@ public class UserService {
         org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth.getPrincipal();
         AppUser user = provisioningService.findOrCreateFromJwt(jwt);
         
-        // Log login success event
-        try {
-            HttpServletRequest request = getHttpServletRequest();
-            if (request != null) {
-                String ipAddress = AuditService.getClientIp(request);
-                String userAgent = request.getHeader("User-Agent");
-                auditService.logEvent(user, "LOGIN_SUCCESS", ipAddress, userAgent, null);
-                log.debug("Logged LOGIN_SUCCESS for user: {}, IP: {}", user.getEmail(), ipAddress);
-            } else {
-                log.warn("HttpServletRequest not available, skipping audit logging");
-            }
-        } catch (Exception e) {
-            log.error("Failed to log login audit event", e);
-            // Don't fail the request if audit logging fails
-        }
+        // Note: Login audit is now handled by /api/v1/sessions/mark-login endpoint
+        // to ensure idempotency (once per JWT token)
         
         return mapToProfileResponse(user);
     }
@@ -110,7 +97,10 @@ public class UserService {
         
         // Log profile update (with error handling)
         try {
-            auditService.logEvent(user.getId(), "PROFILE_UPDATED", null, null, null);
+            HttpServletRequest httpRequest = getHttpServletRequest();
+            String ipAddress = httpRequest != null ? com.itcenter.auth.service.AuditService.getClientIp(httpRequest) : null;
+            String userAgent = httpRequest != null ? httpRequest.getHeader("User-Agent") : null;
+            auditService.logEvent(user, "PROFILE_UPDATED", ipAddress, userAgent, null);
         } catch (Exception e) {
             log.error("Failed to log audit event: {}", e.getMessage());
             // Don't fail the update if audit logging fails
@@ -122,7 +112,7 @@ public class UserService {
     public Page<UserSummaryResponse> searchUsers(String query, Pageable pageable) {
         Page<AppUser> users = query != null && !query.isEmpty() 
             ? userRepository.searchUsers(query, pageable)
-            : userRepository.findAll(pageable);
+            : userRepository.findAllActive(pageable);
         
         return users.map(this::mapToSummaryResponse);
     }
@@ -130,6 +120,9 @@ public class UserService {
     public UserSummaryResponse getUserById(Long id) {
         AppUser user = userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found"));
+        if (Boolean.FALSE.equals(user.getIsActive())) {
+            throw new RuntimeException("User not found");
+        }
         
         return mapToSummaryResponse(user);
     }

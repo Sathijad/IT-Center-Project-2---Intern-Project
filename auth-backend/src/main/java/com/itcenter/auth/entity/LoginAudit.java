@@ -35,6 +35,9 @@ public class LoginAudit {
     @Column(name = "metadata", columnDefinition = "CLOB")
     private String metadata;
     
+    @Column(name = "token_jti")
+    private String tokenJti;
+    
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;

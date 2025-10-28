@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import api from '../lib/api'
-import { Settings } from 'lucide-react'
+import api, { deleteUser as deleteUserApi } from '../lib/api'
+import { Settings, Trash2 } from 'lucide-react'
 
 const UserDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -50,6 +50,21 @@ const UserDetail: React.FC = () => {
       alert('Failed to update roles')
     } finally {
       setIsLoadingRoles(false)
+    }
+  }
+
+  const deleteUser = async () => {
+    if (!user) return
+    const email = user.email
+    const confirmInput = window.prompt(`Type the user's email to confirm permanent deletion: ${email}`)
+    if (confirmInput !== email) return
+    try {
+      await deleteUserApi(user.id)
+      alert('User permanently deleted')
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      navigate('/users')
+    } catch (e: any) {
+      alert(e?.response?.data?.message || 'Failed to delete user')
     }
   }
 
@@ -138,6 +153,15 @@ const UserDetail: React.FC = () => {
               ? new Date(user.lastLogin).toLocaleString()
               : 'Never'}
           </p>
+        </div>
+
+        <div className="pt-4 border-t flex justify-end">
+          <button
+            onClick={deleteUser}
+            className="text-red-600 hover:text-red-800 inline-flex items-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" /> Delete User
+          </button>
         </div>
       </div>
 

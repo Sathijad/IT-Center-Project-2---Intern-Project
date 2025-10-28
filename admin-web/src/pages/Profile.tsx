@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../lib/api'
@@ -7,10 +7,10 @@ import { User } from 'lucide-react'
 const Profile: React.FC = () => {
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const [displayName, setDisplayName] = useState(user?.displayName || '')
-  const [locale, setLocale] = useState(user?.locale || 'en-US')
+  const [displayName, setDisplayName] = useState('')
+  const [locale, setLocale] = useState('en-US')
 
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, isLoading } = useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
       const response = await api.get('/api/v1/me')
@@ -18,8 +18,16 @@ const Profile: React.FC = () => {
     },
   })
 
+  // Update local state when currentUser changes
+  useEffect(() => {
+    if (currentUser) {
+      setDisplayName(currentUser.displayName || '')
+      setLocale(currentUser.locale || 'en-US')
+    }
+  }, [currentUser])
+
   const updateMutation = useMutation({
-    mutationFn: async (data: { display_name?: string; locale?: string }) => {
+    mutationFn: async (data: { displayName?: string; locale?: string }) => {
       const response = await api.patch('/api/v1/me', data)
       return response.data
     },
@@ -27,14 +35,25 @@ const Profile: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['current-user'] })
       alert('Profile updated successfully')
     },
+    onError: (error: any) => {
+      alert(error?.response?.data?.message || 'Failed to update profile')
+    },
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     updateMutation.mutate({
-      display_name: displayName,
-      locale,
+      displayName: displayName.trim(),
+      locale: locale.trim(),
     })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Loading profile...</div>
+      </div>
+    )
   }
 
   return (
@@ -64,8 +83,9 @@ const Profile: React.FC = () => {
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              maxLength={50}
+              maxLength={80}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter your display name"
             />
           </div>
 

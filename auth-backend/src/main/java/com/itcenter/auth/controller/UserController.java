@@ -2,6 +2,7 @@ package com.itcenter.auth.controller;
 
 import com.itcenter.auth.dto.*;
 import com.itcenter.auth.service.UserService;
+import com.itcenter.auth.service.AdminUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ import java.util.Map;
 public class UserController {
     
     private final UserService userService;
+    private final AdminUserService adminUserService;
     
     @GetMapping("/me")
     public ResponseEntity<UserProfileResponse> getCurrentUser() {
@@ -31,7 +33,8 @@ public class UserController {
     @PatchMapping("/me")
     public ResponseEntity<UserProfileResponse> updateCurrentUser(
             @Valid @RequestBody UpdateProfileRequest request) {
-        return ResponseEntity.ok(userService.updateCurrentUserProfile(request));
+        UserProfileResponse response = userService.updateCurrentUserProfile(request);
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/admin/users")
@@ -67,6 +70,14 @@ public class UserController {
             error.put("error", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         }
+    }
+
+    @DeleteMapping("/admin/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        // Hard delete: permanently removes user and all related data (roles, audit records)
+        adminUserService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }
 

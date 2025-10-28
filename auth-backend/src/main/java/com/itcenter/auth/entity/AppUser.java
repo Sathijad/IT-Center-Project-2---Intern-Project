@@ -33,12 +33,16 @@ public class AppUser {
     @Column(name = "display_name", length = 50)
     private String displayName;
     
+    @Builder.Default
     @Column(length = 10)
     private String locale = "en";
     
     @Builder.Default
     @Column(name = "is_active")
     private Boolean isActive = true;
+    
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
     
     @CreationTimestamp
     @Column(name = "created_at")

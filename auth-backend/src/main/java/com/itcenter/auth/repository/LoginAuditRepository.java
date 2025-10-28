@@ -19,5 +19,7 @@ public interface LoginAuditRepository extends JpaRepository<LoginAudit, Long> {
     
     @Query("SELECT COUNT(a) FROM LoginAudit a WHERE a.user.id = :userId")
     long countByUserId(@Param("userId") Long userId);
+    
+    boolean existsByTokenJti(String tokenJti);
 }
 

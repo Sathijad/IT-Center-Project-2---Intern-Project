@@ -32,3 +32,7 @@ api.interceptors.response.use(
 
 export default api
 
+export async function deleteUser(id: number) {
+  return api.delete(`/api/v1/admin/users/${id}`)
+}
+
