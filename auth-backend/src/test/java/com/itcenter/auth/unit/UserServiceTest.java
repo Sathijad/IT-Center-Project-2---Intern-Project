@@ -18,18 +18,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -53,17 +48,10 @@ class UserServiceTest {
     @Mock
     private UserRoleRepository userRoleRepository;
 
-    @Mock
-    private SecurityContext securityContext;
-
-    @Mock
-    private Authentication authentication;
-
     @InjectMocks
     private UserService userService;
 
     private AppUser testUser;
-    private Jwt mockJwt;
 
     @BeforeEach
     void setUp() {
@@ -79,19 +67,6 @@ class UserServiceTest {
         adminRole.setId(1L);
         adminRole.setName("ADMIN");
         testUser.setRoles(List.of(adminRole));
-
-        // Create mock JWT
-        mockJwt = Jwt.withTokenValue("mock-token")
-                .claim("sub", "test-sub")
-                .claim("email", "test@example.com")
-                .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plusSeconds(3600))
-                .build();
-
-        // Setup SecurityContext
-        SecurityContextHolder.setContext(securityContext);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(mockJwt);
     }
 
     @Test
@@ -117,7 +92,7 @@ class UserServiceTest {
         String query = "test";
         List<AppUser> users = List.of(testUser);
         Page<AppUser> userPage = new PageImpl<>(users);
-        when(userRepository.searchUsers(query, any(Pageable.class))).thenReturn(userPage);
+        when(userRepository.searchUsers(eq(query), any(Pageable.class))).thenReturn(userPage);
 
         // When
         Pageable pageable = mock(Pageable.class);
@@ -126,7 +101,7 @@ class UserServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
-        verify(userRepository, times(1)).searchUsers(query, any(Pageable.class));
+        verify(userRepository, times(1)).searchUsers(eq(query), any(Pageable.class));
     }
 
     @Test

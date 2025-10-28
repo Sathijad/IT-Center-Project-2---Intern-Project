@@ -54,6 +54,7 @@ class UserProvisioningServiceTest {
         String name = "New User";
 
         Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "RS256")
                 .claim("sub", sub)
                 .claim("email", email)
                 .claim("name", name)
@@ -79,7 +80,7 @@ class UserProvisioningServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getEmail()).isEqualTo(email);
-        verify(userRepository, times(2)).save(any(AppUser.class)); // Once for user, once for role
+        verify(userRepository, times(3)).save(any(AppUser.class)); // Save user, save role, save last_login
     }
 
     @Test
@@ -89,6 +90,7 @@ class UserProvisioningServiceTest {
         String email = "existing@test.com";
 
         Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "RS256")
                 .claim("sub", sub)
                 .claim("email", email)
                 .issuedAt(Instant.now())
@@ -119,6 +121,7 @@ class UserProvisioningServiceTest {
         String sub = "fallback-user-sub";
 
         Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "RS256")
                 .claim("sub", sub)
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(3600))
