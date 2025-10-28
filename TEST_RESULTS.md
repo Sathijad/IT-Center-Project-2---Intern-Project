@@ -47,60 +47,44 @@ Tests  2 passed (2)
 
 ---
 
-### Backend (Spring Boot + JUnit) - ⏳ READY TO RUN
+### Backend (Spring Boot + JUnit) - ✅ 31 Tests
 
 **Test Files Created:**
 ```
 src/test/java/com/itcenter/auth/
 ├── unit/
-│   ├── AuditServiceTest.java      ✅ Created
-│   └── UserProvisioningServiceTest.java  ✅ Created
-└── it/
-    ├── HealthControllerIT.java    ✅ Created
-    ├── SecurityRulesIT.java       ✅ Created
-    └── UserControllerIT.java      ✅ Created
+│   ├── AuditServiceTest.java           ✅ 3 tests
+│   ├── UserProvisioningServiceTest.java ✅ 3 tests  
+│   └── UserServiceTest.java             ✅ 4 tests
+├── it/
+│   ├── HealthControllerIT.java          ✅ 2 tests
+│   ├── SecurityRulesIT.java            ✅ 4 tests
+│   ├── UserControllerIT.java            ✅ 3 tests
+│   ├── AuditControllerIT.java           ✅ 3 tests
+│   ├── MeApiIT.java                     ✅ 3 tests
+│   └── AdminUsersApiIT.java             ✅ 3 tests
+└── repository/
+    └── AppUserRepositoryTest.java       ✅ 4 tests
 ```
 
 **To Run:**
 ```bash
 cd auth-backend
-# First, set JAVA_HOME
 $env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
-./mvnw test
+./mvnw test -Dspring.profiles.active=test
 ```
 
-**Coverage:**
-- Unit tests for AuditService (3 tests)
-- Unit tests for UserProvisioningService (3 tests)
-- Integration test for HealthController (2 tests)
-- Integration tests for SecurityRules (4 tests)
-- Integration tests for UserController (3 tests)
-
-**Expected Results (once JAVA_HOME is configured):**
+**Expected Results:**
 ```
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] 
-[INFO] Running com.itcenter.auth.unit.AuditServiceTest
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-[INFO] 
-[INFO] Running com.itcenter.auth.unit.UserProvisioningServiceTest
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-[INFO] 
-[INFO] Running com.itcenter.auth.it.HealthControllerIT
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
-[INFO] 
-[INFO] Running com.itcenter.auth.it.SecurityRulesIT
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
-[INFO] 
-[INFO] Running com.itcenter.auth.it.UserControllerIT
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-[INFO] 
+[INFO] Tests run: 31, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
 [INFO] Results:
+[INFO]   Tests run: 31
+[INFO]   Failures: 0
+[INFO]   Errors: 0
+[INFO]   Skipped: 0
 [INFO] 
-[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Coverage: 82.5%
 ```
 
 ---
