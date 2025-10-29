@@ -3,6 +3,8 @@ package com.itcenter.auth.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -32,7 +34,8 @@ public class LoginAudit {
     @Column(name = "user_agent", length = 500)
     private String userAgent;
     
-    @Column(name = "metadata", columnDefinition = "CLOB")
+    @Column(name = "metadata", columnDefinition = "jsonb", insertable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.JSON)
     private String metadata;
     
     @Column(name = "token_jti")

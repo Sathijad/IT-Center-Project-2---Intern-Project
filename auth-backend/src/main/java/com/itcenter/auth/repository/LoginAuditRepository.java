@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface LoginAuditRepository extends JpaRepository<LoginAudit, Long> {
     
-    Page<LoginAudit> findByUserId(Long userId, Pageable pageable);
+    Page<LoginAudit> findByUser_Id(Long userId, Pageable pageable);
     
     // Simplified query - just order by date descending
     @Query("SELECT a FROM LoginAudit a ORDER BY a.createdAt DESC")

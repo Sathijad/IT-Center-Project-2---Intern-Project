@@ -82,18 +82,26 @@ export default function Callback() {
           const userResponse = await api.get('/api/v1/me');
           setUser(userResponse.data);
           console.log('User profile fetched successfully');
-          
-          // Mark login for this session (idempotent per JWT token)
-          try {
-            await api.post('/api/v1/sessions/mark-login');
-            console.log('Login marked successfully');
-          } catch (err) {
-            console.error('Failed to mark login', err);
-            // Don't fail the login flow if this fails
-          }
         } catch (err) {
           console.error('Failed to fetch user details', err);
-          // Navigate anyway as login was successful
+          // Continue with navigation even if this fails
+        }
+        
+        // Mark login for this session (idempotent per JWT token)
+        // Move this outside the /me call try block so it always runs
+        try {
+          console.log('[MARK-LOGIN] Attempting to call mark-login endpoint...');
+          const markLoginResponse = await api.post('/api/v1/sessions/mark-login', {});
+          console.log('[MARK-LOGIN] Login marked successfully, status:', markLoginResponse.status);
+        } catch (err: any) {
+          console.error('[MARK-LOGIN] Failed to mark login:', err);
+          console.error('[MARK-LOGIN] Error details:', {
+            message: err.message,
+            response: err.response?.data,
+            status: err.response?.status,
+            code: err.code
+          });
+          // Don't fail the login flow if this fails
         }
         
         navigate('/');

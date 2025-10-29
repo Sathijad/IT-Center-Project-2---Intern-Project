@@ -37,6 +37,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/healthz", "/actuator/health").permitAll()
                 .requestMatchers("/api/v1/me").authenticated()
+                .requestMatchers("/api/v1/sessions/**").authenticated()  // Explicitly allow sessions endpoints
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")  // Only ADMIN role
                 .anyRequest().authenticated()
             )
