@@ -1,0 +1,52 @@
+{
+  "me": {
+    "id": 1,
+    "email": "admin@itcenter.com",
+    "displayName": "Test Admin",
+    "roles": ["ADMIN"]
+  },
+  "users": [
+    {
+      "id": 101,
+      "email": "user1@itcenter.com",
+      "displayName": "User One",
+      "roles": ["EMPLOYEE"]
+    },
+    {
+      "id": 102,
+      "email": "user2@itcenter.com",
+      "displayName": "User Two",
+      "roles": ["EMPLOYEE", "HR"]
+    },
+    {
+      "id": 1,
+      "email": "admin@itcenter.com",
+      "displayName": "Test Admin",
+      "roles": ["ADMIN"]
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": 1,
+      "createdAt": "2025-10-28T10:00:00Z",
+      "userEmail": "admin@itcenter.com",
+      "eventType": "ROLE_ASSIGNED",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": 2,
+      "createdAt": "2025-10-28T10:05:00Z",
+      "userEmail": "admin@itcenter.com",
+      "eventType": "ROLE_REMOVED",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": 3,
+      "createdAt": "2025-10-28T09:00:00Z",
+      "userEmail": "admin@itcenter.com",
+      "eventType": "LOGIN_SUCCESS",
+      "ipAddress": "127.0.0.1"
+    }
+  ]
+}
+
