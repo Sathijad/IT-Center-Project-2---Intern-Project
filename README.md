@@ -164,6 +164,47 @@ cd mobile-app
 flutter test
 ```
 
+### UI Automation Tests (Selenium)
+
+Selenium WebDriver tests for the React admin portal with Page Object Model pattern.
+
+**Setup:**
+```powershell
+cd admin-web
+npm install
+```
+
+**Run UI Tests:**
+```powershell
+# Run in headless mode (default)
+npm run ui:test
+
+# Run with visible browser
+$env:HEADFUL="true"; npm run ui:test
+
+# Set custom base URL
+$env:WEB_BASE_URL="http://localhost:5173"; npm run ui:test
+```
+
+**Test Suite:**
+- `login.spec.ts` - Login flow with pre-seeded token for CI
+- `users.roles.spec.ts` - Role management (idempotent role edits)
+- `audit.spec.ts` - Audit log viewing and filtering
+- `a11y.smoke.spec.ts` - Accessibility checks with axe-core
+
+**Page Objects:**
+- `LoginPage` - Sign in with Cognito flow
+- `DashboardPage` - User avatar/email verification
+- `UsersPage` - User management and role toggling
+- `AuditPage` - Event filtering and verification
+
+**Features:**
+- Headless Chrome by default (configurable via `HEADFUL=true`)
+- Page Object Model for maintainability
+- Idempotent tests (safe to run repeatedly)
+- Accessibility testing with axe-core
+- Pre-seeded auth tokens for CI/CD bypass
+
 ## 📖 API Documentation
 
 OpenAPI spec: `/docs/openapi/auth.yaml`
