@@ -22,12 +22,30 @@ function Find-Java21 {
     return $null
 }
 
-# Set JAVA_HOME if not already set
-if (-not $env:JAVA_HOME) {
-    $javaPath = Find-Java21
-    if ($javaPath) {
-        $env:JAVA_HOME = $javaPath
-        Write-Host "Found Java 21 at: $env:JAVA_HOME" -ForegroundColor Yellow
+# Always verify and set JAVA_HOME to correct path
+$javaPath = Find-Java21
+if ($javaPath) {
+    # Override JAVA_HOME even if it's set incorrectly
+    $env:JAVA_HOME = $javaPath
+    Write-Host "Setting JAVA_HOME to: $env:JAVA_HOME" -ForegroundColor Green
+} else {
+    # Check if JAVA_HOME is already set (might be wrong path)
+    if ($env:JAVA_HOME) {
+        $javaExe = Join-Path $env:JAVA_HOME "bin\java.exe"
+        if (Test-Path $javaExe) {
+            Write-Host "Using existing JAVA_HOME: $env:JAVA_HOME" -ForegroundColor Cyan
+        } else {
+            Write-Host "WARNING: JAVA_HOME points to invalid path: $env:JAVA_HOME" -ForegroundColor Red
+            Write-Host "ERROR: Java 21 not found in common locations!" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "Please install Java 21 from:" -ForegroundColor Yellow
+            Write-Host "https://www.oracle.com/java/technologies/downloads/#java21"
+            Write-Host ""
+            Write-Host "Or set JAVA_HOME manually using:" -ForegroundColor Yellow
+            Write-Host '  $env:JAVA_HOME = "C:\Path\To\Java\jdk-21"'
+            Write-Host ""
+            exit 1
+        }
     } else {
         Write-Host "ERROR: Java 21 not found!" -ForegroundColor Red
         Write-Host ""
@@ -39,8 +57,6 @@ if (-not $env:JAVA_HOME) {
         Write-Host ""
         exit 1
     }
-} else {
-    Write-Host "Using existing JAVA_HOME: $env:JAVA_HOME" -ForegroundColor Cyan
 }
 
 # Verify Java installation
@@ -50,10 +66,48 @@ if (-not (Test-Path $javaExe)) {
     exit 1
 }
 
+# Function to kill processes on port 8080
+function Kill-Port8080 {
+    Write-Host "Checking for processes using port 8080..." -ForegroundColor Cyan
+    $port = 8080
+    $connections = netstat -ano | Select-String ":$port.*LISTENING"
+    
+    if ($connections) {
+        $pids = @()
+        foreach ($connection in $connections) {
+            $parts = $connection.ToString().Split() | Where-Object { $_ }
+            $pid = $parts[-1]
+            if ($pid -and $pid -match '^\d+$') {
+                $pids += [int]$pid
+            }
+        }
+        
+        $uniquePids = $pids | Select-Object -Unique
+        
+        if ($uniquePids.Count -gt 0) {
+            foreach ($pid in $uniquePids) {
+                try {
+                    $process = Get-Process -Id $pid -ErrorAction Stop
+                    Write-Host "Found process using port 8080: $($process.ProcessName) (PID: $pid)" -ForegroundColor Yellow
+                    Write-Host "Stopping process $pid..." -ForegroundColor Yellow
+                    Stop-Process -Id $pid -Force
+                    Write-Host "Process stopped." -ForegroundColor Green
+                } catch {
+                    Write-Host "Process $pid not found or already terminated." -ForegroundColor Gray
+                }
+            }
+            Start-Sleep -Seconds 2  # Give the port time to be released
+            Write-Host ""
+        }
+    }
+}
+
+# Kill any process on port 8080 before starting
+Kill-Port8080
+
 # Set development profile explicitly
 $env:SPRING_PROFILES_ACTIVE = "dev"
 
-Write-Host ""
 Write-Host "Running with profile: dev" -ForegroundColor Cyan
 Write-Host "Building and running application..." -ForegroundColor Green
 Write-Host ""

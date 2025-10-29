@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'package:flutter/material.dart';
 import '../api_client.dart';
 import '../models/user_profile.dart';
@@ -17,7 +18,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final nameCtl = TextEditingController();
   String locale = 'en';
-  final locales = const ['en', 'si', 'ta'];
+  final supportedLocales = const ['en', 'si', 'ta'];
+  List<String> dropdownLocales = const ['en', 'si', 'ta'];
+
+  // Normalize locale string (e.g., "de_DE" -> "de-DE", handle null/empty)
+  String normalizeLocale(String? s) {
+    if (s == null || s.trim().isEmpty) return 'en';
+    return s.trim().replaceAll('_', '-');
+  }
+
+  // Ensure locale is valid - if not supported, either add to items or fallback to 'en'
+  void _applyLoadedUser(UserProfile u) {
+    final serverLocale = normalizeLocale(u.locale);
+    
+    // Option A: Include unsupported locale in dropdown (so user can see and change it)
+    dropdownLocales = LinkedHashSet<String>.from([serverLocale, ...supportedLocales]).toList();
+    
+    // Option B: Fallback to 'en' if not supported (uncomment to use):
+    // dropdownLocales = [...supportedLocales];
+    
+    // Set current locale: use server value if it's in dropdown, otherwise use 'en'
+    locale = dropdownLocales.contains(serverLocale) ? serverLocale : 'en';
+  }
 
   @override
   void initState() {
@@ -34,7 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final u = await api.me();
       me = u;
       nameCtl.text = u.displayName;
-      locale = u.locale.isNotEmpty ? u.locale : 'en';
+      _applyLoadedUser(u);
     } catch (e) {
       err = e.toString();
     } finally {
@@ -210,7 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 const SizedBox(height: 20),
                                 DropdownButtonFormField<String>(
-                                  initialValue: locale,
+                                  value: dropdownLocales.contains(locale) ? locale : null,
                                   decoration: InputDecoration(
                                     labelText: 'Locale',
                                     prefixIcon: const Icon(Icons.language),
@@ -218,7 +240,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  items: locales
+                                  hint: const Text('Select locale'),
+                                  items: dropdownLocales
                                       .map((l) => DropdownMenuItem(
                                           value: l, child: Text(l)))
                                       .toList(),

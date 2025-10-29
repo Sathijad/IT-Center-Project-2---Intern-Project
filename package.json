@@ -1,0 +1,10 @@
+{
+  "name": "itcenter-project-root",
+  "version": "1.0.0",
+  "description": "Root package.json for convenience scripts",
+  "scripts": {
+    "e2e": "cd admin-web && npm run e2e"
+  },
+  "private": true
+}
+

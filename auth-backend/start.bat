@@ -1,10 +1,8 @@
 @echo off
 REM This script sets up JAVA_HOME and starts the Spring Boot application
 
-REM Check if JAVA_HOME is set
-if "%JAVA_HOME%"=="" (
-    set JAVA_HOME=C:\Program Files\Java\jdk-21
-)
+REM Always set JAVA_HOME to correct path (overrides incorrect system variable)
+set JAVA_HOME=C:\Program Files\Java\jdk-21
 
 REM Check if JAVA_HOME\bin\java.exe exists
 if not exist "%JAVA_HOME%\bin\java.exe" (
