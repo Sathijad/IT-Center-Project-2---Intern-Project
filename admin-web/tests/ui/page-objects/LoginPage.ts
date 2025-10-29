@@ -1,5 +1,5 @@
 import { WebDriver, By, until } from 'selenium-webdriver';
-import { getBaseUrl } from '../helpers/test-base';
+import { getBaseUrl } from '../helpers/test-base.js';
 
 export class LoginPage {
   constructor(private driver: WebDriver) {}
@@ -26,9 +26,12 @@ export class LoginPage {
 
   async isDisplayed(): Promise<boolean> {
     try {
-      const signInButton = await this.driver.findElement(
-        By.xpath("//button[contains(text(), 'Sign in with Cognito')]")
+      // Wait for the button to be located and visible
+      const signInButton = await this.driver.wait(
+        until.elementLocated(By.xpath("//button[contains(text(), 'Sign in with Cognito')]")),
+        10000
       );
+      await this.driver.wait(until.elementIsVisible(signInButton), 5000);
       return await signInButton.isDisplayed();
     } catch {
       return false;

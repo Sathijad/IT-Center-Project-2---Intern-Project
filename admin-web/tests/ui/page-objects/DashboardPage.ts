@@ -1,5 +1,5 @@
 import { WebDriver, By, until } from 'selenium-webdriver';
-import { getBaseUrl } from '../helpers/test-base';
+import { getBaseUrl } from '../helpers/test-base.js';
 
 export class DashboardPage {
   constructor(private driver: WebDriver) {}

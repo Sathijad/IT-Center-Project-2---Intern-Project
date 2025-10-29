@@ -1,9 +1,9 @@
 import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
 import { WebDriver } from 'selenium-webdriver';
-import { createDriver, waitForPageLoad, getBaseUrl } from './helpers/test-base';
-import { DashboardPage } from './page-objects/DashboardPage';
-import { generateMockToken } from './helpers/test-data';
+import { createDriver, waitForPageLoad, getBaseUrl } from './helpers/test-base.js';
+import { DashboardPage } from './page-objects/DashboardPage.js';
+import { generateMockToken } from './helpers/test-data.js';
 
 describe('Accessibility Smoke Tests', () => {
   let driver: WebDriver;

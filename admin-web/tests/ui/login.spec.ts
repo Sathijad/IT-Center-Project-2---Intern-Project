@@ -62,7 +62,16 @@ describe('Login Flow', () => {
   });
 
   it('should display login page and allow clicking Sign In with Cognito', async () => {
+    // Clear any existing auth tokens first
+    await driver.executeScript(`
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('id_token');
+    `);
+    
     await loginPage.open();
+    
+    // Wait a bit for page to fully render
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     const isVisible = await loginPage.isDisplayed();
     expect(isVisible, 'Login page should be displayed').to.be.true;

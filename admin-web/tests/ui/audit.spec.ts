@@ -1,33 +1,25 @@
 import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
-import { WebDriver } from 'selenium-webdriver';
-import { createDriver, waitForPageLoad, getBaseUrl } from './helpers/test-base';
-import { AuditPage } from './page-objects/AuditPage';
-import { generateMockToken } from './helpers/test-data';
+import { WebDriver, By, until } from 'selenium-webdriver';
+import { createDriver, seedAuthToken, getBaseUrl, waitForElementVisible } from './helpers/test-base.js';
+import { AuditPage } from './page-objects/AuditPage.js';
 
-describe('Audit Log', () => {
+describe('Audit Log', function() {
+  this.timeout(120000); // 2 minutes timeout for entire suite
+  
   let driver: WebDriver;
   let auditPage: AuditPage;
+  const baseUrl = getBaseUrl();
 
   before(async () => {
     driver = await createDriver();
     auditPage = new AuditPage(driver);
     
-    // Set up authentication
-    const baseUrl = getBaseUrl();
-    await driver.get(baseUrl);
+    // Seed auth token BEFORE app loads (critical for AuthContext)
+    await seedAuthToken(driver, 'e2e-token');
     
-    // Set auth token
-    const token = generateMockToken();
-    await driver.executeScript(`
-      localStorage.setItem('access_token', '${token}');
-      localStorage.setItem('id_token', 'test-id-token');
-    `);
-    
-    // Reload to apply authentication
-    await driver.navigate().refresh();
-    await waitForPageLoad(driver);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Small delay to ensure token is set
+    await new Promise(resolve => setTimeout(resolve, 500));
   });
 
   after(async () => {
@@ -36,62 +28,69 @@ describe('Audit Log', () => {
     }
   });
 
-  it('should open audit log page and filter by user', async () => {
-    await auditPage.open();
+  it('should show audit log with role events', async () => {
+    await driver.get(`${baseUrl}/audit`);
     
-    const currentUrl = await driver.getCurrentUrl();
-    expect(currentUrl).to.include('/audit');
-  });
-
-  it('should display audit logs with role assignment/removal events', async () => {
-    await auditPage.open();
-    await auditPage.waitForAuditLogs();
+    // Wait for page header - strong explicit wait
+    try {
+      await waitForElementVisible(
+        driver,
+        By.xpath("//h1[contains(text(), 'Audit Log')]"),
+        30000
+      );
+    } catch (error) {
+      // Check if redirected to login (auth not satisfied)
+      const currentUrl = await driver.getCurrentUrl();
+      if (currentUrl.includes('/login')) {
+        throw new Error('Audit title not visible — redirected to login (auth not satisfied). Make sure json-server is running on port 5050 and VITE_API_BASE_URL=http://localhost:5050');
+      }
+      throw error;
+    }
     
-    // Get all event rows
-    const events = await auditPage.getAllEventRows();
+    // Wait for loading spinner to disappear
+    await driver.wait(async () => {
+      const spinners = await driver.findElements(By.css('.animate-spin'));
+      return spinners.length === 0;
+    }, 25000);
     
-    expect(events.length, 'Should have at least one audit log entry').to.be.greaterThan(0);
+    // Check if we got "No audit log entries found" message - this would indicate a data format issue
+    const emptyStateElements = await driver.findElements(By.xpath("//*[contains(text(), 'No audit log entries found')]"));
+    if (emptyStateElements.length > 0) {
+      const emptyState = emptyStateElements[0];
+      if (await emptyState.isDisplayed()) {
+        // Debug: log the page source to see what's happening
+        const pageSource = await driver.getPageSource();
+        console.error('Page shows "No audit log entries found". Page snippet:', pageSource.substring(0, 2000));
+        throw new Error('API returned data but component shows "No audit log entries found" - check response format');
+      }
+    }
     
-    // Check if there are any role-related events
-    const roleEvents = events.filter(e => 
-      e.eventType.includes('ROLE_ASSIGNED') || 
-      e.eventType.includes('ROLE_REMOVED') ||
-      e.eventType.includes('LOGIN_SUCCESS') ||
-      e.eventType.includes('LOGIN_FAILURE')
+    // Wait for the table to appear
+    await driver.wait(
+      until.elementLocated(By.css('table')),
+      20000
     );
     
-    console.log(`Found ${roleEvents.length} role-related events out of ${events.length} total events`);
+    // Wait a bit more for React Query to finish rendering
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Log some sample events for debugging
-    if (events.length > 0) {
-      events.slice(0, 3).forEach(event => {
-        console.log(`- ${event.eventType} by ${event.email}`);
-      });
-    }
+    // Assert table headers exist (Timestamp, User, Event, IP Address)
+    await waitForElementVisible(driver, By.xpath("//th[contains(.,'Timestamp')]"), 10000);
+    await waitForElementVisible(driver, By.xpath("//th[contains(.,'User')]"), 10000);
+    await waitForElementVisible(driver, By.xpath("//th[contains(.,'Event')]"), 10000);
+    await waitForElementVisible(driver, By.xpath("//th[contains(.,'IP')]"), 10000);
     
-    // If there are role events, verify they contain relevant information
-    if (roleEvents.length > 0) {
-      expect(roleEvents[0].eventType, 'Event type should not be empty').to.not.be.empty;
-    }
-  });
-
-  it('should have at least one ROLE_ASSIGNED or ROLE_REMOVED row', async () => {
-    await auditPage.open();
-    await auditPage.waitForAuditLogs();
+    console.log('✓ Audit log page loaded with correct headers');
     
-    const hasRoleEvents = await auditPage.hasRoleAssignedOrRemovedEvent();
+    // At least one ROLE_ASSIGNED or ROLE_REMOVED row - strong wait
+    const anyRoleEvent = await waitForElementVisible(
+      driver,
+      By.xpath("//*[contains(.,'ROLE_ASSIGNED') or contains(.,'ROLE_REMOVED')]"),
+      20000
+    );
+    expect(await anyRoleEvent.isDisplayed()).to.eq(true);
     
-    // Note: This test might pass or fail depending on your data
-    // It's ok to have no role events if none have been created yet
-    if (hasRoleEvents) {
-      console.log('Found role assignment/removal events');
-    } else {
-      console.log('No role assignment/removal events found - this is OK if none have been created yet');
-    }
-    
-    // Get the count of audit logs
-    const logCount = await auditPage.getAuditLogCount();
-    expect(logCount, 'Should have at least one audit log entry').to.be.greaterThan(0);
+    console.log('✓ Found role assignment/removal events');
   });
 });
 

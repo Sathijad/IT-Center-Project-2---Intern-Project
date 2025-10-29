@@ -1,5 +1,5 @@
 import { WebDriver, By, until, Key } from 'selenium-webdriver';
-import { getBaseUrl } from '../helpers/test-base';
+import { getBaseUrl } from '../helpers/test-base.js';
 
 export class UsersPage {
   constructor(private driver: WebDriver) {}
@@ -8,11 +8,48 @@ export class UsersPage {
     const baseUrl = getBaseUrl();
     await this.driver.get(`${baseUrl}/users`);
     
-    // Wait for the users page to load
-    await this.driver.wait(
-      until.elementLocated(By.xpath("//h1[contains(text(), 'Users')]")),
-      10000
-    );
+    // Wait for navigation to complete
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Check current URL to debug redirects
+    const currentUrl = await this.driver.getCurrentUrl();
+    console.log(`Current URL after navigation: ${currentUrl}`);
+    
+    // Check if we were redirected to login
+    if (currentUrl.includes('/login')) {
+      throw new Error('Redirected to login page - authentication may have failed');
+    }
+    
+    // Check if we see a 403 error
+    try {
+      const forbiddenMsg = await this.driver.findElement(By.xpath("//h1[contains(text(), '403')]"));
+      if (forbiddenMsg) {
+        throw new Error('Received 403 Forbidden - user may not have ADMIN role');
+      }
+    } catch {
+      // No 403 found, continue
+    }
+    
+    // Wait for the users page to load - try multiple possible indicators
+    try {
+      await this.driver.wait(
+        until.elementLocated(By.xpath("//h1[contains(text(), 'Users')]")),
+        15000
+      );
+    } catch {
+      // Try alternative: wait for search input as it's a reliable indicator
+      try {
+        await this.driver.wait(
+          until.elementLocated(By.xpath("//input[@placeholder='Search by email or name...']")),
+          15000
+        );
+      } catch (error) {
+        // If both fail, check if page is still loading
+        const pageSource = await this.driver.getPageSource();
+        console.log(`Page source snippet: ${pageSource.substring(0, 500)}`);
+        throw new Error(`Users page did not load. Current URL: ${currentUrl}. Error: ${error}`);
+      }
+    }
   }
 
   async searchByEmail(email: string): Promise<void> {
