@@ -50,6 +50,10 @@ docker-compose.override.yml
 test-results/
 coverage/
 
+# Network captures (exclude .gitkeep)
+captures/*.pcapng
+captures/*.pcap
+
 # Temporary files
 *.tmp
 *.temp

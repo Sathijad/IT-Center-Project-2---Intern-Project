@@ -1,0 +1,4 @@
+# This directory contains network capture files (.pcapng)
+# Created by the network-capture.js script during test execution
+# Add to .gitignore to avoid committing capture files
+

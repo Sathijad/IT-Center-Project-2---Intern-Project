@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Root package.json for convenience scripts",
   "scripts": {
-    "e2e": "cd admin-web && npm run e2e"
+    "e2e": "cd admin-web && npm run e2e",
+    "test:with-capture": "node scripts/network-capture.js",
+    "test:capture": "node scripts/network-capture.js --test-command \"cd admin-web && npm run ui:test\""
   },
   "private": true
 }

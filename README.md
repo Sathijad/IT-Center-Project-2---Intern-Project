@@ -205,6 +205,50 @@ $env:WEB_BASE_URL="http://localhost:5173"; npm run ui:test
 - Accessibility testing with axe-core
 - Pre-seeded auth tokens for CI/CD bypass
 
+### Network Monitoring (Wireshark/TShark)
+
+Capture and analyze network traffic during test execution.
+
+**Setup:**
+1. Install [Wireshark](https://www.wireshark.org/download.html)
+2. Verify installation: `tshark --version`
+3. List interfaces: `tshark -D`
+
+**Quick Start:**
+```powershell
+# Capture during E2E tests (automatic)
+npm run test:with-capture
+
+# Or with custom test command
+$env:TEST_COMMAND="cd mobile-app && flutter test"
+npm run test:with-capture
+
+# Manual capture
+tshark -i 1 -f "tcp port 8080" -w captures/api_traffic.pcapng
+```
+
+**Analyze Captures:**
+```powershell
+# Open capture file
+wireshark captures/api_capture_20250130_143022.pcapng
+
+# Apply filters:
+# - Authorization headers: http.request.line contains "Authorization"
+# - HTTP errors: http.response.code >= 400
+# - TLS traffic: tls
+```
+
+**Use Cases:**
+- ✅ Verify JWT authorization headers
+- ✅ Detect unencrypted traffic
+- ✅ Debug failed API calls
+- ✅ Analyze authentication flows
+- ✅ Security audit
+
+**Documentation:**
+- [Network Capture Guide](./docs/network-capture.md) - Complete setup and usage
+- [Wireshark Filters](./docs/WIRESHARK_FILTERS.md) - Display filter reference
+
 ## 📖 API Documentation
 
 OpenAPI spec: `/docs/openapi/auth.yaml`
