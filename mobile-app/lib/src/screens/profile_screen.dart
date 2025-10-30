@@ -220,6 +220,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 const SizedBox(height: 20),
                                 TextField(
+                                  key: const ValueKey('display_name_field'),
                                   controller: nameCtl,
                                   decoration: InputDecoration(
                                     labelText: 'Display Name',
@@ -255,6 +256,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         if (me?.roles != null && me!.roles.isNotEmpty) ...[
                           const SizedBox(height: 16),
                           Card(
+                            key: const ValueKey('roles_card'),
                             elevation: 2,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -276,6 +278,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       spacing: 8,
                                       children: me!.roles
                                           .map((role) => Chip(
+                                                key: ValueKey('role_chip_$role'),
                                                 label: Text(role),
                                                 backgroundColor: Colors.green[50],
                                                 labelStyle: TextStyle(
@@ -296,6 +299,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           children: [
                             Expanded(
                               child: FilledButton.icon(
+                                key: const ValueKey('profile_save_button'),
                                 onPressed: saving ? null : _save,
                                 icon: saving
                                     ? const SizedBox(

@@ -95,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       // Welcome Card
                       Card(
+                        key: const ValueKey('dashboard_welcome_card'),
                         elevation: 2,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -171,6 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Expanded(
                             child: _buildActionCard(
                               context,
+                              key: const ValueKey('profile_action_card'),
                               icon: Icons.person_outline,
                               title: 'Profile',
                               subtitle: 'View your profile',
@@ -209,6 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildActionCard(BuildContext context, {
+    Key? key,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -216,6 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required VoidCallback onTap,
   }) {
     return InkWell(
+      key: key,
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Card(
@@ -268,6 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ExpansionTile(
+        key: const ValueKey('roles_expansion_tile'),
         leading: const Icon(Icons.info_outline),
         title: const Text(
           'Account Information',

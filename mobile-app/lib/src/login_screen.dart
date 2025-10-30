@@ -113,6 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       FilledButton.icon(
+                        key: const ValueKey('sign_in_button'),
                         onPressed: busy ? null : _doSignIn,
                         icon: busy
                             ? const SizedBox(
