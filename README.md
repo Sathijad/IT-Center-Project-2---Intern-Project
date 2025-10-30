@@ -157,6 +157,28 @@ cd admin-web
 npm test
 ```
 
+### Accessibility (axe)
+
+```powershell
+# Install deps (if not done)
+cd admin-web
+npm install
+
+# Run component a11y tests (jest + jest-axe)
+npm run a11y:test
+```
+
+What the a11y suite does:
+- Runs jest-axe against key pages: `Login`, `Dashboard`, `Users`
+- Fails if axe detects violations in rendered markup (jsdom)
+- UI E2E smoke (`tests/ui/a11y.smoke.spec.ts`) injects `axe-core` in Selenium and asserts no serious/critical issues on real pages
+
+How to fix common axe issues:
+- Labels: ensure form controls have programmatic names; use `<label htmlFor>` or `aria-label`/`aria-labelledby`.
+- Color contrast: maintain WCAG AA contrast; adjust Tailwind classes or color tokens to meet ratios.
+- ARIA roles/props: prefer native HTML elements; when using ARIA, ensure valid roles and required properties are present.
+- Keyboard navigation: all interactive elements must be reachable/operable via keyboard; avoid `tabIndex={-1}` for actionable UI and ensure focus states are visible.
+
 ### Mobile Tests
 
 ```powershell
