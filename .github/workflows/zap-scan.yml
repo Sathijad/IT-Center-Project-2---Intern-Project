@@ -1,0 +1,115 @@
+name: zap-scan
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  zap-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: itcenter_auth
+          POSTGRES_USER: itcenter
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U itcenter -d itcenter_auth" \
+          --health-interval 5s \
+          --health-timeout 5s \
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install frontend deps
+        working-directory: admin-web
+        run: |
+          npm ci
+
+      - name: Build backend
+        working-directory: auth-backend
+        run: |
+          ./mvnw -q -DskipTests package
+
+      - name: Start backend (8080)
+        working-directory: auth-backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/itcenter_auth
+          SPRING_DATASOURCE_USERNAME: itcenter
+          SPRING_DATASOURCE_PASSWORD: password
+          SPRING_PROFILES_ACTIVE: dev
+        run: |
+          nohup ./mvnw -q -DskipTests spring-boot:run > ../backend.log 2>&1 &
+
+      - name: Start frontend (5173)
+        working-directory: admin-web
+        env:
+          NODE_ENV: development
+        run: |
+          nohup npm run dev -- --host --port 5173 > ../frontend.log 2>&1 &
+
+      - name: Wait for services
+        run: |
+          echo "Waiting for API on 8080 and Web on 5173..."
+          for i in {1..60}; do
+            API=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 || true)
+            WEB=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173 || true)
+            if [ "$API" != "000" ] && [ "$WEB" != "000" ]; then
+              echo "Services are up: API=$API WEB=$WEB"; break; fi; sleep 5; done
+
+      - name: Prepare report dirs
+        run: |
+          mkdir -p security-reports security
+
+      - name: Run ZAP scans via compose
+        working-directory: infra
+        run: |
+          docker compose -f docker-compose.security.yml up --abort-on-container-exit --exit-code-from zap-web zap zap-web zap-api || true
+
+      - name: Upload ZAP reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-reports
+          path: |
+            security-reports/*.html
+            security-reports/*.json
+            security-reports/*.xml
+
+      - name: Enforce severity gates (fail on High/Critical, warn on Medium)
+        if: always()
+        run: |
+          set -e
+          jq -r '.site[0].alerts[] | {risk: .riskcode|tonumber, name: .alert, url: .instances[0].uri} | @tsv' security-reports/web-baseline.json security-reports/api-baseline.json 2>/dev/null | awk 'BEGIN{high=0;crit=0;med=0} {if($1==3) high++; else if($1==4) crit++; else if($1==2) med++;} END{printf "HIGH=%d\nCRITICAL=%d\nMEDIUM=%d\n",high,crit,med}' > gate_counts.txt || echo "No JSON found"
+          cat gate_counts.txt || true
+          HIGH=$(grep -oE 'HIGH=[0-9]+' gate_counts.txt | cut -d= -f2 || echo 0)
+          CRIT=$(grep -oE 'CRITICAL=[0-9]+' gate_counts.txt | cut -d= -f2 || echo 0)
+          MED=$(grep -oE 'MEDIUM=[0-9]+' gate_counts.txt | cut -d= -f2 || echo 0)
+          if [ "$HIGH" -gt 0 ] || [ "$CRIT" -gt 0 ]; then
+            echo "Failing: High=$HIGH Critical=$CRIT"; exit 1; fi
+          if [ "$MED" -gt 0 ]; then echo "Warning: Medium findings=$MED"; fi
+
+      - name: Tear down ZAP compose
+        if: always()
+        working-directory: infra
+        run: docker compose -f docker-compose.security.yml down -v
+
+

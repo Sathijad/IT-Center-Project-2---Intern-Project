@@ -1,0 +1,12 @@
+# Suppress known dev-only issues
+
+# Mixed content on localhost during dev
+regex=Mixed\sContent
+
+# Insecure cookie in dev
+regex=Cookie\swithout\sSecure\sflag
+
+# Missing CSP in dev
+regex=Content\sSecurity\sPolicy\s(.*)\snot\sset
+
+
