@@ -1,0 +1,29 @@
+{
+  "name": "itcenter-mobile-appium-tests",
+  "version": "1.0.0",
+  "description": "Appium E2E tests for IT Center Flutter mobile app",
+  "scripts": {
+    "appium:start": "appium --base-path /wd/hub",
+    "mobile:test": "mocha -r ts-node/register tests/mobile/**/*.spec.ts --timeout 120000",
+    "mobile:test:login": "mocha -r ts-node/register tests/mobile/login.spec.ts --timeout 120000",
+    "mobile:test:profile": "mocha -r ts-node/register tests/mobile/profile.spec.ts --timeout 120000",
+    "mobile:test:roles": "mocha -r ts-node/register tests/mobile/roles.read.spec.ts --timeout 120000"
+  },
+  "dependencies": {
+    "@wdio/cli": "^8.35.0",
+    "webdriverio": "^8.35.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.5",
+    "app": "^0.1.0",
+    "appium": "^2.19.0",
+    "appium-flutter-driver": "^1.23.0",
+    "appium-uiautomator2-driver": "^2.29.8",
+    "chai": "^4.3.10",
+    "mocha": "^10.3.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
