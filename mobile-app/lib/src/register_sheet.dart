@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'auth_service.dart';
 
 class RegisterSheet extends StatefulWidget {
@@ -15,15 +16,35 @@ class _RegisterSheetState extends State<RegisterSheet> {
   String? err;
   bool busy = false;
 
+  @override
+  void dispose() {
+    email.dispose();
+    pw.dispose();
+    code.dispose();
+    super.dispose();
+  }
+
   Future<void> _signup() async {
     setState(() { busy = true; err = null; });
     try {
       await AuthService.instance.signUpEmail(email.text.trim(), pw.text);
-      phase = 'confirm';
+      if (mounted) setState(() { phase = 'confirm'; });
+    } on AuthException catch (e) {
+      String errorMessage = 'Registration failed';
+      if (e.message.contains('UsernameExistsException')) {
+        errorMessage = 'An account with this email already exists';
+      } else if (e.message.contains('InvalidPasswordException')) {
+        errorMessage = 'Password does not meet requirements';
+      } else if (e.message.contains('InvalidParameterException')) {
+        errorMessage = 'Invalid email format';
+      } else {
+        errorMessage = e.message;
+      }
+      setState(() => err = errorMessage);
     } catch (e) {
-      err = e.toString();
+      setState(() => err = 'Registration failed: ${e.toString()}');
     } finally {
-      setState(() => busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -31,11 +52,26 @@ class _RegisterSheetState extends State<RegisterSheet> {
     setState(() { busy = true; err = null; });
     try {
       await AuthService.instance.confirmSignUp(email.text.trim(), code.text.trim());
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration confirmed! Please sign in.')),
+        );
+      }
+    } on AuthException catch (e) {
+      String errorMessage = 'Confirmation failed';
+      if (e.message.contains('CodeMismatchException')) {
+        errorMessage = 'Invalid confirmation code';
+      } else if (e.message.contains('ExpiredCodeException')) {
+        errorMessage = 'Confirmation code has expired';
+      } else {
+        errorMessage = e.message;
+      }
+      setState(() => err = errorMessage);
     } catch (e) {
-      err = e.toString();
+      setState(() => err = 'Confirmation failed: ${e.toString()}');
     } finally {
-      setState(() => busy = false);
+      if (mounted) setState(() => busy = false);
     }
   }
 
