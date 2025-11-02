@@ -9,7 +9,10 @@ import {
   User as UserIcon, 
   LogOut, 
   Menu,
-  X
+  X,
+  Calendar,
+  Clock,
+  BarChart3
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -30,6 +33,13 @@ const Layout: React.FC = () => {
       { name: 'Users', href: '/users', icon: Users },
       { name: 'Audit Log', href: '/audit', icon: FileText },
     ] : []),
+    // Phase 2: Leave & Attendance
+    { name: 'Leave', href: '/leave', icon: Calendar },
+    ...(isAdmin ? [
+      { name: 'Leave Approvals', href: '/leave/approvals', icon: FileText },
+      { name: 'Leave Reports', href: '/reports/leave', icon: BarChart3 },
+    ] : []),
+    { name: 'Attendance', href: '/attendance', icon: Clock },
     { name: 'Profile', href: '/profile', icon: UserIcon },
   ]
 

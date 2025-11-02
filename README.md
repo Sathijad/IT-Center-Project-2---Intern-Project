@@ -5,11 +5,12 @@ Secure, role-based staff authentication system with AWS Cognito OIDC integration
 ## 🏗️ Project Structure
 
 ```
-/auth-backend   # Spring Boot (Java 21)
-/admin-web      # React (Vite + Tailwind)
-/mobile-app     # Flutter
-/infra          # Docker Compose, PostgreSQL, MailHog
-/docs           # OpenAPI, ERD, documentation
+/auth-backend        # Phase 1: Spring Boot (Java 21)
+/leave-attendance-api # Phase 2: Node.js (Express + TypeScript)
+/admin-web           # React (Vite + Tailwind) - Phase 1 & 2
+/mobile-app          # Flutter - Phase 1 & 2
+/infra               # Docker Compose, PostgreSQL, MailHog
+/docs                 # OpenAPI, ERD, documentation
 ```
 
 ## 🚀 Quick Start
@@ -69,6 +70,16 @@ $env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
 
 Backend runs on `http://localhost:8080`
 
+### Phase 2: Leave & Attendance API (Node.js)
+
+```powershell
+cd leave-attendance-api
+npm install
+npm run dev
+```
+
+Leave & Attendance API runs on `http://localhost:8082`
+
 ### Admin Web
 
 ```powershell
@@ -98,6 +109,7 @@ AWS_REGION: ap-southeast-2
 
 ## 📋 Features
 
+### Phase 1: Authentication & Role Management
 - ✅ AWS Cognito OIDC integration (Web + Mobile)
 - ✅ JWT validation with Spring Security
 - ✅ Role-based access control (ADMIN, EMPLOYEE)
@@ -106,6 +118,14 @@ AWS_REGION: ap-southeast-2
 - ✅ React Admin portal
 - ✅ Flutter mobile app
 - ✅ Docker Compose local dev stack
+
+### Phase 2: Leave & Attendance Management
+- ✅ Leave request application and approval workflow
+- ✅ Leave balance tracking and accrual
+- ✅ Attendance clock-in/out with duration tracking
+- ✅ Leave policies (Annual, Casual, Sick)
+- ✅ Admin leave approvals and reports
+- ✅ Role-based data access (EMPLOYEE: own, ADMIN: all)
 
 ## ⚠️ Important: AWS Cognito Configuration
 

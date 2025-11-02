@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'auth_service.dart';
 import 'api_base.dart';
 import 'screens/profile_screen.dart';
+import 'screens/leave_home_screen.dart';
+import 'screens/attendance_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -196,6 +198,47 @@ class _HomeScreenState extends State<HomeScreen> {
                               subtitle: 'Reload data',
                               color: Colors.green,
                               onTap: _loadUser,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Phase 2: Leave & Attendance Actions
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              icon: Icons.calendar_today,
+                              title: 'Leave',
+                              subtitle: 'Apply & view leave',
+                              color: Colors.purple,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LeaveHomeScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              icon: Icons.access_time,
+                              title: 'Attendance',
+                              subtitle: 'Clock in & out',
+                              color: Colors.orange,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const AttendanceScreen(),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ],
