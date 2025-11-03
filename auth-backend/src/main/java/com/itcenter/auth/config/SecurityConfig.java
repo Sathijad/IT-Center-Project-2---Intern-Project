@@ -53,8 +53,22 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        // Parse configured origins
+        java.util.List<String> configuredOrigins = Arrays.asList(allowedOrigins.split(","));
+        
+        // Create CORS configuration using allowedOriginPatterns which supports both exact matches and wildcards
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        
+        // Combine configured origins with localhost wildcard patterns
+        // allowedOriginPatterns supports both exact origins and wildcard patterns like "http://localhost:*"
+        java.util.List<String> originPatterns = new java.util.ArrayList<>(configuredOrigins);
+        
+        // For development: allow all localhost ports (Flutter web uses dynamic ports)
+        // The wildcard pattern "http://localhost:*" matches any port on localhost
+        originPatterns.add("http://localhost:*");
+        originPatterns.add("http://127.0.0.1:*");
+        
+        configuration.setAllowedOriginPatterns(originPatterns);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setExposedHeaders(Arrays.asList("X-Request-Id", "X-Correlation-Id"));
