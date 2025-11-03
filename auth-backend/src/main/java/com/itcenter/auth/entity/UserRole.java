@@ -11,7 +11,11 @@ import java.time.Instant;
 @EntityListeners(AuditingEntityListener.class)
 @Entity
 @Table(name = "user_roles",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"})
+    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"}),
+    indexes = {
+        @Index(name = "idx_user_roles_user", columnList = "user_id"),
+        @Index(name = "idx_user_roles_role", columnList = "role_id")
+    }
 )
 @Getter
 @Setter
@@ -33,7 +37,8 @@ public class UserRole {
     private Role role;
     
     @CreatedDate
-    @Column(name = "assigned_at", nullable = false, updatable = false)
+    @Column(name = "assigned_at", nullable = true, updatable = false, insertable = false)
+    @org.hibernate.annotations.ColumnDefault("CURRENT_TIMESTAMP")
     private Instant assignedAt;
     
     @CreatedBy

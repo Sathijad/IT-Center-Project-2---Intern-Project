@@ -14,7 +14,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Repository tests for RoleRepository with @DataJpaTest
  */
-@DataJpaTest
+@DataJpaTest(properties = {
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+    "spring.jpa.properties.hibernate.globally_quoted_identifiers=false",
+    "spring.flyway.enabled=false"
+})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class RoleRepositoryTest {
 

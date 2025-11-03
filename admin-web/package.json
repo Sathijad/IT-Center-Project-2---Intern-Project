@@ -8,11 +8,11 @@
     "preview": "vite preview",
     "test": "vitest",
     "a11y:test": "jest --runInBand --selectProjects a11y",
-    "ui:test": "mocha --require ts-node/register --recursive tests/ui/**/*.spec.ts --timeout 60000",
+    "ui:test": "cross-env NODE_OPTIONS=\"--loader ts-node/esm --no-warnings\" TS_NODE_PROJECT=tests/ui/tsconfig.json TS_NODE_TRANSPILE_ONLY=true mocha \"tests/ui/**/*.spec.ts\" --loader ts-node/esm --timeout 60000 --reporter allure-mocha",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "e2e:api": "node mock/server.js",
     "e2e:web": "cross-env VITE_API_BASE_URL=http://localhost:5050 vite --port 5173",
-    "e2e:test": "cross-env NODE_OPTIONS=\"--loader ts-node/esm\" TS_NODE_TRANSPILE_ONLY=true HEADFUL=false mocha \"tests/ui/**/*.spec.ts\" -r ts-node/esm --timeout 120000",
+    "e2e:test": "cross-env NODE_OPTIONS=\"--loader ts-node/esm\" TS_NODE_TRANSPILE_ONLY=true HEADFUL=false mocha \"tests/ui/**/*.spec.ts\" -r ts-node/esm --timeout 120000 --reporter allure-mocha",
     "e2e": "concurrently -k -s first \"npm run e2e:api\" \"npm run e2e:web\" \"npm run e2e:test\""
   },
   "dependencies": {
@@ -66,6 +66,7 @@
     "jsdom": "^27.0.1",
     "json-server": "^0.17.4",
     "mocha": "^10.2.0",
+    "allure-mocha": "^3.0.0",
     "msw": "^2.11.6",
     "postcss": "^8.4.32",
     "selenium-webdriver": "^4.16.0",

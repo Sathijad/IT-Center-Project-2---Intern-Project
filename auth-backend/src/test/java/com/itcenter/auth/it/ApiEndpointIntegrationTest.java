@@ -177,7 +177,8 @@ class ApiEndpointIntegrationTest {
         
         mockMvc.perform(patch("/api/v1/admin/users/{id}/roles", testUser.getId())
                         .with(SecurityMockMvcRequestPostProcessors.jwt()
-                                .jwt(j -> j.claim("email", adminUser.getEmail()))
+                                .jwt(j -> j.claim("sub", adminUser.getCognitoSub())
+                                        .claim("email", adminUser.getEmail()))
                                 .authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -195,7 +196,8 @@ class ApiEndpointIntegrationTest {
         
         mockMvc.perform(patch("/api/v1/admin/users/{id}/roles", testUser.getId())
                         .with(SecurityMockMvcRequestPostProcessors.jwt()
-                                .jwt(j -> j.claim("email", adminUser.getEmail()))
+                                .jwt(j -> j.claim("sub", adminUser.getCognitoSub())
+                                        .claim("email", adminUser.getEmail()))
                                 .authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -210,7 +212,8 @@ class ApiEndpointIntegrationTest {
         
         mockMvc.perform(patch("/api/v1/admin/users/{id}/roles", testUser.getId())
                         .with(SecurityMockMvcRequestPostProcessors.jwt()
-                                .jwt(j -> j.claim("email", adminUser.getEmail()))
+                                .jwt(j -> j.claim("sub", adminUser.getCognitoSub())
+                                        .claim("email", adminUser.getEmail()))
                                 .authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -224,7 +227,8 @@ class ApiEndpointIntegrationTest {
         
         mockMvc.perform(patch("/api/v1/admin/users/{id}/roles", 99999L)
                         .with(SecurityMockMvcRequestPostProcessors.jwt()
-                                .jwt(j -> j.claim("email", adminUser.getEmail()))
+                                .jwt(j -> j.claim("sub", adminUser.getCognitoSub())
+                                        .claim("email", adminUser.getEmail()))
                                 .authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -238,7 +242,8 @@ class ApiEndpointIntegrationTest {
         
         mockMvc.perform(patch("/api/v1/admin/users/{id}/roles", testUser.getId())
                         .with(SecurityMockMvcRequestPostProcessors.jwt()
-                                .jwt(j -> j.claim("email", adminUser.getEmail()))
+                                .jwt(j -> j.claim("sub", adminUser.getCognitoSub())
+                                        .claim("email", adminUser.getEmail()))
                                 .authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -280,7 +285,8 @@ class ApiEndpointIntegrationTest {
     void testListUsers_WithAdminRole_Returns200() throws Exception {
         mockMvc.perform(get("/api/v1/admin/users")
                         .with(SecurityMockMvcRequestPostProcessors.jwt()
-                                .jwt(j -> j.claim("email", adminUser.getEmail()))
+                                .jwt(j -> j.claim("sub", adminUser.getCognitoSub())
+                                        .claim("email", adminUser.getEmail()))
                                 .authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .queryParam("page", "0")
                         .queryParam("size", "20"))

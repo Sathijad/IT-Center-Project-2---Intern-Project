@@ -5,7 +5,18 @@
   "scripts": {
     "e2e": "cd admin-web && npm run e2e",
     "test:with-capture": "node scripts/network-capture.js",
-    "test:capture": "node scripts/network-capture.js --test-command \"cd admin-web && npm run ui:test\""
+    "test:capture": "node scripts/network-capture.js --test-command \"cd admin-web && npm run ui:test\"",
+    "test:backend": "cd auth-backend && mvn -q clean test",
+    "test:frontend": "cd admin-web && npm run ui:test",
+    "allure:clean": "rimraf all-results combined-report || true",
+    "allure:merge": "powershell -Command \"if (!(Test-Path all-results)) { New-Item -ItemType Directory all-results | Out-Null }; if (Test-Path auth-backend/target/allure-results) { Copy-Item auth-backend/target/allure-results/* all-results/ -Recurse -Force }; if (Test-Path admin-web/allure-results) { Copy-Item admin-web/allure-results/* all-results/ -Recurse -Force }\"",
+    "allure:report": "allure generate \"all-results\" --clean -o \"combined-report\"",
+    "allure:open": "allure open \"combined-report\"",
+    "report:both": "npm run test:backend && npm run test:frontend && npm run allure:clean && npm run allure:merge && npm run allure:report && npm run allure:open"
+  },
+  "devDependencies": {
+    "allure-commandline": "^2.27.0",
+    "rimraf": "^6.0.1"
   },
   "private": true
 }

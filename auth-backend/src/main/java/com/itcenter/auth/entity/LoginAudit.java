@@ -34,7 +34,7 @@ public class LoginAudit {
     @Column(name = "user_agent", length = 500)
     private String userAgent;
     
-    @Column(name = "metadata", columnDefinition = "jsonb", insertable = false, updatable = false)
+    @Column(name = "metadata", columnDefinition = "TEXT", insertable = false, updatable = false)
     @JdbcTypeCode(SqlTypes.JSON)
     private String metadata;
     

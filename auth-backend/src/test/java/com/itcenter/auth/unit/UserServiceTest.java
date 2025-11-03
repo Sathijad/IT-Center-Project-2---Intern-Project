@@ -74,7 +74,7 @@ class UserServiceTest {
         // Given
         List<AppUser> users = List.of(testUser);
         Page<AppUser> userPage = new PageImpl<>(users);
-        when(userRepository.findAll(any(Pageable.class))).thenReturn(userPage);
+        when(userRepository.findAllActive(any(Pageable.class))).thenReturn(userPage);
 
         // When
         Pageable pageable = mock(Pageable.class);
@@ -83,7 +83,7 @@ class UserServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
-        verify(userRepository, times(1)).findAll(any(Pageable.class));
+        verify(userRepository, times(1)).findAllActive(any(Pageable.class));
     }
 
     @Test

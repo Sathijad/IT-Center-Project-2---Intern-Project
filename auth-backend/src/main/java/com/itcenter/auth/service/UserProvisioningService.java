@@ -1,11 +1,11 @@
 package com.itcenter.auth.service;
 
 import com.itcenter.auth.entity.AppUser;
-import com.itcenter.auth.entity.Role;
 import com.itcenter.auth.repository.AppUserRepository;
 import com.itcenter.auth.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -83,6 +83,11 @@ public class UserProvisioningService {
         if (displayName == null || displayName.isBlank()) {
             displayName = finalEmail; // fallback to email
         }
+        
+        // Truncate display name to 50 characters (database column limit)
+        if (displayName != null && displayName.length() > 50) {
+            displayName = displayName.substring(0, 50);
+        }
 
         final String finalDisplayName = displayName;
 
@@ -148,11 +153,11 @@ public class UserProvisioningService {
             headers.setBearerAuth(accessToken);
             HttpEntity<?> entity = new HttpEntity<>(headers);
             
-            ResponseEntity<Map> response = restTemplate.exchange(
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 USERINFO_ENDPOINT,
                 HttpMethod.GET,
                 entity,
-                Map.class
+                new ParameterizedTypeReference<Map<String, Object>>() {}
             );
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {

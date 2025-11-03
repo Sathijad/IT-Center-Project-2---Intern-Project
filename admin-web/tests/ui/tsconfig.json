@@ -1,11 +1,17 @@
 {
   "extends": "../../tsconfig.test.json",
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "ESNext",
     "target": "ES2020",
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "strict": false
+    "strict": false,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
   }
 }
 

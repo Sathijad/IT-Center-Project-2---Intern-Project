@@ -140,18 +140,22 @@ public class UserService {
         
         AppUser currentUser = getCurrentUser();
         
-        // Normalize and validate role names
+        // Normalize and validate role names, then deduplicate
         List<String> newRoleNames = request.getRoles().stream()
             .filter(role -> role != null && !role.isBlank())
             .map(String::trim)
             .map(String::toUpperCase)
+            .distinct() // Remove duplicates after normalization
             .collect(Collectors.toList());
         
-        // Validate all roles exist and load as managed entities
-        List<Role> targetRoles = newRoleNames.stream()
-            .map(roleName -> roleRepository.findByName(roleName)
-                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName)))
-            .collect(Collectors.toList());
+        // Validate all roles exist and load as managed entities, using LinkedHashSet to deduplicate
+        java.util.Set<Role> targetRolesSet = new java.util.LinkedHashSet<>();
+        for (String roleName : newRoleNames) {
+            Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+            targetRolesSet.add(role); // Set will automatically deduplicate by object reference/equals
+        }
+        List<Role> targetRoles = new java.util.ArrayList<>(targetRolesSet);
         
         // Get current roles from the many-to-many relationship
         List<String> existingRoleNames = targetUser.getRoles().stream()

@@ -32,9 +32,26 @@ CREATE TABLE user_roles (
     user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
     role_id BIGINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     assigned_by BIGINT REFERENCES app_users(id),
-    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, role_id)
 );
+
+-- Trigger to automatically set assigned_at if NULL (handles @ManyToMany inserts that don't include this column)
+CREATE OR REPLACE FUNCTION set_assigned_at_if_null()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.assigned_at IS NULL THEN
+        NEW.assigned_at = CURRENT_TIMESTAMP;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_set_assigned_at
+    BEFORE INSERT ON user_roles
+    FOR EACH ROW
+    WHEN (NEW.assigned_at IS NULL)
+    EXECUTE FUNCTION set_assigned_at_if_null();
 
 -- Login audit table
 CREATE TABLE login_audit (
