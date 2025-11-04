@@ -13,6 +13,16 @@ const DEFAULT_CAPABILITIES: AppiumCapabilities = {
   'appium:deviceName': 'Android Emulator',
   'appium:app': './build/app/outputs/flutter-apk/app-debug.apk',
   'appium:automationName': 'Flutter',
+  // Hardened capabilities for stability
+  'appium:autoGrantPermissions': true,
+  'appium:noReset': true, // Don't wipe app data between test runs
+  'appium:newCommandTimeout': 300,
+  'appium:adbExecTimeout': 240000,
+  'appium:uiautomator2ServerInstallTimeout': 240000,
+  // Provide package/activity hints to prevent early app close
+  'appium:appPackage': 'com.example.itcenter_auth',
+  'appium:appWaitActivity': 'com.example.itcenter_auth.MainActivity',
+  'appium:appWaitForLaunch': true,
 };
 
 export async function createDriver(customCapabilities?: Partial<AppiumCapabilities>) {
@@ -195,5 +205,49 @@ export async function checkSnackbar(
     await new Promise(resolve => setTimeout(resolve, 500));
   }
   return false;
+}
+
+// --- Context switching helpers (Flutter <-> WEBVIEW) ---
+
+export async function waitForWebView(
+  driver: WebdriverIO.Browser,
+  timeout: number = 30000
+): Promise<string> {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    try {
+      const contexts: string[] = await (driver as any).getContexts();
+      const webview = contexts.find((c) => c.includes('WEBVIEW'));
+      if (webview) return webview;
+    } catch (_) {}
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error('WEBVIEW context not found');
+}
+
+export async function switchToWebView(driver: WebdriverIO.Browser): Promise<void> {
+  const webview = await waitForWebView(driver, 30000);
+  await (driver as any).switchContext(webview);
+}
+
+export async function switchToFlutter(driver: WebdriverIO.Browser): Promise<void> {
+  await (driver as any).switchContext('FLUTTER');
+}
+
+// Web helpers: find first existing element among selectors
+export async function findWebElementAny(
+  driver: WebdriverIO.Browser,
+  selectors: string[],
+  timeout: number = 15000
+): Promise<WebdriverIO.Element> {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    for (const sel of selectors) {
+      const el = await driver.$(sel);
+      if (await el.isExisting()) return el;
+    }
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  throw new Error(`None of the selectors existed within ${timeout}ms: ${selectors.join(', ')}`);
 }
 

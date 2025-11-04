@@ -266,6 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(height: 24),
                               TextFormField(
+                                key: const ValueKey('mfa_code'),
                                 controller: _codeController,
                                 keyboardType: TextInputType.number,
                                 textInputAction: TextInputAction.done,
@@ -320,6 +321,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               FilledButton.icon(
+                                key: const ValueKey('mfa_submit'),
                                 onPressed: busy ? null : _doConfirmCode,
                                 icon: busy
                                     ? const SizedBox(
@@ -356,6 +358,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               TextFormField(
+                                key: const ValueKey('login_email'),
                                 controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
                                 textInputAction: TextInputAction.next,
@@ -381,6 +384,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(height: 16),
                               TextFormField(
+                                key: const ValueKey('login_password'),
                                 controller: _passwordController,
                                 obscureText: _obscurePassword,
                                 textInputAction: TextInputAction.done,

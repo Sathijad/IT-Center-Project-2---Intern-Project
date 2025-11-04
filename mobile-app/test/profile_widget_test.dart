@@ -9,19 +9,25 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: Column(
-              children: [
-                TextField(
-                  onChanged: (value) {
-                    hasChanged = value.isNotEmpty && value != 'Original';
-                  },
-                  decoration: InputDecoration(labelText: 'Display Name'),
-                ),
-                ElevatedButton(
-                  onPressed: hasChanged ? () {} : null,
-                  child: Text('Save'),
-                ),
-              ],
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                return Column(
+                  children: [
+                    TextField(
+                      onChanged: (value) {
+                        setState(() {
+                          hasChanged = value.isNotEmpty && value != 'Original';
+                        });
+                      },
+                      decoration: InputDecoration(labelText: 'Display Name'),
+                    ),
+                    ElevatedButton(
+                      onPressed: hasChanged ? () {} : null,
+                      child: Text('Save'),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -41,25 +47,32 @@ void main() {
 
     testWidgets('Save button enabled after edit', (WidgetTester tester) async {
       bool saveCalled = false;
+      bool hasChanged = false;
       
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: Column(
-              children: [
-                TextField(
-                  onChanged: (value) {
-                    hasChanged = value.isNotEmpty;
-                  },
-                  decoration: InputDecoration(labelText: 'Display Name'),
-                ),
-                ElevatedButton(
-                  onPressed: hasChanged 
-                    ? () { saveCalled = true; }
-                    : null,
-                  child: Text('Save'),
-                ),
-              ],
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                return Column(
+                  children: [
+                    TextField(
+                      onChanged: (value) {
+                        setState(() {
+                          hasChanged = value.isNotEmpty;
+                        });
+                      },
+                      decoration: InputDecoration(labelText: 'Display Name'),
+                    ),
+                    ElevatedButton(
+                      onPressed: hasChanged 
+                        ? () { saveCalled = true; }
+                        : null,
+                      child: Text('Save'),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),

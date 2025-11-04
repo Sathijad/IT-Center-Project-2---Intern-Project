@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "types": ["node", "mocha"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./test/*"]
+    }
+  },
+  "include": [
+    "test/**/*.ts",
+    "wdio.conf.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
+

@@ -21,9 +21,20 @@ class AuthService {
   static final instance = AuthService._();
 
   bool _configured = false;
+  
+  // Check if we're in E2E test mode
+  static bool get isE2ETest => const bool.fromEnvironment('E2E_TEST', defaultValue: false);
 
   Future<void> init() async {
     if (_configured) return;
+    
+    // Skip Amplify init in E2E test mode to avoid crashes
+    if (isE2ETest) {
+      log('E2E_TEST mode: Skipping Amplify configuration');
+      _configured = true;
+      return;
+    }
+    
     try {
       await Amplify.addPlugin(AmplifyAuthCognito());
       await Amplify.configure(getAmplifyConfig());
@@ -32,7 +43,10 @@ class AuthService {
       _configured = true;
     } catch (e) {
       log('Amplify init failed: $e');
-      rethrow;
+      // In E2E mode, don't rethrow - just log and continue
+      if (!isE2ETest) {
+        rethrow;
+      }
     }
   }
 
