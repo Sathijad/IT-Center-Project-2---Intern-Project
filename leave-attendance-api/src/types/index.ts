@@ -7,7 +7,8 @@ export interface UserContext {
   isAdmin: boolean;
 }
 
-// Express request with user context
+// Express request with user context (for backward compatibility)
+// Note: The user property is now available on Express.Request via module augmentation
 export interface AuthenticatedRequest extends Express.Request {
   user?: UserContext;
 }
