@@ -1,7 +1,7 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { LeaveService } from '../services/leave.service';
-import { AuthenticatedRequest, CreateLeaveRequestDto, UpdateLeaveRequestDto } from '../types';
-import { sendErrorResponse, NotFoundError, ForbiddenError } from '../lib/errors';
+import { CreateLeaveRequestDto, UpdateLeaveRequestDto } from '../types';
+import { sendErrorResponse, NotFoundError, ForbiddenError, ValidationError, UnauthorizedError } from '../lib/errors';
 
 export class LeaveController {
   private service: LeaveService;
@@ -10,26 +10,40 @@ export class LeaveController {
     this.service = new LeaveService();
   }
 
-  async getBalance(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async getBalance(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
+      // Check if user is authenticated
+      if (!req.user || !req.user.userId) {
+        return sendErrorResponse(res, new UnauthorizedError('User not authenticated'));
+      }
+
       const userId = req.query.user_id 
         ? parseInt(req.query.user_id as string, 10)
-        : req.user!.userId;
+        : req.user.userId;
 
       // Admin can view any user's balance, EMPLOYEE only own
-      if (!req.user!.isAdmin && userId !== req.user!.userId) {
+      if (!req.user.isAdmin && userId !== req.user.userId) {
         return sendErrorResponse(res, new ForbiddenError('Cannot view another user\'s balance'));
       }
 
       const balances = await this.service.getLeaveBalance(userId);
       res.json({ data: balances });
     } catch (error) {
+      console.error('Error in getBalance:', error);
+      if (error instanceof Error) {
+        console.error('Error stack:', error.stack);
+      }
       sendErrorResponse(res, error as Error);
     }
   }
 
-  async getRequests(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async getRequests(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
+      // Check if user is authenticated
+      if (!req.user || !req.user.userId) {
+        return sendErrorResponse(res, new UnauthorizedError('User not authenticated'));
+      }
+
       const filters: {
         userId?: number;
         status?: string;
@@ -40,8 +54,8 @@ export class LeaveController {
       } = {};
 
       // EMPLOYEE can only see own requests unless admin
-      if (!req.user!.isAdmin) {
-        filters.userId = req.user!.userId;
+      if (!req.user.isAdmin) {
+        filters.userId = req.user.userId;
       } else if (req.query.user_id) {
         filters.userId = parseInt(req.query.user_id as string, 10);
       }
@@ -75,26 +89,74 @@ export class LeaveController {
         },
       });
     } catch (error) {
+      console.error('Error in getRequests:', error);
+      if (error instanceof Error) {
+        console.error('Error stack:', error.stack);
+      }
       sendErrorResponse(res, error as Error);
     }
   }
 
-  async createRequest(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async createRequest(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
+      // Check if user is authenticated
+      if (!req.user || !req.user.userId) {
+        return sendErrorResponse(res, new UnauthorizedError('User not authenticated'));
+      }
+
       const dto = req.body as CreateLeaveRequestDto;
-      const request = await this.service.createLeaveRequest(req.user!.userId, dto);
+
+      // Validate request body structure
+      if (!dto) {
+        return sendErrorResponse(res, new ValidationError('Request body is required'));
+      }
+
+      if (!dto.policyId) {
+        return sendErrorResponse(res, new ValidationError('policyId is required'));
+      }
+
+      if (!dto.startDate) {
+        return sendErrorResponse(res, new ValidationError('startDate is required'));
+      }
+
+      if (!dto.endDate) {
+        return sendErrorResponse(res, new ValidationError('endDate is required'));
+      }
+
+      // Validate halfDay value if provided
+      if (dto.halfDay && dto.halfDay !== 'AM' && dto.halfDay !== 'PM') {
+        return sendErrorResponse(res, new ValidationError('halfDay must be either "AM" or "PM"'));
+      }
+
+      // Validate policyId is a number
+      if (typeof dto.policyId !== 'number' || isNaN(dto.policyId)) {
+        return sendErrorResponse(res, new ValidationError('policyId must be a valid number'));
+      }
+
+      const request = await this.service.createLeaveRequest(req.user.userId, dto);
       res.status(201).json({ data: request });
     } catch (error) {
+      console.error('Error in createRequest:', error);
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
       sendErrorResponse(res, error as Error);
     }
   }
 
   async updateRequestStatus(
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
-    next: NextFunction
+    _next: NextFunction
   ): Promise<void> {
     try {
+      // Check if user is authenticated
+      if (!req.user || !req.user.userId) {
+        return sendErrorResponse(res, new UnauthorizedError('User not authenticated'));
+      }
+
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) {
         return sendErrorResponse(res, new NotFoundError('Invalid leave request ID'));
@@ -104,17 +166,26 @@ export class LeaveController {
       const updated = await this.service.updateLeaveRequestStatus(
         id,
         dto,
-        req.user!.userId,
-        req.user!.isAdmin
+        req.user.userId,
+        req.user.isAdmin
       );
       res.json({ data: updated });
     } catch (error) {
+      console.error('Error in updateRequestStatus:', error);
+      if (error instanceof Error) {
+        console.error('Error stack:', error.stack);
+      }
       sendErrorResponse(res, error as Error);
     }
   }
 
-  async cancelRequest(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async cancelRequest(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
+      // Check if user is authenticated
+      if (!req.user || !req.user.userId) {
+        return sendErrorResponse(res, new UnauthorizedError('User not authenticated'));
+      }
+
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) {
         return sendErrorResponse(res, new NotFoundError('Invalid leave request ID'));
@@ -122,11 +193,15 @@ export class LeaveController {
 
       const cancelled = await this.service.cancelLeaveRequest(
         id,
-        req.user!.userId,
-        req.user!.isAdmin
+        req.user.userId,
+        req.user.isAdmin
       );
       res.json({ data: cancelled });
     } catch (error) {
+      console.error('Error in cancelRequest:', error);
+      if (error instanceof Error) {
+        console.error('Error stack:', error.stack);
+      }
       sendErrorResponse(res, error as Error);
     }
   }

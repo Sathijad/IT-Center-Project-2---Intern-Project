@@ -1,0 +1,405 @@
+{
+	"info": {
+		"_postman_id": "leave-api-collection",
+		"name": "Leave API - Testing Collection",
+		"description": "Collection for testing all leave endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8082",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string",
+			"description": "Your JWT access token from Cognito"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Get Leave Balance",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/leave/balance",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"leave",
+						"balance"
+					]
+				},
+				"description": "Get leave balance for the authenticated user. Admins can optionally specify user_id query parameter."
+			},
+			"response": []
+		},
+		{
+			"name": "1.1 Get Leave Balance (Admin - Another User)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/leave/balance?user_id=2",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"leave",
+						"balance"
+					],
+					"query": [
+						{
+							"key": "user_id",
+							"value": "2",
+							"description": "User ID (Admin only)"
+						}
+					]
+				},
+				"description": "Admin can view another user's leave balance by specifying user_id"
+			},
+			"response": []
+		},
+		{
+			"name": "2. List Leave Requests",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/leave/requests",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"leave",
+						"requests"
+					]
+				},
+				"description": "List leave requests. Employees see only their own, Admins see all."
+			},
+			"response": []
+		},
+		{
+			"name": "2.1 List Leave Requests (With Filters)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/leave/requests?status=PENDING&from=2024-01-01&to=2024-12-31&page=1&size=10",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"leave",
+						"requests"
+					],
+					"query": [
+						{
+							"key": "status",
+							"value": "PENDING",
+							"description": "Filter by status: PENDING, APPROVED, REJECTED, CANCELLED"
+						},
+						{
+							"key": "from",
+							"value": "2024-01-01",
+							"description": "Start date (YYYY-MM-DD)"
+						},
+						{
+							"key": "to",
+							"value": "2024-12-31",
+							"description": "End date (YYYY-MM-DD)"
+						},
+						{
+							"key": "page",
+							"value": "1",
+							"description": "Page number"
+						},
+						{
+							"key": "size",
+							"value": "10",
+							"description": "Page size"
+						}
+					]
+				},
+				"description": "List leave requests with filters (status, date range, pagination)"
+			},
+			"response": []
+		},
+		{
+			"name": "3. Create Leave Request",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"policyId\": 1,\n  \"startDate\": \"2024-02-01\",\n  \"endDate\": \"2024-02-05\",\n  \"reason\": \"Family vacation\",\n  \"halfDay\": null\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/leave/requests",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"leave",
+						"requests"
+					]
+				},
+				"description": "Create a new leave request. Required: policyId, startDate, endDate. Optional: reason, halfDay (AM/PM)"
+			},
+			"response": []
+		},
+		{
+			"name": "3.1 Create Half-Day Leave Request (AM)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"policyId\": 1,\n  \"startDate\": \"2024-02-01\",\n  \"endDate\": \"2024-02-01\",\n  \"reason\": \"Doctor appointment\",\n  \"halfDay\": \"AM\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/leave/requests",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"leave",
+						"requests"
+					]
+				},
+				"description": "Create a half-day leave request for morning (AM)"
+			},
+			"response": []
+		},
+		{
+			"name": "3.2 Create Half-Day Leave Request (PM)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"policyId\": 1,\n  \"startDate\": \"2024-02-01\",\n  \"endDate\": \"2024-02-01\",\n  \"reason\": \"Personal errands\",\n  \"halfDay\": \"PM\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/leave/requests",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"leave",
+						"requests"
+					]
+				},
+				"description": "Create a half-day leave request for afternoon (PM)"
+			},
+			"response": []
+		},
+		{
+			"name": "4. Update Leave Request Status (Approve)",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"status\": \"APPROVED\",\n  \"comments\": \"Approved. Enjoy your vacation!\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/leave/requests/:id",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"leave",
+						"requests",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "1",
+							"description": "Leave request ID"
+						}
+					]
+				},
+				"description": "Approve a leave request (Admin only). Replace :id with actual request ID."
+			},
+			"response": []
+		},
+		{
+			"name": "4.1 Update Leave Request Status (Reject)",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"status\": \"REJECTED\",\n  \"comments\": \"Cannot approve due to project deadline.\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/leave/requests/:id",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"leave",
+						"requests",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "1",
+							"description": "Leave request ID"
+						}
+					]
+				},
+				"description": "Reject a leave request (Admin only). Replace :id with actual request ID."
+			},
+			"response": []
+		},
+		{
+			"name": "5. Cancel Leave Request",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/leave/requests/:id/cancel",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"leave",
+						"requests",
+						":id",
+						"cancel"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "1",
+							"description": "Leave request ID"
+						}
+					]
+				},
+				"description": "Cancel a leave request. Employees can cancel their own, Admins can cancel any. Replace :id with actual request ID."
+			},
+			"response": []
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/healthz",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"healthz"
+					]
+				},
+				"description": "Check if the server is running (no authentication required)"
+			},
+			"response": []
+		}
+	]
+}
+

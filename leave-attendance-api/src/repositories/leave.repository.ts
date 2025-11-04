@@ -49,8 +49,15 @@ export class LeaveRepository {
   }
 
   async findLeaveRequestsByUserId(userId: number): Promise<LeaveRequest[]> {
-    return query<LeaveRequest>(
-      'SELECT * FROM leave_requests WHERE user_id = $1 ORDER BY created_at DESC',
+    // Use COALESCE for safe balance retrieval
+    return query<LeaveRequest & { balance_days?: number }>(
+      `SELECT 
+        r.*,
+        COALESCE(b.balance_days, 0) AS balance_days
+       FROM leave_requests r
+       LEFT JOIN leave_balances b ON b.user_id = r.user_id AND b.policy_id = r.policy_id
+       WHERE r.user_id = $1 
+       ORDER BY r.created_at DESC`,
       [userId]
     );
   }
@@ -98,10 +105,17 @@ export class LeaveRepository {
     );
     const total = parseInt(countResult[0].count, 10);
 
-    // Get paginated data
+    // Get paginated data with COALESCE for safe balance retrieval
     params.push(size, offset);
-    const data = await query<LeaveRequest>(
-      `SELECT * FROM leave_requests ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
+    const data = await query<LeaveRequest & { balance_days?: number }>(
+      `SELECT 
+        r.*,
+        COALESCE(b.balance_days, 0) AS balance_days
+       FROM leave_requests r
+       LEFT JOIN leave_balances b ON b.user_id = r.user_id AND b.policy_id = r.policy_id
+       ${whereClause} 
+       ORDER BY r.created_at DESC 
+       LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
       params
     );
 
@@ -189,20 +203,40 @@ export class LeaveRepository {
     );
   }
 
+  // UPSERT balance - robust version that never inserts NULL and never goes negative
+  // Returns the new balance_days value
   async upsertBalance(
+    userId: number,
+    policyId: number,
+    deltaDays: number
+  ): Promise<number> {
+    const safeDeltaDays = Number.isFinite(deltaDays) ? deltaDays : 0;
+    
+    const result = await query<{ balance_days: number }>(
+      `INSERT INTO leave_balances (user_id, policy_id, balance_days)
+       VALUES ($1, $2, GREATEST(0, $3))
+       ON CONFLICT (user_id, policy_id)
+       DO UPDATE SET 
+         balance_days = GREATEST(0, COALESCE(leave_balances.balance_days, 0) + EXCLUDED.balance_days),
+         updated_at = CURRENT_TIMESTAMP
+       RETURNING balance_days`,
+      [userId, policyId, safeDeltaDays]
+    );
+    return Number(result[0]?.balance_days || 0);
+  }
+
+  // Legacy method for backward compatibility (uses upsertBalance internally)
+  async upsertBalanceLegacy(
     userId: number,
     policyId: number,
     balanceDays: number
   ): Promise<LeaveBalance> {
-    const result = await query<LeaveBalance>(
-      `INSERT INTO leave_balances (user_id, policy_id, balance_days, updated_at)
-       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
-       ON CONFLICT (user_id, policy_id)
-       DO UPDATE SET balance_days = $3, updated_at = CURRENT_TIMESTAMP
-       RETURNING *`,
-      [userId, policyId, balanceDays]
-    );
-    return result[0];
+    await this.upsertBalance(userId, policyId, balanceDays);
+    const balance = await this.findBalanceByUserAndPolicy(userId, policyId);
+    if (!balance) {
+      throw new Error('Failed to retrieve balance after upsert');
+    }
+    return balance;
   }
 
   async updateBalance(
@@ -210,12 +244,15 @@ export class LeaveRepository {
     policyId: number,
     deltaDays: number
   ): Promise<LeaveBalance | null> {
+    // Ensure deltaDays is a valid number
+    const safeDeltaDays = Number.isFinite(deltaDays) ? deltaDays : 0;
+    
     const result = await query<LeaveBalance>(
       `UPDATE leave_balances
-       SET balance_days = balance_days + $3, updated_at = CURRENT_TIMESTAMP
+       SET balance_days = GREATEST(0, COALESCE(balance_days, 0) + $3), updated_at = CURRENT_TIMESTAMP
        WHERE user_id = $1 AND policy_id = $2
        RETURNING *`,
-      [userId, policyId, deltaDays]
+      [userId, policyId, safeDeltaDays]
     );
     return result[0] || null;
   }
@@ -241,6 +278,72 @@ export class LeaveRepository {
       'SELECT * FROM leave_audit WHERE request_id = $1 ORDER BY created_at ASC',
       [requestId]
     );
+  }
+
+  // List policies with simplified structure for initialization
+  async listPoliciesForInit(): Promise<Array<{id: number; maxDays: number; accrualRate: number; accrualPeriod: string}>> {
+    const policies = await this.findAllPolicies();
+    return policies.map(p => ({
+      id: p.id,
+      maxDays: p.maxDays,
+      accrualRate: p.accrualRate,
+      accrualPeriod: p.accrualPeriod
+    }));
+  }
+
+  // Initialize balances for a new user
+  // This should be called when a user is created
+  async initializeUserBalances(userId: number, hireDate?: Date): Promise<LeaveBalance[]> {
+    const policies = await this.listPoliciesForInit();
+
+    // Use FULL allocation by default (set to false for prorated)
+    const full = true;
+
+    // Calculate months worked (for prorated allocation)
+    let months = 12;
+    if (!full && hireDate) {
+      const now = new Date();
+      const diffMs = now.getTime() - hireDate.getTime();
+      months = Math.max(0, Math.min(12, Math.floor(diffMs / (1000 * 60 * 60 * 24 * 30))));
+    } else if (!full) {
+      // Fall back to created_at if no hireDate
+      const userResult = await queryOne<{ created_at: string | Date }>(
+        'SELECT created_at FROM app_users WHERE id = $1',
+        [userId]
+      );
+      if (userResult?.created_at) {
+        const createdDate = new Date(userResult.created_at);
+        const now = new Date();
+        const diffMs = now.getTime() - createdDate.getTime();
+        months = Math.max(0, Math.min(12, Math.floor(diffMs / (1000 * 60 * 60 * 24 * 30))));
+      }
+    }
+
+    const balances: LeaveBalance[] = [];
+
+    // Initialize balance for each policy
+    for (const p of policies) {
+      // Calculate per month accrual rate
+      const perMonth = p.accrualRate > 0 
+        ? p.accrualRate 
+        : (p.maxDays / 12.0);
+      
+      // Calculate starting balance
+      const start = full 
+        ? p.maxDays 
+        : Math.round(Math.max(0, months * perMonth) * 100) / 100;
+
+      // Upsert the balance (delta approach)
+      await this.upsertBalance(userId, p.id, start);
+      
+      // Retrieve the created balance
+      const balance = await this.findBalanceByUserAndPolicy(userId, p.id);
+      if (balance) {
+        balances.push(balance);
+      }
+    }
+
+    return balances;
   }
 }
 

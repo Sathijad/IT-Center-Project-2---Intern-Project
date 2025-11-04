@@ -12,7 +12,8 @@
     "test:coverage": "jest --coverage",
     "test:api": "jest tests/api",
     "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix"
+    "lint:fix": "eslint src --ext .ts --fix",
+    "migrate:fix-balances": "node scripts/run-migration.js"
   },
   "keywords": [
     "leave",

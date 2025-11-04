@@ -7,7 +7,6 @@ import {
   ERROR_CODES,
 } from '../lib/errors';
 import { CreateLeaveRequestDto, UpdateLeaveRequestDto, LeaveRequest } from '../types';
-import { query } from '../lib/db';
 
 export class LeaveService {
   private repository: LeaveRepository;
@@ -56,8 +55,34 @@ export class LeaveService {
       });
     }
 
+    // Validate halfDay can only be used for single-day requests
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+    if (dto.halfDay && startDateStr !== endDateStr) {
+      throw new ValidationError('halfDay is only allowed for single-day leave requests (startDate must equal endDate)', {
+        code: ERROR_CODES.INVALID_DATE_RANGE,
+      });
+    }
+
+    // Validate required fields (policyId should be a positive number)
+    if (typeof dto.policyId !== 'number' || isNaN(dto.policyId) || dto.policyId <= 0) {
+      throw new ValidationError('policyId is required and must be a positive number');
+    }
+
     // Get policy
-    const policy = await this.repository.findPolicyById(dto.policyId);
+    let policy;
+    try {
+      policy = await this.repository.findPolicyById(dto.policyId);
+    } catch (error: unknown) {
+      // Handle database errors (e.g., connection issues, constraint violations)
+      const dbError = error as { code?: string; message?: string };
+      if (dbError.code === '23503') {
+        // Foreign key violation
+        throw new NotFoundError('Leave policy not found');
+      }
+      throw error; // Re-throw other errors
+    }
+
     if (!policy) {
       throw new NotFoundError('Leave policy not found');
     }
@@ -87,20 +112,40 @@ export class LeaveService {
     }
 
     // Calculate leave days
-    const leaveDays = this.calculateLeaveDays(startDate, endDate, dto.halfDay);
+    const leaveDays = this.calculateLeaveDays(startDate, endDate, dto.halfDay ?? null);
 
-    // Check balance
-    let balance = await this.repository.findBalanceByUserAndPolicy(userId, dto.policyId);
-    if (!balance) {
-      // Initialize balance (could be based on accrual, for now set to policy max)
-      await this.repository.upsertBalance(userId, dto.policyId, policy.maxDays);
+    // Check balance with COALESCE safety
+    let balance;
+    try {
       balance = await this.repository.findBalanceByUserAndPolicy(userId, dto.policyId);
       if (!balance) {
-        throw new Error('Failed to initialize leave balance');
+        // Initialize balance - use policy.maxDays or default to 0 if not available
+        const initialBalance = Number.isFinite(policy.maxDays) && policy.maxDays >= 0 
+          ? policy.maxDays 
+          : 0;
+        
+        await this.repository.upsertBalance(userId, dto.policyId, initialBalance);
+        balance = await this.repository.findBalanceByUserAndPolicy(userId, dto.policyId);
+        if (!balance) {
+          throw new Error('Failed to initialize leave balance');
+        }
       }
+    } catch (error: unknown) {
+      // Handle database errors
+      const dbError = error as { code?: string; message?: string };
+      if (dbError.code === '23503') {
+        throw new ValidationError('Invalid user or policy reference');
+      }
+      if (dbError.code === '23502') {
+        throw new ValidationError('Missing required field in leave balance (balance_days)');
+      }
+      throw error;
     }
 
-    const currentBalance = parseFloat(balance.balanceDays.toString());
+    // Use COALESCE to ensure we never get NULL
+    const currentBalance = Number.isFinite(balance.balanceDays) 
+      ? parseFloat(balance.balanceDays.toString()) 
+      : 0;
     if (currentBalance < leaveDays) {
       throw new ValidationError(
         `Insufficient leave balance. Available: ${currentBalance}, Requested: ${leaveDays}`,
@@ -109,22 +154,40 @@ export class LeaveService {
     }
 
     // Create request
-    const request = await this.repository.createLeaveRequest({
-      userId,
-      policyId: dto.policyId,
-      startDate,
-      endDate,
-      halfDay: dto.halfDay || null,
-      reason: dto.reason || null,
-    });
+    let request;
+    try {
+      request = await this.repository.createLeaveRequest({
+        userId,
+        policyId: dto.policyId,
+        startDate,
+        endDate,
+        halfDay: dto.halfDay ?? null,
+        reason: dto.reason ?? null,
+      });
+    } catch (error: unknown) {
+      // Handle database constraint violations
+      const dbError = error as { code?: string; message?: string };
+      if (dbError.code === '23503') {
+        throw new ValidationError('Invalid user or policy reference');
+      }
+      if (dbError.code === '23502') {
+        throw new ValidationError('Missing required field in leave request');
+      }
+      throw error;
+    }
 
-    // Create audit log
-    await this.repository.createAuditLog(
-      request.id,
-      'CREATED',
-      userId,
-      `Leave request created for ${leaveDays} day(s)`
-    );
+    // Create audit log (don't fail request creation if audit fails)
+    try {
+      await this.repository.createAuditLog(
+        request.id,
+        'CREATED',
+        userId,
+        `Leave request created for ${leaveDays} day(s)`
+      );
+    } catch (auditError) {
+      // Log but don't fail the request
+      console.error('Failed to create audit log:', auditError);
+    }
 
     return request;
   }
@@ -235,16 +298,99 @@ export class LeaveService {
     endDate: Date,
     halfDay: 'AM' | 'PM' | null
   ): number {
-    // Use database function or calculate in JS
+    // Calculate difference in days (inclusive of both start and end dates)
     const diffTime = endDate.getTime() - startDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
+    // Half-day is only valid for single-day requests (already validated above)
+    // This calculation should only be reached if halfDay is null or startDate === endDate
     if (halfDay) {
-      // Single day half-day = 0.5, multi-day with half-day = diffDays - 0.5
-      return diffDays === 1 ? 0.5 : diffDays - 0.5;
+      // Single day half-day = 0.5 days
+      return 0.5;
     }
 
     return diffDays;
+  }
+
+  // Initialize balances for a new user
+  // Call this when a user is created (from your user creation endpoint/service)
+  // Uses transaction for safety
+  async initializeUserBalances(userId: number, hireDate?: Date): Promise<unknown[]> {
+    const { pool } = await import('../lib/db');
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      // Get policies using direct query in transaction
+      const policiesResult = await client.query(
+        'SELECT id, max_days, accrual_rate, accrual_period FROM leave_policies ORDER BY id'
+      );
+      const policies = policiesResult.rows;
+
+      // Use FULL allocation by default (set to false for prorated)
+      const full = true;
+
+      // Calculate months worked (for prorated allocation)
+      let months = 12;
+      if (!full && hireDate) {
+        const now = new Date();
+        const diffMs = now.getTime() - hireDate.getTime();
+        months = Math.max(0, Math.min(12, Math.floor(diffMs / (1000 * 60 * 60 * 24 * 30))));
+      } else if (!full) {
+        // Fall back to created_at if no hireDate
+        const userResult = await client.query(
+          'SELECT created_at FROM app_users WHERE id = $1',
+          [userId]
+        );
+        if (userResult.rows[0]?.created_at) {
+          const createdDate = new Date(userResult.rows[0].created_at);
+          const now = new Date();
+          const diffMs = now.getTime() - createdDate.getTime();
+          months = Math.max(0, Math.min(12, Math.floor(diffMs / (1000 * 60 * 60 * 24 * 30))));
+        }
+      }
+
+      const results: unknown[] = [];
+
+      for (const p of policies) {
+        // Calculate per month accrual rate
+        const accrualRate = Number(p.accrual_rate) || 0;
+        const maxDays = Number(p.max_days) || 0;
+        const perMonth = accrualRate > 0 
+          ? accrualRate 
+          : (maxDays / 12.0);
+        
+        // Calculate starting balance
+        const start = full 
+          ? maxDays 
+          : Math.round(Math.max(0, months * perMonth) * 100) / 100;
+
+        // Upsert using direct SQL in transaction
+        const upsertResult = await client.query(
+          `INSERT INTO leave_balances (user_id, policy_id, balance_days)
+           VALUES ($1, $2, GREATEST(0, $3))
+           ON CONFLICT (user_id, policy_id)
+           DO UPDATE SET 
+             balance_days = GREATEST(0, COALESCE(leave_balances.balance_days, 0) + EXCLUDED.balance_days),
+             updated_at = CURRENT_TIMESTAMP
+           RETURNING balance_days`,
+          [userId, p.id, start]
+        );
+
+        results.push({
+          policyId: p.id,
+          balanceDays: Number(upsertResult.rows[0]?.balance_days || 0),
+        });
+      }
+
+      await client.query('COMMIT');
+      return results;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
 

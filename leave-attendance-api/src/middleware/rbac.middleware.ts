@@ -1,6 +1,6 @@
-import { Response, NextFunction } from 'express';
+import { Response, NextFunction, Request } from 'express';
 import { ForbiddenError, sendErrorResponse } from '../lib/errors';
-import { AuthenticatedRequest, UserContext } from '../types';
+import { AuthenticatedRequest } from '../types';
 
 export function requireRole(...allowedRoles: string[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
@@ -49,26 +49,21 @@ export function enforceOwnData(
     return;
   }
 
-  // For EMPLOYEE, check if user_id param matches their own ID
-  const requestedUserId = req.query.user_id 
-    ? parseInt(req.query.user_id as string, 10)
-    : req.body.user_id 
-    ? parseInt(req.body.user_id as string, 10)
-    : null;
-
-  // If no user_id specified, default to own data
-  if (!requestedUserId) {
-    // Will be handled by controller to use req.user.userId
-    next();
-    return;
+  // For EMPLOYEE, ignore any user_id param and let controller use req.user.userId
+  // This prevents 403 errors when frontend accidentally passes user_id
+  // The controller will override it with req.user.userId anyway
+  const expressReq = req as Request;
+  if (expressReq.query?.user_id) {
+    // Remove user_id from query for non-admins to prevent confusion
+    // Controller will use req.user.userId instead
+    delete expressReq.query.user_id;
+  }
+  if (expressReq.body?.user_id) {
+    // Remove user_id from body for non-admins
+    delete expressReq.body.user_id;
   }
 
-  // EMPLOYEE can only access their own data
-  if (requestedUserId !== req.user.userId) {
-    sendErrorResponse(res, new ForbiddenError('Access denied: can only view own data'));
-    return;
-  }
-
+  // Allow through - controller will enforce using req.user.userId
   next();
 }
 

@@ -63,7 +63,13 @@ export function sendErrorResponse(res: Response, error: ApiError | Error): void 
       timestamp: new Date().toISOString(),
     });
   } else {
+    // Log full error details for debugging
     console.error('Unexpected error:', error);
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     res.status(500).json({
       code: 'INTERNAL_ERROR',
       message: 'An unexpected error occurred',
