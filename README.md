@@ -1,15 +1,19 @@
-# IT Center Auth Project - Phase 1
+# IT Center Auth Project
 
 Secure, role-based staff authentication system with AWS Cognito OIDC integration.
+
+**Phase 1**: Authentication & User Management  
+**Phase 2**: Leave & Attendance Management (NEW)
 
 ## 🏗️ Project Structure
 
 ```
-/auth-backend   # Spring Boot (Java 21)
-/admin-web      # React (Vite + Tailwind)
-/mobile-app     # Flutter
-/infra          # Docker Compose, PostgreSQL, MailHog
-/docs           # OpenAPI, ERD, documentation
+/auth-backend          # Spring Boot (Java 21) - Phase 1 Auth
+/leave-attendance-backend  # Node.js Lambda - Phase 2 Leave/Attendance
+/admin-web             # React (Vite + Tailwind)
+/mobile-app            # Flutter
+/infra                 # Docker Compose, PostgreSQL, MailHog
+/docs                  # OpenAPI, ERD, documentation
 ```
 
 ## 🚀 Quick Start
@@ -98,6 +102,7 @@ AWS_REGION: ap-southeast-2
 
 ## 📋 Features
 
+### Phase 1 - Authentication
 - ✅ AWS Cognito OIDC integration (Web + Mobile)
 - ✅ JWT validation with Spring Security
 - ✅ Role-based access control (ADMIN, EMPLOYEE)
@@ -106,6 +111,16 @@ AWS_REGION: ap-southeast-2
 - ✅ React Admin portal
 - ✅ Flutter mobile app
 - ✅ Docker Compose local dev stack
+
+### Phase 2 - Leave & Attendance (NEW)
+- ✅ Leave request management (apply, approve, reject)
+- ✅ Leave balance tracking per policy
+- ✅ Attendance clock in/out with GPS location
+- ✅ Geofencing validation for attendance
+- ✅ Microsoft Graph calendar sync
+- ✅ Admin leave approval workflow
+- ✅ Attendance logs and reporting
+- ✅ Node.js Lambda backend (API Gateway)
 
 ## ⚠️ Important: AWS Cognito Configuration
 

@@ -1,0 +1,312 @@
+{
+  "info": {
+    "name": "Leave & Attendance API",
+    "description": "Postman collection for Phase 2 Leave & Attendance Management API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/healthz",
+          "host": ["{{base_url}}"],
+          "path": ["healthz"]
+        }
+      }
+    },
+    {
+      "name": "Leave",
+      "item": [
+        {
+          "name": "Get Leave Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/leave/balance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "leave", "balance"]
+            }
+          }
+        },
+        {
+          "name": "Get Leave Balance (Admin - Other User)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/leave/balance?user_id=2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "leave", "balance"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Leave Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/leave/requests?page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "leave", "requests"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Leave Requests (Filtered by Status)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/leave/requests?status=PENDING",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "leave", "requests"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Leave Request by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/leave/requests/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "leave", "requests", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Leave Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policy_id\": 1,\n  \"start_date\": \"2025-02-15\",\n  \"end_date\": \"2025-02-20\",\n  \"reason\": \"Vacation\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/leave/requests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "leave", "requests"]
+            }
+          }
+        },
+        {
+          "name": "Approve Leave Request (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"APPROVE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/leave/requests/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "leave", "requests", "1"]
+            }
+          }
+        },
+        {
+          "name": "Reject Leave Request (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"REJECT\",\n  \"notes\": \"Insufficient leave balance\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/leave/requests/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "leave", "requests", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attendance",
+      "item": [
+        {
+          "name": "Get Attendance Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/attendance?page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "attendance"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Clock In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": -37.8136,\n  \"longitude\": 144.9631,\n  \"accuracy\": 10.5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/attendance/clock-in",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "attendance", "clock-in"]
+            }
+          }
+        },
+        {
+          "name": "Clock Out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": -37.8136,\n  \"longitude\": 144.9631\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/attendance/clock-out",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "attendance", "clock-out"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Get Leave Summary Report (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/leave-summary?year=2025",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "leave-summary"],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2025"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Integrations",
+      "item": [
+        {
+          "name": "Queue Calendar Sync (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"request_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/msgraph/sync",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "integrations", "msgraph", "sync"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

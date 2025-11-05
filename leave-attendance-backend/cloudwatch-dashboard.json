@@ -1,0 +1,109 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          ["AWS/Lambda", "Invocations", {"stat": "Sum", "period": 300}],
+          [".", "Errors", {"stat": "Sum", "period": 300}],
+          [".", "Duration", {"stat": "Average", "period": 300}],
+          [".", "Duration", {"stat": "p95", "period": 300}],
+          [".", "Duration", {"stat": "p99", "period": 300}]
+        ],
+        "period": 300,
+        "stat": "Sum",
+        "region": "ap-southeast-2",
+        "title": "Lambda Function Metrics",
+        "view": "timeSeries"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          ["AWS/Lambda", "Invocations", {"stat": "Sum", "period": 60, "dimensions": {"FunctionName": "leave-attendance-dev-LeaveAttendanceFunction"}}],
+          [".", "Errors", {"stat": "Sum", "period": 60, "dimensions": {"FunctionName": "leave-attendance-dev-LeaveAttendanceFunction"}}],
+          [".", "Duration", {"stat": "Average", "period": 60, "dimensions": {"FunctionName": "leave-attendance-dev-LeaveAttendanceFunction"}}],
+          [".", "Duration", {"stat": "p95", "period": 60, "dimensions": {"FunctionName": "leave-attendance-dev-LeaveAttendanceFunction"}}]
+        ],
+        "period": 60,
+        "stat": "Sum",
+        "region": "ap-southeast-2",
+        "title": "Leave Attendance API - Request Rate & Latency",
+        "view": "timeSeries"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          ["AWS/Lambda", "Invocations", {"stat": "Sum", "period": 60, "dimensions": {"FunctionName": "leave-attendance-dev-CalendarSyncFunction"}}],
+          [".", "Errors", {"stat": "Sum", "period": 60, "dimensions": {"FunctionName": "leave-attendance-dev-CalendarSyncFunction"}}],
+          [".", "Duration", {"stat": "Average", "period": 60, "dimensions": {"FunctionName": "leave-attendance-dev-CalendarSyncFunction"}}]
+        ],
+        "period": 60,
+        "stat": "Sum",
+        "region": "ap-southeast-2",
+        "title": "Calendar Sync Function",
+        "view": "timeSeries"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          ["AWS/ApiGateway", "Count", {"stat": "Sum", "period": 60}],
+          [".", "4XXError", {"stat": "Sum", "period": 60}],
+          [".", "5XXError", {"stat": "Sum", "period": 60}],
+          [".", "Latency", {"stat": "Average", "period": 60}],
+          [".", "Latency", {"stat": "p95", "period": 60}]
+        ],
+        "period": 60,
+        "stat": "Sum",
+        "region": "ap-southeast-2",
+        "title": "API Gateway Metrics",
+        "view": "timeSeries"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          ["AWS/SQS", "NumberOfMessagesSent", {"stat": "Sum", "period": 300, "dimensions": {"QueueName": "leave-calendar-sync-dev"}}],
+          [".", "NumberOfMessagesReceived", {"stat": "Sum", "period": 300, "dimensions": {"QueueName": "leave-calendar-sync-dev"}}],
+          [".", "ApproximateNumberOfMessagesVisible", {"stat": "Average", "period": 300, "dimensions": {"QueueName": "leave-calendar-sync-dev"}}]
+        ],
+        "period": 300,
+        "stat": "Sum",
+        "region": "ap-southeast-2",
+        "title": "Calendar Sync Queue",
+        "view": "timeSeries"
+      }
+    },
+    {
+      "type": "log",
+      "properties": {
+        "query": "SOURCE '/aws/lambda/leave-attendance-dev-LeaveAttendanceFunction'\n| fields @timestamp, @message\n| filter @message like /ERROR/\n| sort @timestamp desc\n| limit 20",
+        "region": "ap-southeast-2",
+        "title": "Recent Errors",
+        "view": "table"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          ["AWS/XRay", "ErrorRate", {"stat": "Average", "period": 300}],
+          [".", "FaultRate", {"stat": "Average", "period": 300}],
+          [".", "ThrottleRate", {"stat": "Average", "period": 300}]
+        ],
+        "period": 300,
+        "stat": "Average",
+        "region": "ap-southeast-2",
+        "title": "X-Ray Service Map Metrics",
+        "view": "timeSeries"
+      }
+    }
+  ]
+}
+

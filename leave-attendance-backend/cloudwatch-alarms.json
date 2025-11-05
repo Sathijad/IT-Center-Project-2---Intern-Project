@@ -1,0 +1,77 @@
+{
+  "alarms": [
+    {
+      "AlarmName": "leave-attendance-high-error-rate",
+      "AlarmDescription": "Alert when error rate exceeds 1%",
+      "MetricName": "Errors",
+      "Namespace": "AWS/Lambda",
+      "Statistic": "Sum",
+      "Period": 300,
+      "EvaluationPeriods": 2,
+      "Threshold": 10,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "Dimensions": [
+        {
+          "Name": "FunctionName",
+          "Value": "leave-attendance-dev-LeaveAttendanceFunction"
+        }
+      ],
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "leave-attendance-high-latency",
+      "AlarmDescription": "Alert when p95 latency exceeds 300ms",
+      "MetricName": "Duration",
+      "Namespace": "AWS/Lambda",
+      "Statistic": "p95",
+      "Period": 300,
+      "EvaluationPeriods": 2,
+      "Threshold": 300,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "Dimensions": [
+        {
+          "Name": "FunctionName",
+          "Value": "leave-attendance-dev-LeaveAttendanceFunction"
+        }
+      ],
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "leave-attendance-throttles",
+      "AlarmDescription": "Alert when function is being throttled",
+      "MetricName": "Throttles",
+      "Namespace": "AWS/Lambda",
+      "Statistic": "Sum",
+      "Period": 300,
+      "EvaluationPeriods": 1,
+      "Threshold": 1,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "Dimensions": [
+        {
+          "Name": "FunctionName",
+          "Value": "leave-attendance-dev-LeaveAttendanceFunction"
+        }
+      ],
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "calendar-sync-queue-size",
+      "AlarmDescription": "Alert when calendar sync queue has too many messages",
+      "MetricName": "ApproximateNumberOfMessagesVisible",
+      "Namespace": "AWS/SQS",
+      "Statistic": "Average",
+      "Period": 300,
+      "EvaluationPeriods": 2,
+      "Threshold": 100,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "Dimensions": [
+        {
+          "Name": "QueueName",
+          "Value": "leave-calendar-sync-dev"
+        }
+      ],
+      "TreatMissingData": "notBreaching"
+    }
+  ]
+}
+

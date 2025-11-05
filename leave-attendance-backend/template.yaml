@@ -1,0 +1,178 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Leave and Attendance Management API - Lambda
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, stg, prd]
+  
+  DatabaseUrl:
+    Type: String
+    Description: PostgreSQL connection string
+    NoEcho: true
+  
+  CognitoIssuerUri:
+    Type: String
+    Default: https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_hTAYJId8y
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs20.x
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+        DATABASE_URL: !Ref DatabaseUrl
+        COGNITO_ISSUER_URI: !Ref CognitoIssuerUri
+        CORS_ORIGINS: !Sub '${CorsOrigins}'
+        GEO_VALIDATION_ENABLED: 'true'
+        OFFICE_LATITUDE: '0'
+        OFFICE_LONGITUDE: '0'
+        GEOFENCE_RADIUS_METERS: '1000'
+        AWS_REGION: ap-southeast-2
+    Tracing: Active
+    Layers:
+      - !Ref XRayLayer
+
+Resources:
+  # API Gateway
+  LeaveAttendanceApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'GET,POST,PATCH,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Trace-Id'"
+        AllowOrigin: !Sub "'${CorsOrigins}'"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: docs/openapi/leave-attendance.yaml
+
+  # Main API Lambda
+  LeaveAttendanceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/index.handler
+      CodeUri: ./
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref LeaveAttendanceApi
+            Path: /{proxy+}
+            Method: ANY
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SecretsManagerReadWrite
+        - VPCAccessExecutionRole:
+            SecurityGroupIds:
+              - !Ref LambdaSecurityGroup
+            SubnetIds: !Ref LambdaSubnetIds
+      Environment:
+        Variables:
+          CALENDAR_SYNC_QUEUE_URL: !GetAtt CalendarSyncQueue.QueueUrl
+
+  # Calendar Sync Lambda (SQS-triggered)
+  CalendarSyncFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/integrations/msgraph/handler.handler
+      CodeUri: ./
+      Events:
+        CalendarSyncQueue:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt CalendarSyncQueue.Arn
+            BatchSize: 10
+      Environment:
+        Variables:
+          MSGRAPH_TENANT_ID: !Ref MSGraphTenantId
+          MSGRAPH_CLIENT_ID: !Ref MSGraphClientId
+          MSGRAPH_CLIENT_SECRET: !Ref MSGraphClientSecret
+          DATABASE_URL: !Ref DatabaseUrl
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SecretsManagerReadWrite
+
+  # SQS Queue for Calendar Sync
+  CalendarSyncQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub 'leave-calendar-sync-${Environment}'
+      MessageRetentionPeriod: 1209600  # 14 days
+      VisibilityTimeout: 60
+
+  # X-Ray Layer
+  XRayLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: !Sub 'xray-nodejs-${Environment}'
+      Content:
+        S3Bucket: !Ref XRayLayerBucket
+        S3Key: !Ref XRayLayerKey
+      CompatibleRuntimes:
+        - nodejs20.x
+
+  # CloudWatch Log Groups
+  LeaveAttendanceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/leave-attendance-${Environment}'
+      RetentionInDays: 30
+
+  CalendarSyncLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/calendar-sync-${Environment}'
+      RetentionInDays: 30
+
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: '*'
+        - PolicyName: SQSAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                Resource: !GetAtt CalendarSyncQueue.Arn
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${LeaveAttendanceApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+  
+  CalendarSyncQueueUrl:
+    Description: SQS Queue URL for calendar sync
+    Value: !GetAtt CalendarSyncQueue.QueueUrl
+

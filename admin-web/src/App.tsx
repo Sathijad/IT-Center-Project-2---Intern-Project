@@ -9,6 +9,9 @@ import Users from './pages/Users'
 import UserDetail from './pages/UserDetail'
 import AuditLog from './pages/AuditLog'
 import Profile from './pages/Profile'
+import LeaveRequestPage from './pages/LeaveRequestPage'
+import ApplyLeavePage from './pages/ApplyLeavePage'
+import AttendancePage from './pages/AttendancePage'
 import Layout from './components/Layout'
 
 const queryClient = new QueryClient({
@@ -55,6 +58,25 @@ function App() {
                 }
               />
               <Route path="profile" element={<Profile />} />
+              <Route
+                path="admin/leave"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <LeaveRequestPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/attendance"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <AttendancePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="leave" element={<ApplyLeavePage />} />
+              <Route path="leave/history" element={<LeaveRequestPage />} />
+              <Route path="attendance" element={<AttendancePage />} />
             </Route>
           </Routes>
         </AuthProvider>

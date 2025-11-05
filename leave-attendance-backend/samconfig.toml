@@ -1,0 +1,38 @@
+version = 0.1
+
+[dev]
+[dev.deploy.parameters]
+stack_name = "leave-attendance-dev"
+s3_bucket = "leave-attendance-sam-deployments-dev"
+s3_prefix = "leave-attendance"
+region = "ap-southeast-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = [
+    "Environment=dev",
+    "DatabaseUrl=postgresql://itcenter:password@localhost:5432/itcenter_auth",
+    "CognitoIssuerUri=https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_hTAYJId8y"
+]
+image_repositories = []
+
+[stg]
+[stg.deploy.parameters]
+stack_name = "leave-attendance-stg"
+s3_bucket = "leave-attendance-sam-deployments-stg"
+s3_prefix = "leave-attendance"
+region = "ap-southeast-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = [
+    "Environment=stg"
+]
+
+[prd]
+[prd.deploy.parameters]
+stack_name = "leave-attendance-prd"
+s3_bucket = "leave-attendance-sam-deployments-prd"
+s3_prefix = "leave-attendance"
+region = "ap-southeast-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = [
+    "Environment=prd"
+]
+

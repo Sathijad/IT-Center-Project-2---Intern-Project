@@ -1,0 +1,712 @@
+openapi: 3.0.3
+info:
+  title: IT Center Leave & Attendance API
+  version: 2.0.0
+  description: |
+    Staff leave and attendance management API with AWS Cognito OIDC integration.
+    
+    **Authentication**: JWT tokens from AWS Cognito
+    **Authorization**: Role-based access control (ADMIN, EMPLOYEE)
+    **Deployment**: AWS Lambda via API Gateway
+
+servers:
+  - url: http://localhost:3000
+    description: Local development (Lambda local)
+  - url: https://api-dev.itcenter.com/v2
+    description: Development environment
+  - url: https://api.itcenter.com/v2
+    description: Production environment
+
+paths:
+  /healthz:
+    get:
+      summary: Health check endpoint
+      operationId: healthCheck
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: UP
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/v1/leave/balance:
+    get:
+      summary: Get leave balances for user
+      operationId: getLeaveBalance
+      tags:
+        - Leave
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          description: User ID (ADMIN only, defaults to current user)
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Leave balances retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+                  balances:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaveBalance'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/leave/requests:
+    get:
+      summary: List leave requests
+      operationId: listLeaveRequests
+      tags:
+        - Leave
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          description: Filter by user ID (ADMIN only)
+          schema:
+            type: integer
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [PENDING, APPROVED, REJECTED, CANCELLED]
+        - name: start_date
+          in: query
+          description: Filter by start date (ISO 8601)
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          description: Filter by end date (ISO 8601)
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sort field and direction (e.g., created_at,desc)
+          schema:
+            type: string
+            default: created_at,desc
+      responses:
+        '200':
+          description: Paginated list of leave requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaveRequest'
+                  totalElements:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  page:
+                    type: integer
+                  size:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      summary: Create new leave request
+      operationId: createLeaveRequest
+      tags:
+        - Leave
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLeaveRequest'
+      responses:
+        '201':
+          description: Leave request created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '409':
+          description: Conflict - overlapping leave request exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/leave/requests/{id}:
+    get:
+      summary: Get leave request by ID
+      operationId: getLeaveRequest
+      tags:
+        - Leave
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Leave request details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+
+    patch:
+      summary: Update leave request status (Approve/Reject/Cancel)
+      operationId: updateLeaveRequest
+      tags:
+        - Leave
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLeaveRequest'
+      responses:
+        '200':
+          description: Leave request updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/attendance:
+    get:
+      summary: Get attendance logs
+      operationId: getAttendanceLogs
+      tags:
+        - Attendance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          description: Filter by user ID (ADMIN only)
+          schema:
+            type: integer
+        - name: start_date
+          in: query
+          description: Filter by start date (ISO 8601)
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          description: Filter by end date (ISO 8601)
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: clock_in,desc
+      responses:
+        '200':
+          description: Paginated attendance logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AttendanceLog'
+                  totalElements:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  page:
+                    type: integer
+                  size:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/attendance/clock-in:
+    post:
+      summary: Record clock-in event
+      operationId: clockIn
+      tags:
+        - Attendance
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClockInRequest'
+      responses:
+        '201':
+          description: Clock-in recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceLog'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '409':
+          description: Conflict - active clock-in already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/attendance/clock-out:
+    post:
+      summary: Record clock-out event and calculate duration
+      operationId: clockOut
+      tags:
+        - Attendance
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClockOutRequest'
+      responses:
+        '200':
+          description: Clock-out recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendanceLog'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          description: No active clock-in found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/integrations/msgraph/sync:
+    post:
+      summary: Queue calendar sync for approved leave (ADMIN only)
+      operationId: queueCalendarSync
+      tags:
+        - Integrations
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                request_id:
+                  type: integer
+                  format: int64
+              required:
+                - request_id
+      responses:
+        '202':
+          description: Calendar sync queued successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  request_id:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/reports/leave-summary:
+    get:
+      summary: Generate HR leave summary report (ADMIN only)
+      operationId: getLeaveSummaryReport
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          description: Report year
+          schema:
+            type: integer
+            default: 2025
+        - name: user_id
+          in: query
+          description: Filter by user ID (optional)
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Leave summary report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveSummaryReport'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LeavePolicy:
+      type: object
+      properties:
+        policy_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          example: Annual Leave
+        description:
+          type: string
+        annual_limit:
+          type: integer
+          example: 14
+        carry_forward:
+          type: integer
+          example: 3
+        is_active:
+          type: boolean
+
+    LeaveBalance:
+      type: object
+      properties:
+        balance_id:
+          type: integer
+          format: int64
+        policy_id:
+          type: integer
+        policy_name:
+          type: string
+        balance_days:
+          type: number
+          format: float
+          example: 12.5
+        year:
+          type: integer
+          example: 2025
+
+    LeaveRequest:
+      type: object
+      properties:
+        request_id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+        user_name:
+          type: string
+        user_email:
+          type: string
+        policy_id:
+          type: integer
+        policy_name:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, CANCELLED]
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        days:
+          type: integer
+          description: Calculated number of days
+        reason:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateLeaveRequest:
+      type: object
+      required:
+        - policy_id
+        - start_date
+        - end_date
+      properties:
+        policy_id:
+          type: integer
+          format: int64
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        reason:
+          type: string
+          maxLength: 1000
+
+    UpdateLeaveRequest:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum: [APPROVE, REJECT, CANCEL]
+        notes:
+          type: string
+          maxLength: 500
+
+    AttendanceLog:
+      type: object
+      properties:
+        log_id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+        user_name:
+          type: string
+        clock_in:
+          type: string
+          format: date-time
+        clock_out:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+        geo_location:
+          type: object
+          properties:
+            latitude:
+              type: number
+              format: float
+            longitude:
+              type: number
+              format: float
+            accuracy:
+              type: number
+              format: float
+        created_at:
+          type: string
+          format: date-time
+
+    ClockInRequest:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+        accuracy:
+          type: number
+          format: float
+          description: GPS accuracy in meters
+
+    ClockOutRequest:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: float
+        longitude:
+          type: number
+          format: float
+
+    LeaveSummaryReport:
+      type: object
+      properties:
+        year:
+          type: integer
+        total_users:
+          type: integer
+        summary:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id:
+                type: integer
+              user_name:
+                type: string
+              user_email:
+                type: string
+              policies:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    policy_name:
+                      type: string
+                    total_days:
+                      type: number
+                    used_days:
+                      type: number
+                    remaining_days:
+                      type: number
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Invalid request parameters
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+        traceId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    Unauthenticated:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
