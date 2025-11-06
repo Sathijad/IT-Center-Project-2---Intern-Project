@@ -7,7 +7,16 @@ export class LeaveService {
   }
 
   async getLeaveBalance(userId, year = new Date().getFullYear()) {
-    const balances = await this.leaveRepo.getLeaveBalance(userId, year);
+    // First, get current balances to check if they exist
+    let balances = await this.leaveRepo.getLeaveBalance(userId, year);
+    
+    // If no balances exist, initialize them for all active policies
+    if (!balances || balances.length === 0) {
+      await this.initializeLeaveBalances(userId, year);
+      // Fetch balances again after initialization
+      balances = await this.leaveRepo.getLeaveBalance(userId, year);
+    }
+    
     return {
       user_id: userId,
       balances: balances.map(b => ({
@@ -18,6 +27,16 @@ export class LeaveService {
         year: b.year
       }))
     };
+  }
+
+  async initializeLeaveBalances(userId, year) {
+    // Get all active leave policies
+    const policies = await this.leaveRepo.getLeavePolicies();
+    
+    // Initialize balance for each policy if it doesn't exist
+    for (const policy of policies) {
+      await this.leaveRepo.initializeLeaveBalance(userId, policy.policy_id, policy.annual_limit, year);
+    }
   }
 
   async getLeaveRequests(filters) {

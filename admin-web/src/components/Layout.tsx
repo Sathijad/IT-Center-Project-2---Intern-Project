@@ -45,10 +45,9 @@ const Layout: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Desktop header with logout */}
       <header className="hidden lg:block fixed top-0 left-64 right-0 h-16 bg-white border-b border-gray-200 z-40">
-        <div className="flex items-center justify-between px-6 h-full">
-          <div className="flex-1"></div>
+        <div className="flex items-center justify-end px-6 h-full">
           <div className="flex items-center space-x-4">
-            {user && (
+            {/* {user && (
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                   {user?.email?.[0]?.toUpperCase() || 'U'}
@@ -60,7 +59,7 @@ const Layout: React.FC = () => {
                   <p className="text-xs text-gray-500">{user?.email || ''}</p>
                 </div>
               </div>
-            )}
+            )} */}
             <button
               onClick={handleLogout}
               className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium"
@@ -93,15 +92,21 @@ const Layout: React.FC = () => {
             ))}
           </nav>
 
-          {/* Sidebar footer - removed user info (now in header), keeping logout as backup */}
+          {/* Sidebar footer - empty now, user info and logout moved to header */}
           <div className="p-6 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center space-x-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
+            {user && (
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  {user?.email?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user?.displayName || user?.email || 'User'}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </aside>
@@ -110,21 +115,12 @@ const Layout: React.FC = () => {
       <header className="lg:hidden bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-xl font-bold text-gray-900">IT Center</h1>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleLogout}
-              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-              title="Logout"
-            >
-              <LogOut className="w-6 h-6" />
-            </button>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
 
         {mobileMenuOpen && (

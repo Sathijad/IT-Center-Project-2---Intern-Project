@@ -6,6 +6,19 @@ import { LeaveService } from '../services/leaveService.js';
 export const leaveRouter = express.Router();
 const leaveService = new LeaveService();
 
+// Get leave policies
+leaveRouter.get('/policies',
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const policies = await leaveService.getLeavePolicies();
+      res.json(policies);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // Get leave balance
 leaveRouter.get('/balance',
   authenticate,
@@ -46,10 +59,17 @@ leaveRouter.get('/requests',
         });
       }
 
+      // For admins: if user_id is provided, filter by that user; otherwise show all requests
+      // For regular users: always filter by their own userId
+      let userId;
+      if (req.user.roles?.includes('ADMIN')) {
+        userId = req.query.user_id ? parseInt(req.query.user_id) : undefined;
+      } else {
+        userId = req.user.userId;
+      }
+
       const filters = {
-        userId: req.query.user_id && req.user.roles?.includes('ADMIN')
-          ? parseInt(req.query.user_id)
-          : req.user.userId,
+        userId: userId,
         status: req.query.status,
         startDate: req.query.start_date,
         endDate: req.query.end_date,

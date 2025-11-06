@@ -1,8 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../services/api_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../src/auth_service.dart';
+
+class LeaveApiBase {
+  static String get base {
+    if (kIsWeb) {
+      return 'http://localhost:3000';  // Flutter Web dev
+    }
+    
+    // For Android emulator: use 10.0.2.2 to access host machine
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:3000';
+    }
+    
+    // For iOS simulator, Windows, Linux, macOS: use localhost
+    return 'http://localhost:3000';
+  }
+}
 
 class ClockInOutScreen extends StatefulWidget {
   const ClockInOutScreen({super.key});
@@ -25,34 +43,52 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
 
   Future<void> _checkActiveClockIn() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final apiService = ApiService(authProvider);
-      // Check if there's an active clock-in by getting recent logs
-      // This would be implemented in the API service
-      setState(() {
-        _hasActiveClockIn = false; // Placeholder
-      });
+      final token = await AuthService.instance.getAccessToken();
+      if (token == null || token.isEmpty) {
+        return;
+      }
+
+      // Get recent attendance logs to check for active clock-in
+      final res = await http.get(
+        Uri.parse('${LeaveApiBase.base}/api/v1/attendance?page=0&size=1&sort=clock_in,desc'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        final logs = data['content'] as List;
+        if (logs.isNotEmpty) {
+          final lastLog = logs[0];
+          // Check if there's a clock-in without a clock-out
+          setState(() {
+            _hasActiveClockIn = lastLog['clock_out'] == null;
+          });
+        }
+      }
     } catch (e) {
-      // Handle error
+      // Error checking, assume no active clock-in
     }
   }
 
   Future<Position> _getCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      throw Exception('Location services are disabled');
+      throw Exception('Location services are disabled. Please enable location services.');
     }
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        throw Exception('Location permissions are denied');
+        throw Exception('Location permissions are denied. Please grant location permissions.');
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      throw Exception('Location permissions are permanently denied');
+      throw Exception('Location permissions are permanently denied. Please enable them in settings.');
     }
 
     return await Geolocator.getCurrentPosition(
@@ -70,32 +106,48 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
       final position = await _getCurrentLocation();
       setState(() => _currentPosition = position);
 
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final apiService = ApiService(authProvider);
+      final token = await AuthService.instance.getAccessToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('Not authenticated');
+      }
 
-      await apiService.clockIn({
+      final requestData = {
         'latitude': position.latitude,
         'longitude': position.longitude,
         'accuracy': position.accuracy,
-      });
+      };
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Clocked in successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        setState(() => _hasActiveClockIn = true);
+      final res = await http.post(
+        Uri.parse('${LeaveApiBase.base}/api/v1/attendance/clock-in'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(requestData),
+      );
+
+      if (res.statusCode == 201 || res.statusCode == 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Clocked in successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          setState(() => _hasActiveClockIn = true);
+        }
+      } else {
+        final error = json.decode(res.body);
+        throw Exception(error['message'] ?? 'Failed to clock in');
       }
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -119,38 +171,52 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
         position = await _getCurrentLocation();
         setState(() => _currentPosition = position);
       } catch (e) {
-        // Location is optional for clock-out
+        // Location is optional for clock-out, but we'll try to get it
       }
 
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final apiService = ApiService(authProvider);
+      final token = await AuthService.instance.getAccessToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('Not authenticated');
+      }
 
-      final data = position != null
+      final requestData = position != null
           ? {
               'latitude': position.latitude,
               'longitude': position.longitude,
             }
           : {};
 
-      await apiService.clockOut(data);
+      final res = await http.post(
+        Uri.parse('${LeaveApiBase.base}/api/v1/attendance/clock-out'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(requestData),
+      );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Clocked out successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        setState(() => _hasActiveClockIn = false);
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Clocked out successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          setState(() => _hasActiveClockIn = false);
+        }
+      } else {
+        final error = json.decode(res.body);
+        throw Exception(error['message'] ?? 'Failed to clock out');
       }
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -175,7 +241,7 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                _hasActiveClockIn ? Icons.access_time : Icons.access_time_filled,
+                _hasActiveClockIn ? Icons.access_time_filled : Icons.access_time,
                 size: 80,
                 color: _hasActiveClockIn ? Colors.orange : Colors.blue,
               ),
@@ -192,6 +258,7 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
                 Text(
                   'Location: ${_currentPosition!.latitude.toStringAsFixed(6)}, ${_currentPosition!.longitude.toStringAsFixed(6)}',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
               ],
@@ -206,6 +273,7 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
                   child: Text(
                     _errorMessage!,
                     style: TextStyle(color: Colors.red.shade800),
+                    textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -244,4 +312,3 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
     );
   }
 }
-

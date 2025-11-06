@@ -4,6 +4,9 @@ import 'package:http/http.dart' as http;
 import 'auth_service.dart';
 import 'api_base.dart';
 import 'screens/profile_screen.dart';
+import '../screens/ApplyLeaveScreen.dart';
+import '../screens/ClockInOutScreen.dart';
+import '../screens/LeaveBalanceScreen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -167,6 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
+                      // First row: Profile and Apply Leave
                       Row(
                         children: [
                           Expanded(
@@ -191,11 +195,62 @@ class _HomeScreenState extends State<HomeScreen> {
                           Expanded(
                             child: _buildActionCard(
                               context,
-                              icon: Icons.refresh_rounded,
-                              title: 'Refresh',
-                              subtitle: 'Reload data',
+                              key: const ValueKey('apply_leave_action_card'),
+                              icon: Icons.event_note,
+                              title: 'Apply Leave',
+                              subtitle: 'Request time off',
+                              color: Colors.orange,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ApplyLeaveScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Second row: Clock In/Out and Leave Balance
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              key: const ValueKey('clock_inout_action_card'),
+                              icon: Icons.access_time,
+                              title: 'Clock In/Out',
+                              subtitle: 'Mark attendance',
                               color: Colors.green,
-                              onTap: _loadUser,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ClockInOutScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              key: const ValueKey('leave_balance_action_card'),
+                              icon: Icons.account_balance_wallet,
+                              title: 'Leave Balance',
+                              subtitle: 'View balances & history',
+                              color: Colors.purple,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LeaveBalanceScreen(),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ],

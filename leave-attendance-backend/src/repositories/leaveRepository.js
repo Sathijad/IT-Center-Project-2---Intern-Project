@@ -34,17 +34,6 @@ export class LeaveRepository {
       sort = 'created_at,desc'
     } = filters;
 
-    // If userId is provided but undefined, return empty result
-    if (filters.hasOwnProperty('userId') && !userId) {
-      return {
-        content: [],
-        totalElements: 0,
-        totalPages: 0,
-        page: 0,
-        size: size
-      };
-    }
-
     const [sortField, sortDir] = sort.split(',');
     const offset = page * size;
 
@@ -76,7 +65,9 @@ export class LeaveRepository {
     const params = [];
     let paramIndex = 1;
 
-    if (userId) {
+    // Only filter by userId if it's provided (not undefined/null)
+    // For admins, if userId is undefined, show all requests
+    if (userId !== undefined && userId !== null) {
       query += ` AND lr.user_id = $${paramIndex++}`;
       params.push(userId);
     }
@@ -212,6 +203,15 @@ export class LeaveRepository {
       SELECT * FROM leave_policies WHERE is_active = true ORDER BY name
     `);
     return result.rows;
+  }
+
+  async initializeLeaveBalance(userId, policyId, annualLimit, year) {
+    // Insert balance if it doesn't exist, or update if it does (idempotent)
+    await db.query(`
+      INSERT INTO leave_balances (user_id, policy_id, balance_days, year)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (user_id, policy_id, year) DO NOTHING
+    `, [userId, policyId, annualLimit, year]);
   }
 }
 
