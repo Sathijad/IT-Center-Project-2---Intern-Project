@@ -1,8 +1,11 @@
 package com.itcenter.auth.service;
 
 import com.itcenter.auth.entity.AppUser;
+import com.itcenter.auth.entity.Role;
+import com.itcenter.auth.entity.UserRole;
 import com.itcenter.auth.repository.AppUserRepository;
 import com.itcenter.auth.repository.RoleRepository;
+import com.itcenter.auth.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -23,6 +27,7 @@ public class UserProvisioningService {
     
     private final AppUserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Transactional
@@ -104,10 +109,26 @@ public class UserProvisioningService {
             
             AppUser savedUser = userRepository.save(newUser);
 
-            // Optional: Assign default role
+            // Optional: Assign default EMPLOYEE role with audit fields
             roleRepository.findByName("EMPLOYEE").ifPresent(role -> {
-                savedUser.getRoles().add(role);
-                userRepository.save(savedUser);
+                // Check if UserRole already exists
+                boolean exists = userRoleRepository.findByUserIdWithDetails(savedUser.getId()).stream()
+                    .anyMatch(ur -> ur.getRole().getId().equals(role.getId()));
+                
+                if (!exists) {
+                    // Create UserRole entity with audit fields
+                    // For system-created users, assigned_by is null (system assignment)
+                    UserRole userRole = UserRole.builder()
+                        .user(savedUser)
+                        .role(role)
+                        .assignedAt(Instant.now()) // Explicitly set timestamp
+                        .assignedBy(null) // System assignment, no user assigned it
+                        .build();
+                    
+                    userRoleRepository.save(userRole);
+                    log.debug("Assigned default EMPLOYEE role to new user {} (system assignment at {})", 
+                        savedUser.getId(), userRole.getAssignedAt());
+                }
             });
             
             log.info("Created user with ID: {} for email: {}", savedUser.getId(), finalEmail);

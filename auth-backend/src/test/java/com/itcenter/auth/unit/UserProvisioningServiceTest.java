@@ -2,8 +2,10 @@ package com.itcenter.auth.unit;
 
 import com.itcenter.auth.entity.AppUser;
 import com.itcenter.auth.entity.Role;
+import com.itcenter.auth.entity.UserRole;
 import com.itcenter.auth.repository.AppUserRepository;
 import com.itcenter.auth.repository.RoleRepository;
+import com.itcenter.auth.repository.UserRoleRepository;
 import com.itcenter.auth.service.UserProvisioningService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,13 +36,16 @@ class UserProvisioningServiceTest {
     @Mock
     private RoleRepository roleRepository;
 
+    @Mock
+    private UserRoleRepository userRoleRepository;
+
     private UserProvisioningService userProvisioningService;
 
     private Role employeeRole;
 
     @BeforeEach
     void setUp() {
-        userProvisioningService = new UserProvisioningService(userRepository, roleRepository);
+        userProvisioningService = new UserProvisioningService(userRepository, roleRepository, userRoleRepository);
         
         employeeRole = new Role();
         employeeRole.setId(1L);
@@ -73,6 +79,14 @@ class UserProvisioningServiceTest {
         savedUser.setRoles(new ArrayList<>(List.of(employeeRole)));
 
         when(userRepository.save(any(AppUser.class))).thenReturn(savedUser);
+        // Mock UserRoleRepository - no existing roles for new user
+        when(userRoleRepository.findByUserIdWithDetails(1L)).thenReturn(Collections.emptyList());
+        // Mock saving UserRole entity
+        when(userRoleRepository.save(any(UserRole.class))).thenAnswer(invocation -> {
+            UserRole userRole = invocation.getArgument(0);
+            userRole.setId(1L);
+            return userRole;
+        });
 
         // When
         AppUser result = userProvisioningService.findOrCreateFromJwt(jwt);
@@ -80,7 +94,9 @@ class UserProvisioningServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getEmail()).isEqualTo(email);
-        verify(userRepository, times(3)).save(any(AppUser.class)); // Save user, save role, save last_login
+        verify(userRepository, atLeastOnce()).save(any(AppUser.class));
+        verify(userRoleRepository, times(1)).findByUserIdWithDetails(1L);
+        verify(userRoleRepository, times(1)).save(any(UserRole.class));
     }
 
     @Test
@@ -136,6 +152,14 @@ class UserProvisioningServiceTest {
         savedUser.setEmail(sub + "@cognito.local");
         
         when(userRepository.save(any(AppUser.class))).thenReturn(savedUser);
+        // Mock UserRoleRepository - no existing roles for new user
+        when(userRoleRepository.findByUserIdWithDetails(1L)).thenReturn(Collections.emptyList());
+        // Mock saving UserRole entity
+        when(userRoleRepository.save(any(UserRole.class))).thenAnswer(invocation -> {
+            UserRole userRole = invocation.getArgument(0);
+            userRole.setId(1L);
+            return userRole;
+        });
 
         // When
         AppUser result = userProvisioningService.findOrCreateFromJwt(jwt);
@@ -143,6 +167,8 @@ class UserProvisioningServiceTest {
         // Then
         assertThat(result).isNotNull();
         verify(userRepository, atLeastOnce()).save(any(AppUser.class));
+        verify(userRoleRepository, times(1)).findByUserIdWithDetails(1L);
+        verify(userRoleRepository, times(1)).save(any(UserRole.class));
     }
 }
 

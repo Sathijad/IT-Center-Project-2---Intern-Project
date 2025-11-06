@@ -3,6 +3,7 @@ package com.itcenter.auth.service;
 import com.itcenter.auth.dto.*;
 import com.itcenter.auth.entity.AppUser;
 import com.itcenter.auth.entity.Role;
+import com.itcenter.auth.entity.UserRole;
 import com.itcenter.auth.repository.AppUserRepository;
 import com.itcenter.auth.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -148,18 +150,15 @@ public class UserService {
             .distinct() // Remove duplicates after normalization
             .collect(Collectors.toList());
         
-        // Validate all roles exist and load as managed entities, using LinkedHashSet to deduplicate
-        java.util.Set<Role> targetRolesSet = new java.util.LinkedHashSet<>();
+        // Validate all roles exist and load as managed entities
         for (String roleName : newRoleNames) {
-            Role role = roleRepository.findByName(roleName)
+            roleRepository.findByName(roleName)
                 .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-            targetRolesSet.add(role); // Set will automatically deduplicate by object reference/equals
         }
-        List<Role> targetRoles = new java.util.ArrayList<>(targetRolesSet);
         
-        // Get current roles from the many-to-many relationship
-        List<String> existingRoleNames = targetUser.getRoles().stream()
-            .map(Role::getName)
+        // Get current roles from UserRole entities (not from @ManyToMany to ensure accuracy)
+        List<String> existingRoleNames = userRoleRepository.findByUserIdWithDetails(userId).stream()
+            .map(ur -> ur.getRole().getName())
             .collect(Collectors.toList());
         
         // Determine roles to add and remove
@@ -170,9 +169,55 @@ public class UserService {
             .filter(role -> !newRoleNames.contains(role))
             .collect(Collectors.toList());
         
-        // Update user roles using the @ManyToMany relationship (JPA handles the join table)
-        targetUser.setRoles(targetRoles);
-        targetUser = userRepository.save(targetUser);
+        // Get current user ID for assigned_by
+        Long currentUserId = currentUser.getId();
+        if (currentUserId == null) {
+            log.error("Current user ID is null, cannot assign roles with audit information");
+            throw new RuntimeException("Current user ID is null");
+        }
+        log.debug("Updating roles for user {} by current user {}", userId, currentUserId);
+        
+        // Remove roles that are no longer needed
+        for (String roleName : rolesToRemove) {
+            Role roleToRemove = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+            userRoleRepository.deleteByUserIdAndRoleId(userId, roleToRemove.getId());
+            log.debug("Removed role {} from user {}", roleName, userId);
+        }
+        
+        // Add new roles by creating UserRole entities with audit fields
+        for (String roleName : rolesToAdd) {
+            Role roleToAdd = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+            
+            // Check if UserRole already exists (shouldn't happen, but safety check)
+            boolean exists = userRoleRepository.findByUserIdWithDetails(userId).stream()
+                .anyMatch(ur -> ur.getRole().getId().equals(roleToAdd.getId()));
+            
+            if (!exists) {
+                // Explicitly set both assignedAt and assignedBy to ensure they are populated
+                UserRole userRole = UserRole.builder()
+                    .user(targetUser)
+                    .role(roleToAdd)
+                    .assignedAt(Instant.now()) // Explicitly set timestamp
+                    .assignedBy(currentUserId) // Explicitly set the user who assigned the role
+                    .build();
+                
+                UserRole savedUserRole = userRoleRepository.saveAndFlush(userRole);
+                log.info("Added role {} to user {} (assigned by user {} at {})", 
+                    roleName, userId, currentUserId, savedUserRole.getAssignedAt());
+            }
+        }
+        
+        // Flush all changes to ensure they are persisted to the database
+        userRoleRepository.flush();
+        
+        // Reload the user to get updated roles for the @ManyToMany relationship
+        // The roles will be automatically loaded from the user_roles table
+        // Note: We don't call setRoles() here because we're manually managing UserRole entities
+        // The @ManyToMany relationship will reflect the changes when queried
+        targetUser = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found after role update"));
         
         // Log audit events for role changes (with transaction isolation)
         try {
@@ -232,6 +277,11 @@ public class UserService {
     }
     
     private UserSummaryResponse mapToSummaryResponse(AppUser user) {
+        // Read roles from UserRoleRepository to ensure accuracy after manual UserRole management
+        List<String> roleNames = userRoleRepository.findByUserIdWithDetails(user.getId()).stream()
+            .map(ur -> ur.getRole().getName())
+            .collect(Collectors.toList());
+        
         return UserSummaryResponse.builder()
             .id(user.getId())
             .email(user.getEmail())
@@ -240,7 +290,7 @@ public class UserService {
             .isActive(user.getIsActive())
             .createdAt(user.getCreatedAt())
             .lastLogin(user.getLastLogin())
-            .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
+            .roles(roleNames)
             .build();
     }
 }

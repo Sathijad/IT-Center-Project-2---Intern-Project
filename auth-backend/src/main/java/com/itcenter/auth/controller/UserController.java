@@ -54,8 +54,17 @@ public class UserController {
     
     @GetMapping("/admin/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserSummaryResponse> getUserById(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(userService.getUserById(id));
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("not found")) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", e.getMessage());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            }
+            throw e;
+        }
     }
     
     @PatchMapping("/admin/users/{id}/roles")
@@ -68,6 +77,10 @@ public class UserController {
         } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", e.getMessage());
+            // Return 404 for "not found" errors, 400 for other errors
+            if (e.getMessage() != null && e.getMessage().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            }
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         }
     }

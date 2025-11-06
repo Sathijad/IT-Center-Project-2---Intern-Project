@@ -3,9 +3,11 @@ package com.itcenter.auth.it;
 import com.itcenter.auth.entity.AppUser;
 import com.itcenter.auth.entity.LoginAudit;
 import com.itcenter.auth.entity.Role;
+import com.itcenter.auth.entity.UserRole;
 import com.itcenter.auth.repository.AppUserRepository;
 import com.itcenter.auth.repository.LoginAuditRepository;
 import com.itcenter.auth.repository.RoleRepository;
+import com.itcenter.auth.repository.UserRoleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
@@ -43,6 +46,9 @@ class AuditControllerIT {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private UserRoleRepository userRoleRepository;
+
     private AppUser adminUser;
     private Role adminRole;
 
@@ -63,8 +69,15 @@ class AuditControllerIT {
         adminUser.setDisplayName("Admin User");
         adminUser.setLocale("en");
         adminUser.setIsActive(true);
-        adminUser.setRoles(List.of(adminRole));
         adminUser = userRepository.save(adminUser);
+        // Assign role using UserRole entity
+        UserRole adminUserRole = UserRole.builder()
+            .user(adminUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        userRoleRepository.save(adminUserRole);
 
         // Create some audit entries
         LoginAudit audit1 = new LoginAudit();

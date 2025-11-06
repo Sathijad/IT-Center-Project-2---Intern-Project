@@ -2,6 +2,9 @@ package com.itcenter.auth.repository;
 
 import com.itcenter.auth.entity.AppUser;
 import com.itcenter.auth.entity.Role;
+import com.itcenter.auth.entity.UserRole;
+import com.itcenter.auth.repository.UserRoleRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +36,12 @@ class AppUserRepositoryTest {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private UserRoleRepository userRoleRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     private Role adminRole;
     private Role employeeRole;
@@ -57,8 +67,22 @@ class AppUserRepositoryTest {
         testUser.setDisplayName("Test User");
         testUser.setLocale("en");
         testUser.setIsActive(true);
-        testUser.setRoles(new ArrayList<>(List.of(adminRole, employeeRole)));
         testUser = userRepository.save(testUser);
+        // Assign roles using UserRole entities
+        UserRole adminUserRole = UserRole.builder()
+            .user(testUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        userRoleRepository.save(adminUserRole);
+        UserRole employeeUserRole = UserRole.builder()
+            .user(testUser)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        userRoleRepository.save(employeeUserRole);
     }
 
     @Test
@@ -70,10 +94,17 @@ class AppUserRepositoryTest {
         newUser.setDisplayName("New User");
         newUser.setLocale("si");
         newUser.setIsActive(true);
-        newUser.setRoles(new ArrayList<>(List.of(employeeRole)));
 
         // When
         AppUser saved = userRepository.save(newUser);
+        // Assign role using UserRole entity
+        UserRole newUserRole = UserRole.builder()
+            .user(saved)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        userRoleRepository.save(newUserRole);
 
         // Then
         assertThat(saved.getId()).isNotNull();
@@ -182,11 +213,15 @@ class AppUserRepositoryTest {
 
     @Test
     void testUserWithRoles_AssociatesCorrectly() {
-        // When
+        // When - need to refresh entity to see @ManyToMany relationship
+        entityManager.flush();
+        entityManager.clear();
         Optional<AppUser> user = userRepository.findById(testUser.getId());
         
         // Then
         assertThat(user).isPresent();
+        // Force initialization of lazy-loaded roles
+        user.get().getRoles().size();
         assertThat(user.get().getRoles()).hasSize(2);
         assertThat(user.get().getRoles()).extracting(Role::getName)
             .containsExactlyInAnyOrder("ADMIN", "EMPLOYEE");
@@ -194,11 +229,16 @@ class AppUserRepositoryTest {
 
     @Test
     void testUpdateUserRoles_Success() {
-        // Given
-        testUser.setRoles(new ArrayList<>(List.of(employeeRole)));
+        // Given - remove admin role, keep only employee role
+        userRoleRepository.deleteByUserIdAndRoleId(testUser.getId(), adminRole.getId());
+        userRoleRepository.flush(); // Flush to ensure deletion is persisted
 
-        // When
-        AppUser updated = userRepository.save(testUser);
+        // When - clear persistence context and reload user to see changes
+        entityManager.flush();
+        entityManager.clear();
+        AppUser updated = userRepository.findById(testUser.getId()).orElseThrow();
+        // Force initialization of lazy-loaded roles
+        updated.getRoles().size();
 
         // Then
         assertThat(updated.getRoles()).hasSize(1);

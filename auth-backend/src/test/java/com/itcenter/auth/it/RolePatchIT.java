@@ -2,8 +2,10 @@ package com.itcenter.auth.it;
 
 import com.itcenter.auth.entity.AppUser;
 import com.itcenter.auth.entity.Role;
+import com.itcenter.auth.entity.UserRole;
 import com.itcenter.auth.repository.AppUserRepository;
 import com.itcenter.auth.repository.RoleRepository;
+import com.itcenter.auth.repository.UserRoleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
@@ -36,6 +39,9 @@ class RolePatchIT {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private UserRoleRepository userRoleRepository;
 
     private AppUser testUser;
     private Role adminRole;
@@ -65,8 +71,15 @@ class RolePatchIT {
         testUser.setDisplayName("Patch Test User");
         testUser.setLocale("en");
         testUser.setIsActive(true);
-        testUser.setRoles(List.of(adminRole));
         testUser = userRepository.save(testUser);
+        // Assign role using UserRole entity
+        UserRole testUserRole = UserRole.builder()
+            .user(testUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        userRoleRepository.save(testUserRole);
     }
 
     @Test
@@ -140,7 +153,8 @@ class RolePatchIT {
                         .authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error", not(emptyOrNullString())));
     }
 }
 

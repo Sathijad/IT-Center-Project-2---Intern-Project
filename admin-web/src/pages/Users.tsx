@@ -171,7 +171,7 @@ const Users: React.FC = () => {
                         </button>
                         <button
                           onClick={() => openRoleModal(user)}
-                          className="text-green-600 hover:text-green-900 flex items-center gap-1"
+                          className="text-green-700 hover:text-green-900 flex items-center gap-1"
                         >
                           <Settings className="w-4 h-4" />
                           Roles

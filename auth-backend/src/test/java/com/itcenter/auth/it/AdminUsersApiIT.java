@@ -3,9 +3,11 @@ package com.itcenter.auth.it;
 import com.itcenter.auth.entity.AppUser;
 import com.itcenter.auth.entity.LoginAudit;
 import com.itcenter.auth.entity.Role;
+import com.itcenter.auth.entity.UserRole;
 import com.itcenter.auth.repository.AppUserRepository;
 import com.itcenter.auth.repository.LoginAuditRepository;
 import com.itcenter.auth.repository.RoleRepository;
+import com.itcenter.auth.repository.UserRoleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +42,9 @@ class AdminUsersApiIT {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private UserRoleRepository userRoleRepository;
 
     @Autowired
     private LoginAuditRepository auditRepository;
@@ -72,8 +78,15 @@ class AdminUsersApiIT {
         adminUser.setDisplayName("Admin User");
         adminUser.setLocale("en");
         adminUser.setIsActive(true);
-        adminUser.setRoles(List.of(adminRole));
         adminUser = userRepository.save(adminUser);
+        // Assign role using UserRole entity
+        UserRole adminUserRole = UserRole.builder()
+            .user(adminUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        userRoleRepository.save(adminUserRole);
 
         // Create target user (unique email)
         targetUser = new AppUser();
@@ -82,8 +95,15 @@ class AdminUsersApiIT {
         targetUser.setDisplayName("Target User");
         targetUser.setLocale("en");
         targetUser.setIsActive(true);
-        targetUser.setRoles(List.of(employeeRole));
         targetUser = userRepository.save(targetUser);
+        // Assign role using UserRole entity
+        UserRole targetUserRole = UserRole.builder()
+            .user(targetUser)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        userRoleRepository.save(targetUserRole);
     }
 
     @Test

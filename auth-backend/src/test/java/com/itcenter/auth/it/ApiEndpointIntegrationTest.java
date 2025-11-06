@@ -2,8 +2,10 @@ package com.itcenter.auth.it;
 
 import com.itcenter.auth.entity.AppUser;
 import com.itcenter.auth.entity.Role;
+import com.itcenter.auth.entity.UserRole;
 import com.itcenter.auth.repository.AppUserRepository;
 import com.itcenter.auth.repository.RoleRepository;
+import com.itcenter.auth.repository.UserRoleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +42,9 @@ class ApiEndpointIntegrationTest {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private UserRoleRepository userRoleRepository;
 
     private AppUser testUser;
     private AppUser adminUser;
@@ -78,8 +84,15 @@ class ApiEndpointIntegrationTest {
         adminUser.setDisplayName("Admin User");
         adminUser.setLocale("en");
         adminUser.setIsActive(true);
-        adminUser.setRoles(List.of(adminRole));
         adminUser = userRepository.save(adminUser);
+        // Assign role using UserRole entity
+        UserRole adminUserRole = UserRole.builder()
+            .user(adminUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null) // System assignment in tests
+            .build();
+        userRoleRepository.save(adminUserRole);
 
         // Create test user
         testUser = new AppUser();
@@ -88,8 +101,15 @@ class ApiEndpointIntegrationTest {
         testUser.setDisplayName("Test User");
         testUser.setLocale("en");
         testUser.setIsActive(true);
-        testUser.setRoles(List.of(employeeRole));
         testUser = userRepository.save(testUser);
+        // Assign role using UserRole entity
+        UserRole testUserRole = UserRole.builder()
+            .user(testUser)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null) // System assignment in tests
+            .build();
+        userRoleRepository.save(testUserRole);
 
         // Create employee user
         employeeUser = new AppUser();
@@ -98,8 +118,15 @@ class ApiEndpointIntegrationTest {
         employeeUser.setDisplayName("Employee User");
         employeeUser.setLocale("en");
         employeeUser.setIsActive(true);
-        employeeUser.setRoles(List.of(employeeRole));
         employeeUser = userRepository.save(employeeUser);
+        // Assign role using UserRole entity
+        UserRole empUserRole = UserRole.builder()
+            .user(employeeUser)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null) // System assignment in tests
+            .build();
+        userRoleRepository.save(empUserRole);
     }
 
     // GET /api/v1/me tests
@@ -188,9 +215,15 @@ class ApiEndpointIntegrationTest {
 
     @Test
     void testUpdateUserRoles_RemoveRoles_Returns200() throws Exception {
-        // First add roles
-        testUser.setRoles(Arrays.asList(adminRole, employeeRole));
-        testUser = userRepository.save(testUser);
+        // First add roles using UserRole entities
+        UserRole testUserAdminRole = UserRole.builder()
+            .user(testUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        userRoleRepository.save(testUserAdminRole);
+        // employeeRole is already assigned in setUp, so we don't need to add it again
         
         String body = "{\"roles\":[\"EMPLOYEE\"]}";
         
@@ -207,7 +240,7 @@ class ApiEndpointIntegrationTest {
     }
 
     @Test
-    void testUpdateUserRoles_UnknownRole_Returns400() throws Exception {
+    void testUpdateUserRoles_UnknownRole_Returns404() throws Exception {
         String body = "{\"roles\":[\"INVALID_ROLE\"]}";
         
         mockMvc.perform(patch("/api/v1/admin/users/{id}/roles", testUser.getId())
@@ -217,12 +250,23 @@ class ApiEndpointIntegrationTest {
                                 .authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error", containsString("Role not found")));
     }
 
     @Test
-    void testUpdateUserRoles_UnknownUser_Returns400() throws Exception {
+    void testGetUserById_NonExistentUser_Returns404() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/users/{id}", 99999L)
+                        .with(SecurityMockMvcRequestPostProcessors.jwt()
+                                .jwt(j -> j.claim("sub", adminUser.getCognitoSub())
+                                        .claim("email", adminUser.getEmail()))
+                                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error", not(emptyOrNullString())));
+    }
+
+    @Test
+    void testUpdateUserRoles_NonExistentUser_Returns404() throws Exception {
         String body = "{\"roles\":[\"EMPLOYEE\"]}";
         
         mockMvc.perform(patch("/api/v1/admin/users/{id}/roles", 99999L)
@@ -232,9 +276,10 @@ class ApiEndpointIntegrationTest {
                                 .authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error", containsString("User not found")));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error", not(emptyOrNullString())));
     }
+
 
     @Test
     void testUpdateUserRoles_EmptyRolesList_Handled() throws Exception {

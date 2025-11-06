@@ -4,6 +4,7 @@ import com.itcenter.auth.dto.UpdateRolesRequest;
 import com.itcenter.auth.dto.UserSummaryResponse;
 import com.itcenter.auth.entity.AppUser;
 import com.itcenter.auth.entity.Role;
+import com.itcenter.auth.entity.UserRole;
 import com.itcenter.auth.repository.AppUserRepository;
 import com.itcenter.auth.repository.RoleRepository;
 import com.itcenter.auth.repository.UserRoleRepository;
@@ -23,6 +24,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import java.time.Instant;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,11 +110,40 @@ class UserServiceUpdateRolesTest {
 
     @Test
     void updateUserRoles_AddRole_Success() {
-        // Given
+        // Given - user already has ADMIN, we're adding EMPLOYEE
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
         when(roleRepository.findByName("EMPLOYEE")).thenReturn(Optional.of(employeeRole));
-        when(userRepository.save(any(AppUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        // Mock existing UserRole for ADMIN
+        UserRole existingAdminRole = UserRole.builder()
+            .user(testUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        existingAdminRole.setId(1L);
+        // Create new UserRole for EMPLOYEE that will be added
+        UserRole newEmployeeRole = UserRole.builder()
+            .user(testUser)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(2L)
+            .build();
+        newEmployeeRole.setId(2L);
+        // Mock findByUserIdWithDetails - called multiple times:
+        // 1. To get existing roles (returns ADMIN only)
+        // 2. Inside loop to check if EMPLOYEE exists (returns ADMIN only)
+        // 3. In mapToSummaryResponse to get final roles (returns ADMIN and EMPLOYEE)
+        when(userRoleRepository.findByUserIdWithDetails(1L))
+            .thenReturn(List.of(existingAdminRole))  // First call - existing roles
+            .thenReturn(List.of(existingAdminRole))  // Second call - check before adding
+            .thenReturn(List.of(existingAdminRole, newEmployeeRole));  // Third call - final roles
+        when(userRoleRepository.saveAndFlush(any(UserRole.class))).thenAnswer(invocation -> {
+            UserRole ur = invocation.getArgument(0);
+            ur.setId(2L);
+            return ur;
+        });
+        doNothing().when(userRoleRepository).flush();
 
         UpdateRolesRequest request = new UpdateRolesRequest();
         request.setRoles(Arrays.asList("ADMIN", "EMPLOYEE"));
@@ -124,15 +155,39 @@ class UserServiceUpdateRolesTest {
         assertThat(response.getRoles()).containsExactlyInAnyOrder("ADMIN", "EMPLOYEE");
         verify(auditService, times(1)).logEvent(eq(currentUser), eq("ROLE_ASSIGNED"), 
             any(), any(), contains("EMPLOYEE"));
+        verify(userRoleRepository, times(1)).saveAndFlush(any(UserRole.class));
     }
 
     @Test
     void updateUserRoles_RemoveRole_Success() {
-        // Given
+        // Given - user has both ADMIN and EMPLOYEE, we're removing ADMIN
         testUser.setRoles(new ArrayList<>(List.of(adminRole, employeeRole)));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByName("EMPLOYEE")).thenReturn(Optional.of(employeeRole));
-        when(userRepository.save(any(AppUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
+        // Mock existing UserRoles
+        UserRole existingAdminRole = UserRole.builder()
+            .user(testUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        existingAdminRole.setId(1L);
+        UserRole existingEmployeeRole = UserRole.builder()
+            .user(testUser)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        existingEmployeeRole.setId(2L);
+        // Mock findByUserIdWithDetails - called multiple times:
+        // 1. To get existing roles (returns ADMIN and EMPLOYEE)
+        // 2. In mapToSummaryResponse to get final roles (returns EMPLOYEE only after deletion)
+        when(userRoleRepository.findByUserIdWithDetails(1L))
+            .thenReturn(List.of(existingAdminRole, existingEmployeeRole))  // First call - existing roles
+            .thenReturn(List.of(existingEmployeeRole));  // Second call - final roles after deletion
+        doNothing().when(userRoleRepository).deleteByUserIdAndRoleId(1L, adminRole.getId());
+        doNothing().when(userRoleRepository).flush();
 
         UpdateRolesRequest request = new UpdateRolesRequest();
         request.setRoles(List.of("EMPLOYEE"));
@@ -144,15 +199,60 @@ class UserServiceUpdateRolesTest {
         assertThat(response.getRoles()).containsExactly("EMPLOYEE");
         verify(auditService, times(1)).logEvent(eq(currentUser), eq("ROLE_REMOVED"), 
             any(), any(), contains("ADMIN"));
+        verify(userRoleRepository, times(1)).deleteByUserIdAndRoleId(1L, adminRole.getId());
     }
 
     @Test
     void updateUserRoles_ReplaceAllRoles_Success() {
-        // Given
+        // Given - user has ADMIN, we're replacing with EMPLOYEE and MANAGER
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByName("EMPLOYEE")).thenReturn(Optional.of(employeeRole));
         when(roleRepository.findByName("MANAGER")).thenReturn(Optional.of(managerRole));
-        when(userRepository.save(any(AppUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
+        // Mock existing UserRole for ADMIN
+        UserRole existingAdminRole = UserRole.builder()
+            .user(testUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        existingAdminRole.setId(1L);
+        // Create new UserRoles for EMPLOYEE and MANAGER
+        UserRole newEmployeeRole = UserRole.builder()
+            .user(testUser)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(2L)
+            .build();
+        newEmployeeRole.setId(2L);
+        UserRole newManagerRole = UserRole.builder()
+            .user(testUser)
+            .role(managerRole)
+            .assignedAt(Instant.now())
+            .assignedBy(2L)
+            .build();
+        newManagerRole.setId(3L);
+        // Mock findByUserIdWithDetails - called multiple times:
+        // 1. To get existing roles (returns ADMIN only)
+        // 2. Inside loop to check if EMPLOYEE exists (returns ADMIN only)
+        // 3. Inside loop to check if MANAGER exists (returns ADMIN only)
+        // 4. In mapToSummaryResponse to get final roles (returns EMPLOYEE and MANAGER)
+        when(userRoleRepository.findByUserIdWithDetails(1L))
+            .thenReturn(List.of(existingAdminRole))  // First call - existing roles
+            .thenReturn(List.of(existingAdminRole))  // Second call - check EMPLOYEE
+            .thenReturn(List.of(existingAdminRole))  // Third call - check MANAGER
+            .thenReturn(List.of(newEmployeeRole, newManagerRole));  // Fourth call - final roles
+        when(userRoleRepository.saveAndFlush(any(UserRole.class))).thenAnswer(invocation -> {
+            UserRole ur = invocation.getArgument(0);
+            if (ur.getRole().getName().equals("EMPLOYEE")) {
+                ur.setId(2L);
+            } else if (ur.getRole().getName().equals("MANAGER")) {
+                ur.setId(3L);
+            }
+            return ur;
+        });
+        doNothing().when(userRoleRepository).deleteByUserIdAndRoleId(1L, adminRole.getId());
+        doNothing().when(userRoleRepository).flush();
 
         UpdateRolesRequest request = new UpdateRolesRequest();
         request.setRoles(Arrays.asList("EMPLOYEE", "MANAGER"));
@@ -203,10 +303,38 @@ class UserServiceUpdateRolesTest {
 
     @Test
     void updateUserRoles_DuplicateRole_HandledGracefully() {
-        // Given
+        // Given - user has ADMIN, we're replacing with EMPLOYEE (duplicate in request)
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByName("EMPLOYEE")).thenReturn(Optional.of(employeeRole));
-        when(userRepository.save(any(AppUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
+        // Mock existing UserRole for ADMIN
+        UserRole existingAdminRole = UserRole.builder()
+            .user(testUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        existingAdminRole.setId(1L);
+        // Create new UserRole for EMPLOYEE
+        UserRole newEmployeeRole = UserRole.builder()
+            .user(testUser)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(2L)
+            .build();
+        newEmployeeRole.setId(2L);
+        // Mock findByUserIdWithDetails - called multiple times
+        when(userRoleRepository.findByUserIdWithDetails(1L))
+            .thenReturn(List.of(existingAdminRole))  // First call - existing roles
+            .thenReturn(List.of(existingAdminRole))  // Second call - check before adding
+            .thenReturn(List.of(newEmployeeRole));  // Third call - final roles
+        when(userRoleRepository.saveAndFlush(any(UserRole.class))).thenAnswer(invocation -> {
+            UserRole ur = invocation.getArgument(0);
+            ur.setId(2L);
+            return ur;
+        });
+        doNothing().when(userRoleRepository).deleteByUserIdAndRoleId(1L, adminRole.getId());
+        doNothing().when(userRoleRepository).flush();
 
         UpdateRolesRequest request = new UpdateRolesRequest();
         request.setRoles(Arrays.asList("EMPLOYEE", "EMPLOYEE")); // Duplicate
@@ -214,17 +342,46 @@ class UserServiceUpdateRolesTest {
         // When
         UserSummaryResponse response = userService.updateUserRoles(1L, request);
 
-        // Then - should handle gracefully (Set deduplicates)
+        // Then - should handle gracefully (distinct() deduplicates)
         assertThat(response.getRoles()).containsExactly("EMPLOYEE");
-        verify(userRepository, times(1)).save(any(AppUser.class));
+        verify(userRoleRepository, times(1)).saveAndFlush(any(UserRole.class));
+        verify(userRoleRepository, times(1)).deleteByUserIdAndRoleId(1L, adminRole.getId());
     }
 
     @Test
     void updateUserRoles_CaseInsensitiveRoleNames() {
-        // Given
+        // Given - user has ADMIN, we're replacing with EMPLOYEE (case variations)
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByName("EMPLOYEE")).thenReturn(Optional.of(employeeRole));
-        when(userRepository.save(any(AppUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
+        // Mock existing UserRole for ADMIN
+        UserRole existingAdminRole = UserRole.builder()
+            .user(testUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        existingAdminRole.setId(1L);
+        // Create new UserRole for EMPLOYEE
+        UserRole newEmployeeRole = UserRole.builder()
+            .user(testUser)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(2L)
+            .build();
+        newEmployeeRole.setId(2L);
+        // Mock findByUserIdWithDetails - called multiple times
+        when(userRoleRepository.findByUserIdWithDetails(1L))
+            .thenReturn(List.of(existingAdminRole))  // First call - existing roles
+            .thenReturn(List.of(existingAdminRole))  // Second call - check before adding
+            .thenReturn(List.of(newEmployeeRole));  // Third call - final roles
+        when(userRoleRepository.saveAndFlush(any(UserRole.class))).thenAnswer(invocation -> {
+            UserRole ur = invocation.getArgument(0);
+            ur.setId(2L);
+            return ur;
+        });
+        doNothing().when(userRoleRepository).deleteByUserIdAndRoleId(1L, adminRole.getId());
+        doNothing().when(userRoleRepository).flush();
 
         UpdateRolesRequest request = new UpdateRolesRequest();
         request.setRoles(Arrays.asList("employee", "Employee", "EMPLOYEE"));
@@ -238,11 +395,51 @@ class UserServiceUpdateRolesTest {
 
     @Test
     void updateUserRoles_NormalizesRoleNames() {
-        // Given
+        // Given - user has ADMIN, we're replacing with EMPLOYEE and MANAGER (with whitespace)
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByName("EMPLOYEE")).thenReturn(Optional.of(employeeRole));
         when(roleRepository.findByName("MANAGER")).thenReturn(Optional.of(managerRole));
-        when(userRepository.save(any(AppUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
+        // Mock existing UserRole for ADMIN
+        UserRole existingAdminRole = UserRole.builder()
+            .user(testUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        existingAdminRole.setId(1L);
+        // Create new UserRoles for EMPLOYEE and MANAGER
+        UserRole newEmployeeRole = UserRole.builder()
+            .user(testUser)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(2L)
+            .build();
+        newEmployeeRole.setId(2L);
+        UserRole newManagerRole = UserRole.builder()
+            .user(testUser)
+            .role(managerRole)
+            .assignedAt(Instant.now())
+            .assignedBy(2L)
+            .build();
+        newManagerRole.setId(3L);
+        // Mock findByUserIdWithDetails - called multiple times
+        when(userRoleRepository.findByUserIdWithDetails(1L))
+            .thenReturn(List.of(existingAdminRole))  // First call - existing roles
+            .thenReturn(List.of(existingAdminRole))  // Second call - check EMPLOYEE
+            .thenReturn(List.of(existingAdminRole))  // Third call - check MANAGER
+            .thenReturn(List.of(newEmployeeRole, newManagerRole));  // Fourth call - final roles
+        when(userRoleRepository.saveAndFlush(any(UserRole.class))).thenAnswer(invocation -> {
+            UserRole ur = invocation.getArgument(0);
+            if (ur.getRole().getName().equals("EMPLOYEE")) {
+                ur.setId(2L);
+            } else if (ur.getRole().getName().equals("MANAGER")) {
+                ur.setId(3L);
+            }
+            return ur;
+        });
+        doNothing().when(userRoleRepository).deleteByUserIdAndRoleId(1L, adminRole.getId());
+        doNothing().when(userRoleRepository).flush();
 
         UpdateRolesRequest request = new UpdateRolesRequest();
         request.setRoles(Arrays.asList("  employee  ", "  manager  ")); // With whitespace
@@ -256,10 +453,38 @@ class UserServiceUpdateRolesTest {
 
     @Test
     void updateUserRoles_NullAndBlankRoles_Ignored() {
-        // Given
+        // Given - user has ADMIN, we're replacing with EMPLOYEE (with null/blank values)
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByName("EMPLOYEE")).thenReturn(Optional.of(employeeRole));
-        when(userRepository.save(any(AppUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
+        // Mock existing UserRole for ADMIN
+        UserRole existingAdminRole = UserRole.builder()
+            .user(testUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        existingAdminRole.setId(1L);
+        // Create new UserRole for EMPLOYEE
+        UserRole newEmployeeRole = UserRole.builder()
+            .user(testUser)
+            .role(employeeRole)
+            .assignedAt(Instant.now())
+            .assignedBy(2L)
+            .build();
+        newEmployeeRole.setId(2L);
+        // Mock findByUserIdWithDetails - called multiple times
+        when(userRoleRepository.findByUserIdWithDetails(1L))
+            .thenReturn(List.of(existingAdminRole))  // First call - existing roles
+            .thenReturn(List.of(existingAdminRole))  // Second call - check before adding
+            .thenReturn(List.of(newEmployeeRole));  // Third call - final roles
+        when(userRoleRepository.saveAndFlush(any(UserRole.class))).thenAnswer(invocation -> {
+            UserRole ur = invocation.getArgument(0);
+            ur.setId(2L);
+            return ur;
+        });
+        doNothing().when(userRoleRepository).deleteByUserIdAndRoleId(1L, adminRole.getId());
+        doNothing().when(userRoleRepository).flush();
 
         UpdateRolesRequest request = new UpdateRolesRequest();
         request.setRoles(Arrays.asList("EMPLOYEE", null, "", "  ")); // With null and blank
@@ -277,16 +502,32 @@ class UserServiceUpdateRolesTest {
         testUser.setRoles(new ArrayList<>(List.of(adminRole)));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
-        when(userRepository.save(any(AppUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        // Mock existing UserRole for ADMIN
+        UserRole existingUserRole = UserRole.builder()
+            .user(testUser)
+            .role(adminRole)
+            .assignedAt(Instant.now())
+            .assignedBy(null)
+            .build();
+        existingUserRole.setId(1L);
+        // Mock findByUserIdWithDetails - called multiple times (no changes, so same result)
+        when(userRoleRepository.findByUserIdWithDetails(1L))
+            .thenReturn(List.of(existingUserRole))  // First call - existing roles
+            .thenReturn(List.of(existingUserRole));  // Second call - in mapToSummaryResponse
 
         UpdateRolesRequest request = new UpdateRolesRequest();
         request.setRoles(List.of("ADMIN"));
 
         // When
-        UserSummaryResponse response = userService.updateUserRoles(1L, request);
+        userService.updateUserRoles(1L, request);
 
-        // Then - saves anyway (JPA processes the many-to-many update)
-        verify(userRepository, times(1)).save(any(AppUser.class));
+        // Then - no changes, so no save or delete operations
+        verify(userRoleRepository, never()).saveAndFlush(any(UserRole.class));
+        verify(userRoleRepository, never()).deleteByUserIdAndRoleId(anyLong(), anyLong());
+        // Audit should still be logged (though with empty lists for additions/removals)
+        // The service logs audit events for each role in rolesToAdd and rolesToRemove
+        // Since both lists are empty, no audit events are logged
+        verify(auditService, never()).logEvent(any(AppUser.class), anyString(), anyString(), anyString(), anyString());
     }
 }
 

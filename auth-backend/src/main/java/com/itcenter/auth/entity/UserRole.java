@@ -37,8 +37,7 @@ public class UserRole {
     private Role role;
     
     @CreatedDate
-    @Column(name = "assigned_at", nullable = true, updatable = false, insertable = false)
-    @org.hibernate.annotations.ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "assigned_at", nullable = false, updatable = false)
     private Instant assignedAt;
     
     @CreatedBy
