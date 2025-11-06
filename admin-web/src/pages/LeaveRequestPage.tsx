@@ -1,33 +1,40 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { getLeaveRequests, updateLeaveRequest, type LeaveRequest } from '../lib/leaveApi'
+import { getLeaveRequests, updateLeaveRequest, type LeaveRequest, type UpdateLeaveRequest } from '../lib/leaveApi'
 import { LeaveRequestTable } from '../components/LeaveRequestTable'
 import { LeaveApprovalCard } from '../components/LeaveApprovalCard'
-import { Calendar, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 
 const LeaveRequestPage: React.FC = () => {
   const { user } = useAuth()
+  const location = useLocation()
   const queryClient = useQueryClient()
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [page, setPage] = useState(0)
 
-  const isAdmin = user?.roles?.includes('ADMIN')
+  // Determine if this is the admin management view or user's own leave view
+  const isAdminView = location.pathname === '/admin/leave'
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['leave-requests', statusFilter, page],
+    queryKey: ['leave-requests', isAdminView, user?.id, statusFilter, page],
     queryFn: () => getLeaveRequests({
+      // For admin view on /admin/leave, don't pass user_id to get all requests
+      // For user view on /leave/history, explicitly pass user_id to show only their own requests (even if admin)
+      ...(isAdminView ? {} : { user_id: user?.id }),
       status: statusFilter || undefined,
       page,
       size: 20,
       sort: 'created_at,desc'
     }),
+    enabled: !!user, // Only fetch when user data is loaded
     staleTime: 60000, // 1 minute
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: { action: string; notes?: string } }) =>
+    mutationFn: ({ id, data }: { id: number; data: UpdateLeaveRequest }) =>
       updateLeaveRequest(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leave-requests'] })
@@ -63,12 +70,14 @@ const LeaveRequestPage: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
-          {isAdmin ? 'Leave Requests Management' : 'My Leave Requests'}
+          {isAdminView ? 'Leave Requests Management' : 'My Leave Requests'}
         </h1>
-        <p className="mt-2 text-gray-600">View and manage leave requests</p>
+        <p className="mt-2 text-gray-600">
+          {isAdminView ? 'View and manage all employee leave requests' : 'View your leave request history'}
+        </p>
       </div>
 
-      {isAdmin && (
+      {isAdminView && (
         <div className="flex gap-4">
           <select
             value={statusFilter}
@@ -91,11 +100,11 @@ const LeaveRequestPage: React.FC = () => {
         <>
           <LeaveRequestTable
             requests={data.content}
-            isAdmin={isAdmin}
+            isAdmin={isAdminView}
             onSelect={setSelectedRequest}
           />
 
-          {selectedRequest && isAdmin && (
+          {selectedRequest && isAdminView && (
             <LeaveApprovalCard
               request={selectedRequest}
               onApprove={handleApprove}
