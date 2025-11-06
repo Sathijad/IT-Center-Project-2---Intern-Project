@@ -10,20 +10,32 @@ const attendanceService = new AttendanceService();
 attendanceRouter.get('/',
   authenticate,
   validate(paginationSchema),
-  async (req, res) => {
-    const filters = {
-      userId: req.query.user_id && req.user.roles?.includes('ADMIN')
-        ? parseInt(req.query.user_id)
-        : req.user.userId,
-      startDate: req.query.start_date,
-      endDate: req.query.end_date,
-      page: req.query.page,
-      size: req.query.size,
-      sort: req.query.sort
-    };
+  async (req, res, next) => {
+    try {
+      if (!req.user.userId) {
+        return res.status(400).json({
+          code: 'INVALID_USER',
+          message: 'User not found in database',
+          traceId: req.traceId
+        });
+      }
 
-    const result = await attendanceService.getAttendanceLogs(filters);
-    res.json(result);
+      const filters = {
+        userId: req.query.user_id && req.user.roles?.includes('ADMIN')
+          ? parseInt(req.query.user_id)
+          : req.user.userId,
+        startDate: req.query.start_date,
+        endDate: req.query.end_date,
+        page: req.query.page,
+        size: req.query.size,
+        sort: req.query.sort
+      };
+
+      const result = await attendanceService.getAttendanceLogs(filters);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 );
 

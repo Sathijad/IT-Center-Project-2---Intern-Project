@@ -32,7 +32,11 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<Callback />} />
             <Route path="/" element={<Layout />}>
-              <Route index element={<Dashboard />} />
+              <Route index element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
               <Route
                 path="users"
                 element={
@@ -57,7 +61,11 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="profile" element={<Profile />} />
+              <Route path="profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
               <Route
                 path="admin/leave"
                 element={
@@ -74,9 +82,21 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="leave" element={<ApplyLeavePage />} />
-              <Route path="leave/history" element={<LeaveRequestPage />} />
-              <Route path="attendance" element={<AttendancePage />} />
+              <Route path="leave" element={
+                <ProtectedRoute>
+                  <ApplyLeavePage />
+                </ProtectedRoute>
+              } />
+              <Route path="leave/history" element={
+                <ProtectedRoute>
+                  <LeaveRequestPage />
+                </ProtectedRoute>
+              } />
+              <Route path="attendance" element={
+                <ProtectedRoute>
+                  <AttendancePage />
+                </ProtectedRoute>
+              } />
             </Route>
           </Routes>
         </AuthProvider>

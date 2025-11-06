@@ -41,14 +41,31 @@ export const authenticate = async (req, res, next) => {
       });
     });
 
+    // Get user ID from database
+    const userId = await getUserIdFromCognitoSub(decoded.sub);
+    
+    // Get user roles from database
+    const rolesResult = await db.query(`
+      SELECT r.name 
+      FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      JOIN app_users u ON ur.user_id = u.id
+      WHERE u.cognito_sub = $1 AND u.is_active = true
+    `, [decoded.sub]);
+    
+    const userRoles = rolesResult.rows.map(row => row.name);
+
     req.user = {
       sub: decoded.sub,
       email: decoded.email,
-      cognitoSub: decoded.sub
+      cognitoSub: decoded.sub,
+      userId: userId,
+      roles: userRoles
     };
 
     next();
   } catch (error) {
+    console.error('Authentication error:', error);
     return res.status(401).json({
       code: 'UNAUTHENTICATED',
       message: 'Invalid or expired token',

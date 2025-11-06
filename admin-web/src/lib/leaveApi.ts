@@ -1,4 +1,39 @@
-import api from './api'
+import axios from 'axios'
+import { config } from '../config/env'
+
+// Phase 2 API client for leave endpoints (port 3000)
+const leaveApi = axios.create({
+  baseURL: config.LEAVE_API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
+// Add token interceptor
+leaveApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// Handle errors
+leaveApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Only redirect to login on 401 (unauthorized), not on 500 errors
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('id_token')
+      // Only redirect if we're not already on the login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
+    }
+    return Promise.reject(error)
+  }
+)
 
 export interface LeaveRequest {
   request_id: number
@@ -47,7 +82,7 @@ export interface LeavePolicy {
 
 export async function getLeaveBalance(userId?: number) {
   const params = userId ? { user_id: userId } : {}
-  const response = await api.get('/api/v1/leave/balance', { params })
+  const response = await leaveApi.get('/api/v1/leave/balance', { params })
   return response.data
 }
 
@@ -60,22 +95,22 @@ export async function getLeaveRequests(params: {
   size?: number
   sort?: string
 }) {
-  const response = await api.get('/api/v1/leave/requests', { params })
+  const response = await leaveApi.get('/api/v1/leave/requests', { params })
   return response.data
 }
 
 export async function getLeaveRequestById(id: number) {
-  const response = await api.get(`/api/v1/leave/requests/${id}`)
+  const response = await leaveApi.get(`/api/v1/leave/requests/${id}`)
   return response.data
 }
 
 export async function createLeaveRequest(data: CreateLeaveRequest) {
-  const response = await api.post('/api/v1/leave/requests', data)
+  const response = await leaveApi.post('/api/v1/leave/requests', data)
   return response.data
 }
 
 export async function updateLeaveRequest(id: number, data: UpdateLeaveRequest) {
-  const response = await api.patch(`/api/v1/leave/requests/${id}`, data)
+  const response = await leaveApi.patch(`/api/v1/leave/requests/${id}`, data)
   return response.data
 }
 

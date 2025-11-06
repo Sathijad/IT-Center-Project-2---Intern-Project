@@ -33,9 +33,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .then((response) => {
         setUser(response.data)
       })
-      .catch(() => {
-        // Token invalid, will redirect to login
-        localStorage.removeItem('access_token')
+      .catch((error) => {
+        // Only remove token on 401 (unauthorized), not on other errors
+        if (error.response?.status === 401) {
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('id_token')
+        }
+        // Don't clear user state on other errors - token might still be valid
+        // This allows pages to load even if Phase 1 backend is temporarily unavailable
       })
       .finally(() => {
         setLoading(false)
@@ -43,7 +48,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const isAdmin = user?.roles?.includes('ADMIN') || false
-  const isAuthenticated = !!user
+  // Consider authenticated if token exists, even if user data hasn't loaded yet
+  const isAuthenticated = checkAuth() || !!user
 
   return (
     <AuthContext.Provider value={{ user, loading, isAdmin, isAuthenticated, setUser }}>

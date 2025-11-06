@@ -3,6 +3,10 @@ import { calculateLeaveDays } from '../utils/dateUtils.js';
 
 export class LeaveRepository {
   async getLeaveBalance(userId, year = new Date().getFullYear()) {
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
     const result = await db.query(`
       SELECT 
         lb.balance_id,
@@ -30,8 +34,24 @@ export class LeaveRepository {
       sort = 'created_at,desc'
     } = filters;
 
+    // If userId is provided but undefined, return empty result
+    if (filters.hasOwnProperty('userId') && !userId) {
+      return {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        page: 0,
+        size: size
+      };
+    }
+
     const [sortField, sortDir] = sort.split(',');
     const offset = page * size;
+
+    // Validate sort field to prevent SQL injection
+    const allowedSortFields = ['created_at', 'updated_at', 'start_date', 'end_date', 'status'];
+    const safeSortField = allowedSortFields.includes(sortField) ? sortField : 'created_at';
+    const safeSortDir = sortDir.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     let query = `
       SELECT 
@@ -76,16 +96,19 @@ export class LeaveRepository {
       params.push(endDate);
     }
 
-    query += ` ORDER BY lr.${sortField} ${sortDir.toUpperCase()}`;
+    query += ` ORDER BY lr.${safeSortField} ${safeSortDir}`;
     query += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(size, offset);
 
     const result = await db.query(query, params);
 
-    // Get total count
-    const countQuery = query.replace(/SELECT.*FROM/, 'SELECT COUNT(*) FROM').replace(/ORDER BY.*LIMIT.*/, '');
-    const countResult = await db.query(countQuery, params.slice(0, -2));
-    const totalElements = parseInt(countResult.rows[0].count);
+    // Get total count (remove ORDER BY and LIMIT/OFFSET)
+    const countQuery = query
+      .replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) FROM')
+      .replace(/ORDER BY[\s\S]*$/, '');
+    const countParams = params.slice(0, -2); // Remove LIMIT and OFFSET params
+    const countResult = await db.query(countQuery, countParams);
+    const totalElements = parseInt(countResult.rows[0]?.count || 0);
 
     return {
       content: result.rows,

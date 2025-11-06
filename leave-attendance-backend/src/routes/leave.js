@@ -9,14 +9,26 @@ const leaveService = new LeaveService();
 // Get leave balance
 leaveRouter.get('/balance',
   authenticate,
-  async (req, res) => {
-    const userId = req.query.user_id && req.user.roles?.includes('ADMIN')
-      ? parseInt(req.query.user_id)
-      : req.user.userId;
+  async (req, res, next) => {
+    try {
+      if (!req.user.userId) {
+        return res.status(400).json({
+          code: 'INVALID_USER',
+          message: 'User not found in database',
+          traceId: req.traceId
+        });
+      }
 
-    const year = parseInt(req.query.year) || new Date().getFullYear();
-    const balance = await leaveService.getLeaveBalance(userId, year);
-    res.json(balance);
+      const userId = req.query.user_id && req.user.roles?.includes('ADMIN')
+        ? parseInt(req.query.user_id)
+        : req.user.userId;
+
+      const year = parseInt(req.query.year) || new Date().getFullYear();
+      const balance = await leaveService.getLeaveBalance(userId, year);
+      res.json(balance);
+    } catch (error) {
+      next(error);
+    }
   }
 );
 
@@ -24,21 +36,33 @@ leaveRouter.get('/balance',
 leaveRouter.get('/requests',
   authenticate,
   validate(paginationSchema),
-  async (req, res) => {
-    const filters = {
-      userId: req.query.user_id && req.user.roles?.includes('ADMIN')
-        ? parseInt(req.query.user_id)
-        : req.user.userId,
-      status: req.query.status,
-      startDate: req.query.start_date,
-      endDate: req.query.end_date,
-      page: req.query.page,
-      size: req.query.size,
-      sort: req.query.sort
-    };
+  async (req, res, next) => {
+    try {
+      if (!req.user.userId) {
+        return res.status(400).json({
+          code: 'INVALID_USER',
+          message: 'User not found in database',
+          traceId: req.traceId
+        });
+      }
 
-    const result = await leaveService.getLeaveRequests(filters);
-    res.json(result);
+      const filters = {
+        userId: req.query.user_id && req.user.roles?.includes('ADMIN')
+          ? parseInt(req.query.user_id)
+          : req.user.userId,
+        status: req.query.status,
+        startDate: req.query.start_date,
+        endDate: req.query.end_date,
+        page: req.query.page,
+        size: req.query.size,
+        sort: req.query.sort
+      };
+
+      const result = await leaveService.getLeaveRequests(filters);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 );
 

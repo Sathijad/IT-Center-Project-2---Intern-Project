@@ -11,8 +11,24 @@ export class AttendanceRepository {
       sort = 'clock_in,desc'
     } = filters;
 
+    // If userId is provided but undefined, return empty result
+    if (filters.hasOwnProperty('userId') && !userId) {
+      return {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        page: 0,
+        size: size
+      };
+    }
+
     const [sortField, sortDir] = sort.split(',');
     const offset = page * size;
+
+    // Validate sort field to prevent SQL injection
+    const allowedSortFields = ['clock_in', 'clock_out', 'created_at'];
+    const safeSortField = allowedSortFields.includes(sortField) ? sortField : 'clock_in';
+    const safeSortDir = sortDir.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     let query = `
       SELECT 
@@ -46,16 +62,19 @@ export class AttendanceRepository {
       params.push(endDate);
     }
 
-    query += ` ORDER BY al.${sortField} ${sortDir.toUpperCase()}`;
+    query += ` ORDER BY al.${safeSortField} ${safeSortDir}`;
     query += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(size, offset);
 
     const result = await db.query(query, params);
 
-    // Get total count
-    const countQuery = query.replace(/SELECT.*FROM/, 'SELECT COUNT(*) FROM').replace(/ORDER BY.*LIMIT.*/, '');
-    const countResult = await db.query(countQuery, params.slice(0, -2));
-    const totalElements = parseInt(countResult.rows[0].count);
+    // Get total count (remove ORDER BY and LIMIT/OFFSET)
+    const countQuery = query
+      .replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) FROM')
+      .replace(/ORDER BY[\s\S]*$/, '');
+    const countParams = params.slice(0, -2); // Remove LIMIT and OFFSET params
+    const countResult = await db.query(countQuery, countParams);
+    const totalElements = parseInt(countResult.rows[0]?.count || 0);
 
     return {
       content: result.rows,

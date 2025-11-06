@@ -24,6 +24,9 @@
         <testcontainers.version>1.19.3</testcontainers.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
+        <flyway.url>jdbc:postgresql://localhost:5432/itcenter_auth</flyway.url>
+        <flyway.user>itcenter</flyway.user>
+        <flyway.password>password</flyway.password>
     </properties>
     
     <profiles>
@@ -355,6 +358,25 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>9.22.3</version>
+                <configuration>
+                    <url>${flyway.url}</url>
+                    <user>${flyway.user}</user>
+                    <password>${flyway.password}</password>
+                    <locations>
+                        <location>classpath:db/migration</location>
+                    </locations>
+                    <baselineOnMigrate>true</baselineOnMigrate>
+                    <baselineVersion>0</baselineVersion>
+                    <validateOnMigrate>false</validateOnMigrate>
+                    <outOfOrder>true</outOfOrder>
+                    <driver>org.postgresql.Driver</driver>
+                </configuration>
             </plugin>
         </plugins>
     </build>

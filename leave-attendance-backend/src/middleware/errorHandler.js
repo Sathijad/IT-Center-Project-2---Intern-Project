@@ -38,11 +38,20 @@ export const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal server error';
 
+  // Log error for debugging
+  console.error('Error:', {
+    message: err.message,
+    stack: err.stack,
+    code: err.code,
+    traceId: req.traceId
+  });
+
   res.status(statusCode).json({
     code: err.code || 'INTERNAL_ERROR',
     message,
     traceId: req.traceId,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    ...(process.env.NODE_ENV === 'development' && { details: err.message })
   });
 };
 
