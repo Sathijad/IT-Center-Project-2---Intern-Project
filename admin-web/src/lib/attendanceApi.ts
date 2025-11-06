@@ -74,7 +74,12 @@ export async function clockIn(data: ClockInRequest) {
 }
 
 export async function clockOut(data?: { latitude?: number; longitude?: number }) {
-  const response = await attendanceApi.post('/api/v1/attendance/clock-out', data || {})
+  // Only send location data if both latitude and longitude are provided
+  // If no location, send empty object (backend will handle it as null)
+  const requestBody = (data && typeof data.latitude === 'number' && typeof data.longitude === 'number') 
+    ? { latitude: data.latitude, longitude: data.longitude }
+    : {}
+  const response = await attendanceApi.post('/api/v1/attendance/clock-out', requestBody)
   return response.data
 }
 

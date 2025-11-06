@@ -107,24 +107,69 @@ export class AttendanceRepository {
   }
 
   async updateClockOut(logId, clockOut, durationMinutes, geoLocation = null) {
-    const updateGeo = geoLocation ? `, geo_location = geo_location || $4::jsonb` : '';
-    const params = geoLocation 
-      ? [clockOut, durationMinutes, logId, JSON.stringify(geoLocation)]
-      : [clockOut, durationMinutes, logId];
-
-    const result = await db.query(`
-      UPDATE attendance_logs
-      SET clock_out = $1, duration_minutes = $2${updateGeo}
-      WHERE log_id = $3
-      RETURNING *
-    `, params);
-
-    return result.rows[0];
+    // Ensure all parameters are valid types
+    if (typeof logId !== 'number' || !Number.isInteger(logId)) {
+      throw new Error(`Invalid logId: ${logId} (type: ${typeof logId})`);
+    }
+    if (!(clockOut instanceof Date)) {
+      throw new Error(`Invalid clockOut: ${clockOut} (type: ${typeof clockOut})`);
+    }
+    if (typeof durationMinutes !== 'number' || !Number.isInteger(durationMinutes)) {
+      throw new Error(`Invalid durationMinutes: ${durationMinutes} (type: ${typeof durationMinutes})`);
+    }
+    
+    // Only update geo_location if geoLocation is not null and has valid coordinates
+    const hasValidGeoLocation = geoLocation && 
+                                typeof geoLocation === 'object' &&
+                                geoLocation !== null &&
+                                !Array.isArray(geoLocation) &&
+                                'latitude' in geoLocation &&
+                                'longitude' in geoLocation &&
+                                typeof geoLocation.latitude === 'number' &&
+                                typeof geoLocation.longitude === 'number' &&
+                                !isNaN(geoLocation.latitude) &&
+                                !isNaN(geoLocation.longitude);
+    
+    if (hasValidGeoLocation) {
+      // Update with geo_location - merge with existing if present, otherwise set new
+      const geoLocationJson = JSON.stringify({
+        latitude: geoLocation.latitude,
+        longitude: geoLocation.longitude,
+        ...(geoLocation.accuracy && { accuracy: geoLocation.accuracy })
+      });
+      
+      const result = await db.query(`
+        UPDATE attendance_logs
+        SET clock_out = $1::timestamp, 
+            duration_minutes = $2::integer,
+            geo_location = COALESCE(geo_location, '{}'::jsonb) || $4::jsonb
+        WHERE log_id = $3::bigint
+        RETURNING *
+      `, [clockOut, durationMinutes, logId, geoLocationJson]);
+      
+      return result.rows[0];
+    } else {
+      // Update without geo_location
+      const result = await db.query(`
+        UPDATE attendance_logs
+        SET clock_out = $1::timestamp, 
+            duration_minutes = $2::integer
+        WHERE log_id = $3::bigint
+        RETURNING *
+      `, [clockOut, durationMinutes, logId]);
+      
+      return result.rows[0];
+    }
   }
 
-  async calculateDuration(clockIn, clockOut) {
+  calculateDuration(clockIn, clockOut) {
     const diff = new Date(clockOut) - new Date(clockIn);
-    return Math.floor(diff / 1000 / 60); // minutes
+    const minutes = Math.floor(diff / 1000 / 60);
+    // Ensure we return a valid integer
+    if (!Number.isInteger(minutes) || isNaN(minutes)) {
+      throw new Error(`Invalid duration calculation: ${minutes} from ${clockIn} to ${clockOut}`);
+    }
+    return minutes;
   }
 }
 

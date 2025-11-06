@@ -24,7 +24,7 @@ export const clockInSchema = z.object({
 export const clockOutSchema = z.object({
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional()
-});
+}).passthrough(); // Allow empty object or object with optional coordinates
 
 export const paginationSchema = z.object({
   page: z.string().regex(/^\d+$/).transform(Number).default('0'),
@@ -35,13 +35,22 @@ export const paginationSchema = z.object({
 export const validate = (schema) => {
   return (req, res, next) => {
     try {
+      // For clock-out, handle empty body gracefully
+      let bodyToValidate = req.body || {};
+      
+      // If body is empty object, keep it as is for clock-out
+      if (Object.keys(bodyToValidate).length === 0 && schema === clockOutSchema) {
+        req.body = {};
+        return next();
+      }
+      
       const result = schema.parse({
-        ...req.body,
+        ...bodyToValidate,
         ...req.query,
         ...req.params
       });
       
-      // Merge validated data back
+      // Merge validated data back, but preserve original body structure
       req.body = { ...req.body, ...result };
       req.query = { ...req.query, ...result };
       req.params = { ...req.params, ...result };

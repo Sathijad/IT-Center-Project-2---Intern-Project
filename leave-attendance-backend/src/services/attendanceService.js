@@ -46,10 +46,24 @@ export class AttendanceService {
       clockOutTime
     );
 
+    // Ensure log_id is a number
+    const logId = typeof activeClockIn.log_id === 'number' 
+      ? activeClockIn.log_id 
+      : parseInt(activeClockIn.log_id, 10);
+    
+    if (isNaN(logId)) {
+      throw new Error(`Invalid log_id: ${activeClockIn.log_id}`);
+    }
+
+    // Ensure durationMinutes is a valid integer
+    if (typeof durationMinutes !== 'number' || isNaN(durationMinutes)) {
+      throw new Error(`Invalid durationMinutes: ${durationMinutes}`);
+    }
+
     return await this.attendanceRepo.updateClockOut(
-      activeClockIn.log_id,
+      logId,
       clockOutTime,
-      durationMinutes,
+      Math.floor(durationMinutes), // Ensure it's an integer
       geoLocation
     );
   }

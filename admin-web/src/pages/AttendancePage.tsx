@@ -2,19 +2,32 @@ import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
 import { getAttendanceLogs, type AttendanceLog } from '../lib/attendanceApi'
-import { Clock, Download, Calendar } from 'lucide-react'
+import { Download, Calendar, Users } from 'lucide-react'
+import api from '../lib/api'
 
 const AttendancePage: React.FC = () => {
   const { user } = useAuth()
   const [startDate, setStartDate] = useState<string>('')
   const [endDate, setEndDate] = useState<string>('')
+  const [selectedUserId, setSelectedUserId] = useState<string>('')
   const [page, setPage] = useState(0)
 
-  const isAdmin = user?.roles?.includes('ADMIN')
+  // Fetch users for filter dropdown
+  const { data: usersData } = useQuery({
+    queryKey: ['users-for-filter'],
+    queryFn: async () => {
+      const response = await api.get('/api/v1/admin/users', {
+        params: { page: 0, size: 1000 } // Get all users for filter
+      })
+      return response.data
+    },
+    enabled: !!user?.roles?.includes('ADMIN'),
+  })
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['attendance-logs', startDate, endDate, page],
+    queryKey: ['admin-attendance-logs', startDate, endDate, selectedUserId, page],
     queryFn: () => getAttendanceLogs({
+      user_id: selectedUserId ? parseInt(selectedUserId) : undefined,
       start_date: startDate || undefined,
       end_date: endDate || undefined,
       page,
@@ -64,15 +77,34 @@ const AttendancePage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          {isAdmin ? 'Attendance Management' : 'My Attendance'}
-        </h1>
-        <p className="mt-2 text-gray-600">View attendance logs and records</p>
+        <h1 className="text-3xl font-bold text-gray-900">Attendance Management</h1>
+        <p className="mt-2 text-gray-600">View and manage all users' attendance records</p>
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div>
+            <label htmlFor="user-filter" className="block text-sm font-medium text-gray-700 mb-2">
+              Filter by User
+            </label>
+            <select
+              id="user-filter"
+              value={selectedUserId}
+              onChange={(e) => {
+                setSelectedUserId(e.target.value)
+                setPage(0)
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+            >
+              <option value="">All Users</option>
+              {usersData?.content?.map((user: any) => (
+                <option key={user.id} value={user.id.toString()}>
+                  {user.displayName || user.email}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
             <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
               Start Date
             </label>
@@ -87,7 +119,7 @@ const AttendancePage: React.FC = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
             />
           </div>
-          <div className="flex-1">
+          <div>
             <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-2">
               End Date
             </label>
@@ -105,7 +137,7 @@ const AttendancePage: React.FC = () => {
           <div className="flex items-end">
             <button
               onClick={handleExport}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
             >
               <Download className="w-5 h-5" />
               Export
@@ -119,21 +151,23 @@ const AttendancePage: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    {isAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clock In</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clock Out</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {data.content.map((log: AttendanceLog) => (
-                    <tr key={log.log_id}>
-                      {isAdmin && (
-                        <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={log.log_id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Users className="w-4 h-4 text-gray-400 mr-2" />
                           <div className="text-sm font-medium text-gray-900">{log.user_name}</div>
-                        </td>
-                      )}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {new Date(log.clock_in).toLocaleDateString()}
@@ -155,6 +189,17 @@ const AttendancePage: React.FC = () => {
                             ? `${Math.floor(log.duration_minutes / 60)}h ${log.duration_minutes % 60}m`
                             : '-'}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {log.clock_out ? (
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                            Complete
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                            Open
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}

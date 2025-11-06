@@ -12,6 +12,7 @@ import Profile from './pages/Profile'
 import LeaveRequestPage from './pages/LeaveRequestPage'
 import ApplyLeavePage from './pages/ApplyLeavePage'
 import AttendancePage from './pages/AttendancePage'
+import MyAttendancePage from './pages/MyAttendancePage'
 import Layout from './components/Layout'
 
 const queryClient = new QueryClient({
@@ -94,7 +95,7 @@ function App() {
               } />
               <Route path="attendance" element={
                 <ProtectedRoute>
-                  <AttendancePage />
+                  <MyAttendancePage />
                 </ProtectedRoute>
               } />
             </Route>
