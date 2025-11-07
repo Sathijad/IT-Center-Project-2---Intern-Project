@@ -48,7 +48,7 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
     });
 
     try {
-      final token = await AuthService.instance.getAccessToken();
+      var token = await AuthService.instance.getAccessToken();
       if (token == null || token.isEmpty) {
         throw Exception('Not authenticated');
       }
@@ -82,6 +82,12 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
         setState(() {
           _leaveBalance = data;
         });
+      } else if (res.statusCode == 401) {
+        final refreshedToken = await AuthService.instance.getAccessToken(forceRefresh: true);
+        if (refreshedToken != null && refreshedToken.isNotEmpty && refreshedToken != token) {
+          return _loadLeaveBalance(refreshedToken);
+        }
+        throw Exception('Session expired. Please sign in again.');
       } else {
         final errorBody = json.decode(res.body);
         throw Exception(errorBody['message'] ?? 'Failed to load leave balance');
@@ -108,6 +114,12 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
         setState(() {
           _leaveRequests = json.decode(res.body);
         });
+      } else if (res.statusCode == 401) {
+        final refreshedToken = await AuthService.instance.getAccessToken(forceRefresh: true);
+        if (refreshedToken != null && refreshedToken.isNotEmpty && refreshedToken != token) {
+          return _loadLeaveRequests(refreshedToken);
+        }
+        throw Exception('Session expired. Please sign in again.');
       } else {
         throw Exception('Failed to load leave requests');
       }

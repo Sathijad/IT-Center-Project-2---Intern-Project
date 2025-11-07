@@ -170,17 +170,25 @@ class AuthService {
   }
 
   // --- Tokens for backend calls ---
-  Future<String?> getAccessToken() async {
+  Future<String?> getAccessToken({bool forceRefresh = false}) async {
     try {
-      final session = await Amplify.Auth.fetchAuthSession();
+      final session = await Amplify.Auth.fetchAuthSession(
+        options: FetchAuthSessionOptions(forceRefresh: forceRefresh),
+      );
       
       if (session is CognitoAuthSession) {
         // Get tokens safely
         final tokens = session.userPoolTokensResult.valueOrNull;
         if (tokens == null) return null;
 
-        // Return the raw JWT string (not toString())
-        return tokens.accessToken.raw;
+        // Prefer access token, fall back to id token if needed
+        final accessToken = tokens.accessToken.raw;
+        if (accessToken.isNotEmpty) {
+          return accessToken;
+        }
+
+        final idToken = tokens.idToken.raw;
+        return idToken.isNotEmpty ? idToken : null;
       }
       return null;
     } catch (e) {
