@@ -56,8 +56,8 @@ exports.config = {
        platformName: "Android",
        //   browserName: "Chrome",
        "appium:deviceName": "emulator-5554",
-       "appium:app":
-         "C:/Users/SathijaDeshapriya/Downloads/IT Center Project 2/mobile-app/build/app/outputs/flutter-apk/app-debug.apk",
+      "appium:app":
+        "C:/Users/SathijaDeshapriya/Downloads/IT Center Project 2/mobile-app/build/app/outputs/flutter-apk/app-debug.apk",
        "appium:platformVersion": "13.0",
        "appium:automationName": "Flutter",
        "appium:flutterSystemPort": 4724,

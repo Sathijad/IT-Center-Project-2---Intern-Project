@@ -5,7 +5,7 @@ import 'src/api_client.dart';
 import 'src/home_screen.dart';
 import 'src/login_screen.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AuthService.instance.init(); // Amplify init
   runApp(const MyApp());
