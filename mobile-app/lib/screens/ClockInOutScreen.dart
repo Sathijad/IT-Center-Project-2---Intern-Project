@@ -234,80 +234,88 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
       appBar: AppBar(
         title: const Text('Clock In/Out'),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                _hasActiveClockIn ? Icons.access_time_filled : Icons.access_time,
-                size: 80,
-                color: _hasActiveClockIn ? Colors.orange : Colors.blue,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                _hasActiveClockIn ? 'Currently Clocked In' : 'Ready to Clock In',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (_currentPosition != null) ...[
-                Text(
-                  'Location: ${_currentPosition!.latitude.toStringAsFixed(6)}, ${_currentPosition!.longitude.toStringAsFixed(6)}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-              ],
-              if (_errorMessage != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(color: Colors.red.shade800),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading
-                      ? null
-                      : (_hasActiveClockIn ? _clockOut : _clockIn),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: _hasActiveClockIn ? Colors.orange : Colors.blue,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Text(
-                          _hasActiveClockIn ? 'Clock Out' : 'Clock In',
-                          style: const TextStyle(fontSize: 18),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _hasActiveClockIn ? Icons.access_time_filled : Icons.access_time,
+                      size: 80,
+                      color: _hasActiveClockIn ? Colors.orange : Colors.blue,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      _hasActiveClockIn ? 'Currently Clocked In' : 'Ready to Clock In',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_currentPosition != null) ...[
+                      Text(
+                        'Location: ${_currentPosition!.latitude.toStringAsFixed(6)}, ${_currentPosition!.longitude.toStringAsFixed(6)}',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (_errorMessage != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade200),
                         ),
+                        child: Text(
+                          _errorMessage!,
+                          style: TextStyle(color: Colors.red.shade800),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isLoading
+                            ? null
+                            : (_hasActiveClockIn ? _clockOut : _clockIn),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: _hasActiveClockIn ? Colors.orange : Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : Text(
+                                _hasActiveClockIn ? 'Clock Out' : 'Clock In',
+                                style: const TextStyle(fontSize: 18),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
