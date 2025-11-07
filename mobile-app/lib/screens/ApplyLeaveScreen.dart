@@ -63,11 +63,26 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       if (res.statusCode == 200) {
         final data = json.decode(res.body);
         setState(() {
-          _policies = (data as List).map((p) => {
-            'id': p['policy_id'],
-            'name': p['name'],
-            'limit': p['annual_limit'],
-          }).toList();
+          final parsedPolicies = <Map<String, dynamic>>[];
+          for (final rawPolicy in (data as List)) {
+            final rawId = rawPolicy['policy_id'];
+            final parsedId = rawId is int ? rawId : int.tryParse(rawId.toString());
+            if (parsedId == null) {
+              continue;
+            }
+
+            final rawLimit = rawPolicy['annual_limit'];
+            final parsedLimit = rawLimit is num
+                ? rawLimit.toInt()
+                : int.tryParse(rawLimit.toString()) ?? 0;
+
+            parsedPolicies.add({
+              'id': parsedId,
+              'name': rawPolicy['name']?.toString() ?? 'Leave Policy',
+              'limit': parsedLimit,
+            });
+          }
+          _policies = parsedPolicies;
         });
       } else {
         // Fallback to default policies if API fails

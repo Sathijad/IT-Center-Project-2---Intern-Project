@@ -11,11 +11,37 @@ import { reportsRouter } from './routes/reports.js';
 
 const app = express();
 
+const configuredOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean)
+  : [];
+
+const corsOptions = {
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  origin(origin, callback) {
+    if (!origin) {
+      // Allow requests like mobile apps or curl (no origin header)
+      return callback(null, true);
+    }
+
+    const normalizedOrigin = origin.trim();
+
+    if (configuredOrigins.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+
+    if (normalizedOrigin.startsWith('http://localhost') || normalizedOrigin.startsWith('http://127.0.0.1')) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS: Origin not allowed - ${origin}`));
+  }
+};
+
 // Middleware
-app.use(cors({
-  origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:5173'],
-  credentials: true
-}));
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(requestLogger);
 
