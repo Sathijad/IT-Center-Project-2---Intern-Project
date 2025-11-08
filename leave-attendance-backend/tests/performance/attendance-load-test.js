@@ -47,7 +47,7 @@ export default function (data) {
 
   // Test 1: Get attendance logs
   const getAttendanceStart = Date.now();
-  const getAttendanceRes = http.get(`${data.baseUrl}/api/v1/attendance?page=0&size=20`, {
+  const getAttendanceRes = http.get(`${data.baseUrl}/api/v1/attendance?page=1&size=20`, {
     headers,
     tags: { name: 'GetAttendance' },
   });
@@ -67,7 +67,7 @@ export default function (data) {
     JSON.stringify({
       latitude: -37.8136 + (Math.random() * 0.01 - 0.005), // Slight variation
       longitude: 144.9631 + (Math.random() * 0.01 - 0.005),
-      accuracy: 10.5,
+      source: 'load-test',
     }),
     {
       headers,
@@ -87,10 +87,7 @@ export default function (data) {
   // Test 3: Clock out
   const clockOutStart = Date.now();
   const clockOutRes = http.post(`${data.baseUrl}/api/v1/attendance/clock-out`,
-    JSON.stringify({
-      latitude: -37.8136 + (Math.random() * 0.01 - 0.005),
-      longitude: 144.9631 + (Math.random() * 0.01 - 0.005),
-    }),
+    JSON.stringify({}),
     {
       headers,
       tags: { name: 'ClockOut' },

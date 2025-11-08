@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Leave & Attendance API",
-    "description": "Postman collection for Phase 2 Leave & Attendance Management API",
+    "name": "Serverless Leave & Attendance API",
+    "description": "Postman collection for Phase 2 serverless leave, attendance, integrations, and reporting endpoints.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -16,8 +16,8 @@
   },
   "variable": [
     {
-      "key": "base_url",
-      "value": "http://localhost:3000",
+      "key": "invoke_url",
+      "value": "https://your-api-id.execute-api.ap-southeast-2.amazonaws.com",
       "type": "string"
     },
     {
@@ -31,10 +31,9 @@
       "name": "Health Check",
       "request": {
         "method": "GET",
-        "header": [],
         "url": {
-          "raw": "{{base_url}}/healthz",
-          "host": ["{{base_url}}"],
+          "raw": "{{invoke_url}}/healthz",
+          "host": ["{{invoke_url}}"],
           "path": ["healthz"]
         }
       }
@@ -43,31 +42,26 @@
       "name": "Leave",
       "item": [
         {
-          "name": "Get Leave Balance",
+          "name": "Get Leave Balance (Self)",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/leave/balance",
-              "host": ["{{base_url}}"],
+              "raw": "{{invoke_url}}/api/v1/leave/balance",
+              "host": ["{{invoke_url}}"],
               "path": ["api", "v1", "leave", "balance"]
             }
           }
         },
         {
-          "name": "Get Leave Balance (Admin - Other User)",
+          "name": "Get Leave Balance (Admin for User 42)",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/leave/balance?user_id=2",
-              "host": ["{{base_url}}"],
+              "raw": "{{invoke_url}}/api/v1/leave/balance?user_id=42",
+              "host": ["{{invoke_url}}"],
               "path": ["api", "v1", "leave", "balance"],
               "query": [
-                {
-                  "key": "user_id",
-                  "value": "2"
-                }
+                { "key": "user_id", "value": "42" }
               ]
             }
           }
@@ -76,51 +70,15 @@
           "name": "List Leave Requests",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/leave/requests?page=0&size=20",
-              "host": ["{{base_url}}"],
+              "raw": "{{invoke_url}}/api/v1/leave/requests?page=1&size=25&sort=created_at,desc",
+              "host": ["{{invoke_url}}"],
               "path": ["api", "v1", "leave", "requests"],
               "query": [
-                {
-                  "key": "page",
-                  "value": "0"
-                },
-                {
-                  "key": "size",
-                  "value": "20"
-                }
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "25" },
+                { "key": "sort", "value": "created_at,desc" }
               ]
-            }
-          }
-        },
-        {
-          "name": "List Leave Requests (Filtered by Status)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/leave/requests?status=PENDING",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "leave", "requests"],
-              "query": [
-                {
-                  "key": "status",
-                  "value": "PENDING"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Leave Request by ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/leave/requests/1",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "leave", "requests", "1"]
             }
           }
         },
@@ -129,18 +87,15 @@
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"policy_id\": 1,\n  \"start_date\": \"2025-02-15\",\n  \"end_date\": \"2025-02-20\",\n  \"reason\": \"Vacation\"\n}"
+              "raw": "{\n  \"policy_id\": 1,\n  \"start_date\": \"2025-05-12\",\n  \"end_date\": \"2025-05-14\",\n  \"half_day\": false,\n  \"reason\": \"Family trip\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/leave/requests",
-              "host": ["{{base_url}}"],
+              "raw": "{{invoke_url}}/api/v1/leave/requests",
+              "host": ["{{invoke_url}}"],
               "path": ["api", "v1", "leave", "requests"]
             }
           }
@@ -150,40 +105,34 @@
           "request": {
             "method": "PATCH",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"action\": \"APPROVE\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/leave/requests/1",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "leave", "requests", "1"]
+              "raw": "{{invoke_url}}/api/v1/leave/requests/{{leave_request_id}}",
+              "host": ["{{invoke_url}}"],
+              "path": ["api", "v1", "leave", "requests", "{{leave_request_id}}"]
             }
           }
         },
         {
-          "name": "Reject Leave Request (Admin)",
+          "name": "Cancel Leave Request (Employee)",
           "request": {
             "method": "PATCH",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"REJECT\",\n  \"notes\": \"Insufficient leave balance\"\n}"
+              "raw": "{\n  \"action\": \"CANCEL\",\n  \"notes\": \"Need to reschedule\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/leave/requests/1",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "leave", "requests", "1"]
+              "raw": "{{invoke_url}}/api/v1/leave/requests/{{leave_request_id}}",
+              "host": ["{{invoke_url}}"],
+              "path": ["api", "v1", "leave", "requests", "{{leave_request_id}}"]
             }
           }
         }
@@ -193,23 +142,18 @@
       "name": "Attendance",
       "item": [
         {
-          "name": "Get Attendance Logs",
+          "name": "List Attendance Logs",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/attendance?page=0&size=20",
-              "host": ["{{base_url}}"],
+              "raw": "{{invoke_url}}/api/v1/attendance?page=1&size=25&from=2025-05-01&to=2025-05-31",
+              "host": ["{{invoke_url}}"],
               "path": ["api", "v1", "attendance"],
               "query": [
-                {
-                  "key": "page",
-                  "value": "0"
-                },
-                {
-                  "key": "size",
-                  "value": "20"
-                }
+                { "key": "page", "value": "1" },
+                { "key": "size", "value": "25" },
+                { "key": "from", "value": "2025-05-01" },
+                { "key": "to", "value": "2025-05-31" }
               ]
             }
           }
@@ -219,18 +163,15 @@
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"latitude\": -37.8136,\n  \"longitude\": 144.9631,\n  \"accuracy\": 10.5\n}"
+              "raw": "{\n  \"latitude\": -37.8136,\n  \"longitude\": 144.9631,\n  \"source\": \"mobile\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/attendance/clock-in",
-              "host": ["{{base_url}}"],
+              "raw": "{{invoke_url}}/api/v1/attendance/clock-in",
+              "host": ["{{invoke_url}}"],
               "path": ["api", "v1", "attendance", "clock-in"]
             }
           }
@@ -240,42 +181,16 @@
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"latitude\": -37.8136,\n  \"longitude\": 144.9631\n}"
+              "raw": "{ }"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/attendance/clock-out",
-              "host": ["{{base_url}}"],
+              "raw": "{{invoke_url}}/api/v1/attendance/clock-out",
+              "host": ["{{invoke_url}}"],
               "path": ["api", "v1", "attendance", "clock-out"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Reports",
-      "item": [
-        {
-          "name": "Get Leave Summary Report (Admin)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/v1/reports/leave-summary?year=2025",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "reports", "leave-summary"],
-              "query": [
-                {
-                  "key": "year",
-                  "value": "2025"
-                }
-              ]
             }
           }
         }
@@ -285,23 +200,40 @@
       "name": "Integrations",
       "item": [
         {
-          "name": "Queue Calendar Sync (Admin)",
+          "name": "Enqueue MS Graph Sync (Admin)",
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"request_id\": 1\n}"
+              "raw": "{\n  \"request_id\": {{leave_request_id}}\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/integrations/msgraph/sync",
-              "host": ["{{base_url}}"],
+              "raw": "{{invoke_url}}/api/v1/integrations/msgraph/sync",
+              "host": ["{{invoke_url}}"],
               "path": ["api", "v1", "integrations", "msgraph", "sync"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Leave Summary (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{invoke_url}}/api/v1/reports/leave-summary?from=2025-01-01&to=2025-12-31",
+              "host": ["{{invoke_url}}"],
+              "path": ["api", "v1", "reports", "leave-summary"],
+              "query": [
+                { "key": "from", "value": "2025-01-01" },
+                { "key": "to", "value": "2025-12-31" }
+              ]
             }
           }
         }

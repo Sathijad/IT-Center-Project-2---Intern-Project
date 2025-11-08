@@ -1,127 +1,117 @@
-# Leave & Attendance Management Backend
+# Leave & Attendance Serverless Backend
 
-Node.js/Express Lambda backend for Phase 2 - Leave and Attendance Management.
+Per-endpoint AWS Lambda functions (Node.js 18) providing leave, attendance, reporting, and MS Graph integration APIs for Phase 2.
 
-## Architecture
+## Architecture Snapshot
 
-- **Runtime**: Node.js 20.x
-- **Framework**: Express.js
-- **Deployment**: AWS Lambda via API Gateway (SAM)
-- **Database**: PostgreSQL (shared with Phase 1)
-- **Authentication**: AWS Cognito JWT
+- **Runtime**: Node.js 18.x (TypeScript → `dist/`)
+- **Framework**: Serverless Framework v3
+- **API Layer**: API Gateway (HTTP API)
+- **Database**: PostgreSQL (`itcenter_auth`) via Secrets Manager + optional RDS Proxy
+- **Authentication**: AWS Cognito JWT with RBAC (ADMIN / EMPLOYEE)
+- **Integrations**: SQS worker for Microsoft Graph calendar sync
+- **Monitoring**: CloudWatch logs/alarms, X-Ray tracing enabled
 
 ## Local Development
 
 ### Prerequisites
 
-- Node.js 20.x
-- AWS SAM CLI
-- Docker (for local Lambda testing)
+- Node.js 18.x
+- npm 10.x
+- Serverless CLI (`npm install -g serverless`)
 
-### Setup
+### Install & Build
 
 ```bash
-# Install dependencies
+cd leave-attendance-backend
 npm install
-
-# Start local API (requires SAM CLI)
-sam local start-api --port 3000
-
-# Or use local Express server (for development)
-node src/app.js  # Note: requires DATABASE_URL env var
+npm run build
 ```
 
-### Environment Variables
-
-Create `.env` file:
-
-```env
-DATABASE_URL=postgresql://itcenter:password@localhost:5432/itcenter_auth
-COGNITO_ISSUER_URI=https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_hTAYJId8y
-CORS_ORIGINS=http://localhost:5173
-GEO_VALIDATION_ENABLED=true
-OFFICE_LATITUDE=-37.8136
-OFFICE_LONGITUDE=144.9631
-GEOFENCE_RADIUS_METERS=1000
-```
-
-## Testing
+### Unit Tests & Linting
 
 ```bash
-# Run unit tests
+# Jest unit tests with coverage
 npm test
 
-# Run with coverage
-npm test -- --coverage
+# ESLint
+npm run lint
+```
 
-# Run watch mode
-npm run test:watch
+### Environment Configuration
+
+Runtime configuration is provided via YAML files in `config/` per stage. See `docs/PHASE2_SERVERLESS_RUNBOOK.md` §3 for the full list of required values:
+
+```yaml
+allowedOrigins:
+  - https://dev-admin.example.com
+
+vpc:
+  subnetIds: [subnet-aaaaaaaa, subnet-bbbbbbbb]
+  securityGroupIds: [sg-cccccccc]
+
+dbSecretArn: arn:aws:secretsmanager:...:secret:itcenter/dev/db
+dbProxyEndpoint: itcenter-dev-proxy.proxy-abcdefghijklmnop.ap-southeast-2.rds.amazonaws.com
+...
 ```
 
 ## Deployment
 
+The Serverless Framework template (`serverless.yml`) provisions all Lambda functions, API Gateway routes, SQS queues, and alarms.
+
 ```bash
-# Build
-sam build
+# Deploy to a stage (dev/stg/prd)
+serverless deploy --stage dev
 
-# Deploy to DEV
-sam deploy --config-env dev
-
-# Deploy to STG
-sam deploy --config-env stg
-
-# Deploy to PRD
-sam deploy --config-env prd
+# Roll back
+serverless rollback --stage dev
 ```
 
-## API Endpoints
+Refer to `.github/workflows/serverless-phase2.yml` for the CI/CD pipeline and to `docs/PHASE2_SERVERLESS_RUNBOOK.md` for step-by-step AWS setup.
 
-See `docs/openapi/leave-attendance.yaml` for full API documentation.
+## Testing & Validation
 
-Main endpoints:
-- `GET /api/v1/leave/balance` - Get leave balances
-- `GET /api/v1/leave/requests` - List leave requests
-- `POST /api/v1/leave/requests` - Create leave request
-- `PATCH /api/v1/leave/requests/{id}` - Update leave status
-- `GET /api/v1/attendance` - Get attendance logs
-- `POST /api/v1/attendance/clock-in` - Clock in
-- `POST /api/v1/attendance/clock-out` - Clock out
+- **Unit tests**: `npm test`
+- **Postman**: `tests/postman/leave-attendance.postman_collection.json` (supply `invoke_url` & `access_token` variables)
+- **Performance**: `tests/performance/attendance-load-test.js` (k6 100 rps, p95 < 300 ms)
+- **Security**: ZAP baseline scan in CI
+
+## API Catalogue
+
+Full contract lives at `docs/openapi/leave-attendance.yaml`.
+
+Key endpoints:
+
+- `GET /api/v1/leave/balance`
+- `GET /api/v1/leave/requests`
+- `POST /api/v1/leave/requests`
+- `PATCH /api/v1/leave/requests/{id}`
+- `GET /api/v1/attendance`
+- `POST /api/v1/attendance/clock-in`
+- `POST /api/v1/attendance/clock-out`
+- `POST /api/v1/integrations/msgraph/sync`
+- `GET /api/v1/reports/leave-summary`
+- `GET /healthz`
 
 ## Project Structure
 
 ```
 src/
-  ├── index.js              # Lambda handler entry point
-  ├── app.js                # Express app setup
-  ├── config/
-  │   └── database.js       # Database connection
-  ├── middleware/
-  │   ├── auth.js           # JWT authentication & RBAC
-  │   ├── errorHandler.js   # Error handling
-  │   └── requestLogger.js  # Request logging
-  ├── routes/
-  │   ├── health.js         # Health check
-  │   ├── leave.js          # Leave endpoints
-  │   ├── attendance.js     # Attendance endpoints
-  │   ├── integrations.js   # Integration endpoints
-  │   └── reports.js        # Report endpoints
-  ├── services/
-  │   ├── leaveService.js   # Leave business logic
-  │   └── attendanceService.js  # Attendance business logic
-  ├── repositories/
-  │   ├── leaveRepository.js      # Leave data access
-  │   └── attendanceRepository.js # Attendance data access
-  ├── utils/
-  │   ├── validation.js     # Zod schemas
-  │   └── dateUtils.js      # Date utilities
-  └── integrations/
-      └── msgraph/
-          └── handler.js    # Calendar sync Lambda
+  common/           # auth, db pool, responses, validation
+  handlers/         # Lambda handlers per endpoint
+  repositories/     # Data access for leave/attendance/reporting
+  services/         # Business logic
+  utils/            # Shared utilities (date calc, geo)
+  index.ts          # Placeholder entrypoint (for bundlers)
+
+migrations/         # Idempotent SQL migrations
+tests/              # Postman, k6 assets
+.github/workflows/  # CI/CD pipeline
 ```
 
-## See Also
+## References
 
-- [Phase 2 Runbook](../docs/PHASE2_RUNBOOK.md)
-- [Phase 2 Release Notes](../docs/PHASE2_RELEASE_NOTES.md)
+- [Serverless Runbook](../docs/PHASE2_SERVERLESS_RUNBOOK.md)
 - [OpenAPI Spec](../docs/openapi/leave-attendance.yaml)
-
+- [Postman Collection](tests/postman/leave-attendance.postman_collection.json)
+- [k6 Performance Script](tests/performance/attendance-load-test.js)

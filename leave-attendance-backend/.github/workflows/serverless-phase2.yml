@@ -1,0 +1,154 @@
+name: Serverless Phase 2 Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "leave-attendance-backend/**"
+      - "docs/**"
+      - "tests/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "leave-attendance-backend/**"
+      - "docs/**"
+      - "tests/**"
+
+env:
+  NODE_VERSION: "18"
+  WORKING_DIR: "leave-attendance-backend"
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: ${{ env.WORKING_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npm ci
+
+      - name: Lint
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npm run lint
+
+      - name: Unit tests
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npm test
+
+      - name: Build
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npm run build
+
+      - name: Upload build artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: |
+            leave-attendance-backend/dist/**
+            leave-attendance-backend/serverless.yml
+            leave-attendance-backend/package.json
+            leave-attendance-backend/package-lock.json
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-test
+    environment:
+      name: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artefacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: leave-attendance-backend
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
+
+      - name: Install Serverless CLI
+        run: npm install -g serverless
+
+      - name: Deploy to DEV
+        working-directory: ${{ env.WORKING_DIR }}
+        run: serverless deploy --stage dev --conceal
+
+      - name: Run smoke tests (Postman)
+        uses: matt-ball/newman-action@v1
+        with:
+          collection: leave-attendance-backend/tests/postman/leave-attendance.postman_collection.json
+          envVar: |
+            ["invoke_url","${{ vars.API_DEV_INVOKE_URL }}"]
+            ["access_token","${{ secrets.DEV_ACCESS_TOKEN }}"]
+
+      - name: Run k6 performance check
+        run: |
+          docker run --rm -v $PWD/leave-attendance-backend/tests/performance:/scripts grafana/k6:0.49.0 run /scripts/attendance-load-test.js \
+            -e API_BASE_URL=${{ vars.API_DEV_INVOKE_URL }} \
+            -e ACCESS_TOKEN=${{ secrets.DEV_ACCESS_TOKEN }}
+
+  promote:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: stg
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
+      - name: Install Serverless CLI
+        run: npm install -g serverless
+      - name: Deploy to STG
+        working-directory: ${{ env.WORKING_DIR }}
+        run: serverless deploy --stage stg --conceal
+      - name: Security scan (ZAP baseline)
+        run: |
+          docker run --rm -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t ${{ vars.API_STG_INVOKE_URL }}/healthz \
+            -r zap-baseline.html
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-baseline
+          path: zap-baseline.html
+
+  prod-release:
+    runs-on: ubuntu-latest
+    needs: promote
+    environment:
+      name: prd
+      url: ${{ vars.API_PRD_INVOKE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
+      - name: Install Serverless CLI
+        run: npm install -g serverless
+      - name: Deploy to PROD (canary)
+        working-directory: ${{ env.WORKING_DIR }}
+        run: serverless deploy --stage prd --conceal
+      - name: Post-deploy verification
+        run: |
+          curl -sSf ${{ vars.API_PRD_INVOKE_URL }}/healthz
+
