@@ -1,5 +1,5 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
-import { Pool, PoolClient, QueryConfig, QueryResult } from 'pg';
+import { Pool, PoolClient, QueryConfig, QueryResult, QueryResultRow } from 'pg';
 import { logger } from './logger';
 
 interface DbSecret {
@@ -110,7 +110,7 @@ export const getPool = async (): Promise<Pool> => {
   return pool;
 };
 
-export const query = async <T>(
+export const query = async <T extends QueryResultRow = QueryResultRow>(
   sql: string | QueryConfig,
   params?: QueryParams,
 ): Promise<QueryResult<T>> => {

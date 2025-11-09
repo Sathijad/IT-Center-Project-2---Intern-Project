@@ -1,9 +1,9 @@
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export interface LogContext {
-  requestId?: string;
+  requestId?: string | number;
   userId?: string | number;
-  correlationId?: string;
+  correlationId?: string | number;
   [key: string]: unknown;
 }
 
