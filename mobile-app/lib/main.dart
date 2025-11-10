@@ -8,7 +8,7 @@ import 'package:flutter_driver/driver_extension.dart';
 import 'package:itcenter_auth/main.dart' as app;
 
 Future<void> main() async {
-  enableFlutterDriverExtension();
+  // enableFlutterDriverExtension();
   WidgetsFlutterBinding.ensureInitialized();
   await AuthService.instance.init(); // Amplify init
   runApp(const MyApp());

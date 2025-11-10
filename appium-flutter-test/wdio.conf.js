@@ -323,6 +323,23 @@
 
 const APPIUM_PORT = Number(process.env.APPIUM_PORT || 4723);
 
+const APPIUM_COMMAND = process.platform === 'win32' ? 'appium.cmd' : 'appium';
+
+const services = process.env.NO_APPIUM_SERVICE
+    ? []
+    : [[
+        'appium',
+        {
+            command: APPIUM_COMMAND,
+            args: {
+                basePath: '/wd/hub',
+                port: APPIUM_PORT,
+            },
+            waitStartTime: 5000,
+            waitStartTimeout: 180000,
+        }
+    ]];
+
 exports.config = {
     runner: 'local',
     port: APPIUM_PORT,
@@ -361,18 +378,7 @@ exports.config = {
     connectionRetryCount: 3,
     
     
-    services: [[
-        'appium',
-        {
-            command: 'appium',
-            args: {
-                basePath: '/wd/hub',
-                port: APPIUM_PORT,
-            },
-            waitStartTime: 5000,
-            waitStartTimeout: 180000,
-        }
-    ]],
+    services,
     
     
     framework: 'mocha',

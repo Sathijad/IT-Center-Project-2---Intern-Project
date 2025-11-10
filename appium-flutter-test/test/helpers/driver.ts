@@ -14,8 +14,10 @@ export async function waitForElement(
 
   while (Date.now() < deadline) {
     try {
+      const remaining = deadline - Date.now();
+      const perAttemptTimeout = remaining < 0 ? 0 : Math.min(remaining, 2000);
       // @ts-ignore - Flutter execute signature not in WDIO types
-      await asFlutter(driver).execute('flutter:waitFor', finder);
+      await asFlutter(driver).execute('flutter:waitFor', finder, perAttemptTimeout);
       return finder;
     } catch {
       await driver.pause(500);

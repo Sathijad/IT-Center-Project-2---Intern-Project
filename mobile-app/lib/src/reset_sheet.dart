@@ -74,6 +74,7 @@ class _ResetSheetState extends State<ResetSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
+      key: const ValueKey('reset_sheet'),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -85,6 +86,7 @@ class _ResetSheetState extends State<ResetSheet> {
           const SizedBox(height: 16),
           if (phase == 'request') ...[
             TextField(
+              key: const ValueKey('reset_email_field'),
               controller: email, 
               decoration: const InputDecoration(
                 labelText: 'Email',
@@ -111,6 +113,7 @@ class _ResetSheetState extends State<ResetSheet> {
               ),
             const SizedBox(height: 16),
             FilledButton(
+              key: const ValueKey('reset_send_code_button'),
               onPressed: busy ? null : _request,
               style: FilledButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
@@ -127,6 +130,7 @@ class _ResetSheetState extends State<ResetSheet> {
             Text('Enter the verification code sent to ${email.text}'),
             const SizedBox(height: 16),
             TextField(
+              key: const ValueKey('reset_code_field'),
               controller: code, 
               decoration: const InputDecoration(
                 labelText: 'Verification Code',
@@ -136,6 +140,7 @@ class _ResetSheetState extends State<ResetSheet> {
             ),
             const SizedBox(height: 8),
             TextField(
+              key: const ValueKey('reset_new_password_field'),
               controller: newPw, 
               decoration: const InputDecoration(
                 labelText: 'New Password',
@@ -162,6 +167,7 @@ class _ResetSheetState extends State<ResetSheet> {
               ),
             const SizedBox(height: 16),
             FilledButton(
+              key: const ValueKey('reset_confirm_button'),
               onPressed: busy ? null : _confirm,
               style: FilledButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),

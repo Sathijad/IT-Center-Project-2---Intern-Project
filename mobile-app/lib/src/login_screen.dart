@@ -522,6 +522,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(color: Colors.grey[400]),
                           ),
                           TextButton(
+                            key: const ValueKey('forgot_password_button'),
                             onPressed: () => showModalBottomSheet(
                               context: context,
                               builder: (_) => const ResetSheet(),

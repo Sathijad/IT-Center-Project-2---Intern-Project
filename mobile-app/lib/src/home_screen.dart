@@ -194,17 +194,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildActionCard(
-                              context,
-                              icon: Icons.refresh_rounded,
-                              title: 'Refresh',
-                              subtitle: 'Reload data',
-                              color: Colors.green,
-                              onTap: _loadUser,
-                            ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 12),

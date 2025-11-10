@@ -205,6 +205,10 @@ class AuthService {
 
   // --- Password reset ---
   Future<void> resetPasswordStart(String email) async {
+    if (isE2ETest) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      return;
+    }
     try {
       await Amplify.Auth.resetPassword(username: email.trim());
     } on AuthException catch (e) {
@@ -214,6 +218,10 @@ class AuthService {
   }
 
   Future<void> resetPasswordConfirm(String email, String code, String newPw) async {
+    if (isE2ETest) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      return;
+    }
     try {
       await Amplify.Auth.confirmResetPassword(
         username: email.trim(),
