@@ -47,16 +47,16 @@ it('should enter credentials and sign in', async function () {
   await tapElement(browser, 'sign_in_button');
 
   const dashboardCard = await waitForElement(browser, 'dashboard_welcome_card', 60000);
-  expect(dashboardCard).to.exist;
+  expect(dashboardCard).toBeTruthy();
 });
 
   it('should verify dashboard widget exists after login', async function () {
     this.timeout(60000);
     const dashboardCard = await waitForElement(browser, 'dashboard_welcome_card', 60000);
-    expect(dashboardCard).to.exist;
+    expect(dashboardCard).toBeTruthy();
 
     const profileCard = await waitForElement(browser, 'profile_action_card', 10000);
-    expect(profileCard).to.exist;
+    expect(profileCard).toBeTruthy();
   });
 });
 

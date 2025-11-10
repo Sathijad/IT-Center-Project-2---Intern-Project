@@ -15,7 +15,16 @@ async function ensureLoggedIn() {
     await waitForElement(browser, 'dashboard_welcome_card', 4000);
     return;
   } catch {
-    // Not logged in yet – perform login flow
+    // Maybe still inside profile screen from previous tests - navigate back
+    try {
+      await waitForElement(browser, 'display_name_field', 2000);
+      await browser.back();
+      await browser.pause(800);
+      await waitForElement(browser, 'dashboard_welcome_card', 10000);
+      return;
+    } catch {
+      // Not logged in yet – perform login flow
+    }
   }
 
   await waitForElement(browser, 'login_email', 20000);
@@ -54,7 +63,7 @@ describe('Mobile Roles Read', () => {
     await waitForElement(browser, 'profile_action_card', 10000);
     await tapElement(browser, 'profile_action_card');
     const displayNameField = await waitForElement(browser, 'display_name_field', 20000);
-    expect(displayNameField).to.exist;
+    expect(displayNameField).toBeTruthy();
   });
 
   it('should display ADMIN or EMPLOYEE chip', async function () {
@@ -92,7 +101,7 @@ describe('Mobile Roles Read', () => {
       await tapElement(browser, 'roles_expansion_tile');
       await browser.pause(500);
       const expansionTile = await waitForElement(browser, 'roles_expansion_tile', 5000);
-      expect(expansionTile).to.exist;
+      expect(expansionTile).toBeTruthy();
     } catch (err) {
       console.log(
         'Roles expansion tile not available or could not be expanded',
