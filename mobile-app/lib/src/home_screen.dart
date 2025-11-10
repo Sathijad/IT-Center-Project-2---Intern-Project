@@ -25,6 +25,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadUser() async {
     setState(() { busy = true; err = null; });
     try {
+      if (AuthService.isE2ETest) {
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        userData = AuthService.instance.testUserProfile;
+        err = null;
+        return;
+      }
+
       final token = await AuthService.instance.getAccessToken();
       if (token == null || token.isEmpty) {
         setState(() => err = 'Not authenticated');

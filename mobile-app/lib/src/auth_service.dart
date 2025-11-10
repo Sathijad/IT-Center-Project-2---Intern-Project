@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:flutter/foundation.dart';
 import '../amplifyconfiguration.dart';
 
 /// Result of a sign-in attempt
@@ -21,9 +22,22 @@ class AuthService {
   static final instance = AuthService._();
 
   bool _configured = false;
+  final ValueNotifier<bool> _testSignedIn = ValueNotifier<bool>(false);
+  Map<String, dynamic>? _testUserProfile;
   
   // Check if we're in E2E test mode
   static bool get isE2ETest => const bool.fromEnvironment('E2E_TEST', defaultValue: false);
+
+  ValueNotifier<bool> get testSignedInNotifier => _testSignedIn;
+  bool get isTestSignedIn => _testSignedIn.value;
+  Map<String, dynamic> get testUserProfile =>
+      _testUserProfile ??
+      {
+        'displayName': 'Admin User',
+        'email': 'admin@test.com',
+        'roles': const ['ADMIN'],
+        'locale': 'en_US',
+      };
 
   Future<void> init() async {
     if (_configured) return;
@@ -53,6 +67,19 @@ class AuthService {
   /// Direct email/password sign-in using Amplify Auth
   /// Returns SignInResult indicating if sign-in is complete or what step is needed next
   Future<SignInResult> signInEmail(String email, String password) async {
+    if (isE2ETest) {
+      final resolvedEmail =
+          email.trim().isEmpty ? 'admin@test.com' : email.trim();
+      _testUserProfile = {
+        'displayName': 'Admin User',
+        'email': resolvedEmail,
+        'roles': const ['ADMIN'],
+        'locale': 'en_US',
+      };
+      _testSignedIn.value = true;
+      return SignInResult(isComplete: true);
+    }
+
     try {
       final result = await Amplify.Auth.signIn(
         username: email.trim(),
@@ -90,6 +117,11 @@ class AuthService {
 
   /// Confirm sign-in with MFA/verification code
   Future<SignInResult> confirmSignInMfa(String code) async {
+    if (isE2ETest) {
+      _testSignedIn.value = true;
+      return SignInResult(isComplete: true);
+    }
+
     try {
       final result = await Amplify.Auth.confirmSignIn(confirmationValue: code.trim());
       
@@ -111,6 +143,11 @@ class AuthService {
   /// Hosted UI (PKCE). Handles MFA challenges inside Cognito UI.
   /// Can also be used to set up MFA when already signed in.
   Future<void> signInHostedUI() async {
+    if (isE2ETest) {
+      _testSignedIn.value = true;
+      return;
+    }
+
     try {
       await Amplify.Auth.signInWithWebUI(provider: AuthProvider.cognito);
     } on AuthException catch (e) {
@@ -120,6 +157,12 @@ class AuthService {
   }
 
   Future<void> signOut() async {
+    if (isE2ETest) {
+      _testSignedIn.value = false;
+      _testUserProfile = null;
+      return;
+    }
+
     try {
       await Amplify.Auth.signOut();
     } on AuthException catch (e) {
@@ -185,6 +228,10 @@ class AuthService {
 
   // --- Tokens for backend calls ---
   Future<String?> getAccessToken() async {
+    if (isE2ETest) {
+      return 'e2e-test-token';
+    }
+
     try {
       final session = await Amplify.Auth.fetchAuthSession();
       
