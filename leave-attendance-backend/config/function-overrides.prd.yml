@@ -1,0 +1,6 @@
+attendanceClockIn:
+  provisionedConcurrency: ${self:custom.env.provisionedConcurrency.clockIn}
+attendanceClockOut:
+  provisionedConcurrency: ${self:custom.env.provisionedConcurrency.clockOut}
+
+

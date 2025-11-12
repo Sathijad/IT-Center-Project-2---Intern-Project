@@ -7,10 +7,10 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "dist",
     "rootDir": "src",
-    "sourceMap": true,
-    "declaration": true,
+    "sourceMap": false,
+    "declaration": false,
+    "noEmit": true,
     "resolveJsonModule": true,
     "types": ["node", "jest"],
     "lib": ["ES2022", "DOM"]

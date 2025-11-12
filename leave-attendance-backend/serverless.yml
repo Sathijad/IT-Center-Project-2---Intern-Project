@@ -4,6 +4,7 @@ frameworkVersion: '3'
 plugins:
   - serverless-plugin-tracing
   - serverless-prune-plugin
+  - serverless-esbuild
 
 custom:
   stage: ${opt:stage, 'dev'}
@@ -11,6 +12,15 @@ custom:
   prune:
     automatic: true
     number: 3
+  esbuild:
+    bundle: true
+    minify: true
+    platform: node
+    target: node18
+    sourcemap: false
+    exclude: []
+    keepOutputDirectory: true
+  functionOverrides: ${file(./config/function-overrides.${self:provider.stage}.yml)}
 
 provider:
   name: aws
@@ -35,11 +45,15 @@ provider:
     COGNITO_CLIENT_ID: ${self:custom.env.cognito.clientId}
     GEO_VALIDATION_ENABLED: '${self:custom.env.featureFlags.geoValidationEnabled}'
     CALENDAR_SYNC_ENABLED: '${self:custom.env.featureFlags.calendarSyncEnabled}'
+    # CALENDAR_SYNC_ENABLED: 'false'  
     GRAPH_TENANT: ${self:custom.env.graph.tenant}
     GRAPH_CLIENT_ID: ${self:custom.env.graph.clientId}
     GRAPH_CLIENT_SECRET: ${self:custom.env.graph.clientSecret}
     GRAPH_SCOPE: ${self:custom.env.graph.scope}
-    ALLOWED_ORIGINS: ${join(',', self:custom.env.allowedOrigins)}
+    ALLOWED_ORIGINS:
+      Fn::Join:
+        - ','
+        - ${self:custom.env.allowedOrigins}
     CALENDAR_SYNC_QUEUE_URL: { Ref: CalendarSyncQueue }
     CALENDAR_SYNC_QUEUE_ARN: { 'Fn::GetAtt': [CalendarSyncQueue, Arn] }
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
@@ -101,68 +115,66 @@ provider:
 
 package:
   individually: true
+  excludeDevDependencies: true
   patterns:
-    - '!src/**'
-    - '!config/**'
-    - dist/**
-    - package.json
-    - package-lock.json
-    - node_modules/**
+    - '!tests/**'
+    - '!docs/**'
+    - '!**/*.md'
 
 functions:
   leaveGetBalance:
-    handler: dist/handlers/leave/getBalance.handler
+    handler: src/handlers/leave/getBalance.handler
     events:
       - httpApi:
           method: GET
           path: /api/v1/leave/balance
 
   leaveListRequests:
-    handler: dist/handlers/leave/listRequests.handler
+    handler: src/handlers/leave/listRequests.handler
     events:
       - httpApi:
           method: GET
           path: /api/v1/leave/requests
 
   leaveCreateRequest:
-    handler: dist/handlers/leave/createRequest.handler
+    handler: src/handlers/leave/createRequest.handler
     events:
       - httpApi:
           method: POST
           path: /api/v1/leave/requests
 
   leaveUpdateRequest:
-    handler: dist/handlers/leave/updateRequest.handler
+    handler: src/handlers/leave/updateRequest.handler
     events:
       - httpApi:
           method: PATCH
           path: /api/v1/leave/requests/{id}
 
   attendanceGetLogs:
-    handler: dist/handlers/attendance/getLogs.handler
+    handler: src/handlers/attendance/getLogs.handler
     events:
       - httpApi:
           method: GET
           path: /api/v1/attendance
 
   attendanceClockIn:
-    handler: dist/handlers/attendance/clockIn.handler
-    provisionedConcurrency: ${self:custom.env.provisionedConcurrency.clockIn}
+    handler: src/handlers/attendance/clockIn.handler
+    provisionedConcurrency: ${self:custom.functionOverrides.attendanceClockIn.provisionedConcurrency, null}
     events:
       - httpApi:
           method: POST
           path: /api/v1/attendance/clock-in
 
   attendanceClockOut:
-    handler: dist/handlers/attendance/clockOut.handler
-    provisionedConcurrency: ${self:custom.env.provisionedConcurrency.clockOut}
+    handler: src/handlers/attendance/clockOut.handler
+    provisionedConcurrency: ${self:custom.functionOverrides.attendanceClockOut.provisionedConcurrency, null}
     events:
       - httpApi:
           method: POST
           path: /api/v1/attendance/clock-out
 
   integrationsMsGraphSync:
-    handler: dist/handlers/integrations/msgraphSyncEnqueue.handler
+    handler: src/handlers/integrations/msgraphSyncEnqueue.handler
     timeout: 10
     events:
       - httpApi:
@@ -170,7 +182,7 @@ functions:
           path: /api/v1/integrations/msgraph/sync
 
   reportsLeaveSummary:
-    handler: dist/handlers/reports/leaveSummary.handler
+    handler: src/handlers/reports/leaveSummary.handler
     timeout: 20
     events:
       - httpApi:
@@ -178,7 +190,7 @@ functions:
           path: /api/v1/reports/leave-summary
 
   healthz:
-    handler: dist/handlers/healthz.handler
+    handler: src/handlers/healthz.handler
     timeout: 5
     memorySize: 256
     events:
@@ -187,7 +199,7 @@ functions:
           path: /healthz
 
   msGraphSyncWorker:
-    handler: dist/handlers/integrations/msgraphSyncWorker.handler
+    handler: src/handlers/integrations/msgraphSyncWorker.handler
     maximumRetryAttempts: 2
     events:
       - sqs:
