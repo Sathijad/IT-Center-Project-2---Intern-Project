@@ -43,11 +43,15 @@ ALTER TABLE leave_requests
     ADD COLUMN IF NOT EXISTS reason         TEXT,
     ADD COLUMN IF NOT EXISTS graph_event_id VARCHAR(128),
     ADD COLUMN IF NOT EXISTS created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ADD COLUMN IF NOT EXISTS updated_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    ADD COLUMN IF NOT EXISTS updated_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS user_email     VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS user_name      VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS user_team_id   BIGINT;
 
 ALTER TABLE leave_requests
-    ADD CONSTRAINT IF NOT EXISTS leave_requests_user_fk
-        FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE CASCADE,
+    DROP CONSTRAINT IF EXISTS leave_requests_user_fk;
+
+ALTER TABLE leave_requests
     ADD CONSTRAINT IF NOT EXISTS leave_requests_policy_fk
         FOREIGN KEY (policy_id) REFERENCES leave_policies(policy_id) ON DELETE RESTRICT;
 
@@ -67,8 +71,7 @@ ALTER TABLE leave_balances
     ADD COLUMN IF NOT EXISTS updated_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 ALTER TABLE leave_balances
-    ADD CONSTRAINT IF NOT EXISTS leave_balances_user_fk
-        FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE CASCADE,
+    DROP CONSTRAINT IF EXISTS leave_balances_user_fk,
     ADD CONSTRAINT IF NOT EXISTS leave_balances_policy_fk
         FOREIGN KEY (policy_id) REFERENCES leave_policies(policy_id) ON DELETE RESTRICT;
 
@@ -92,11 +95,13 @@ ALTER TABLE attendance_logs
     ADD COLUMN IF NOT EXISTS longitude        NUMERIC(10,6),
     ADD COLUMN IF NOT EXISTS source           VARCHAR(50),
     ADD COLUMN IF NOT EXISTS created_at       TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ADD COLUMN IF NOT EXISTS updated_at       TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    ADD COLUMN IF NOT EXISTS updated_at       TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS user_email       VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS user_name        VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS user_team_id     BIGINT;
 
 ALTER TABLE attendance_logs
-    ADD CONSTRAINT IF NOT EXISTS attendance_logs_user_fk
-        FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE CASCADE;
+    DROP CONSTRAINT IF EXISTS attendance_logs_user_fk;
 
 CREATE TABLE IF NOT EXISTS leave_audit (
     audit_id    BIGSERIAL PRIMARY KEY,
@@ -111,25 +116,30 @@ CREATE TABLE IF NOT EXISTS leave_audit (
 ALTER TABLE leave_audit
     ADD COLUMN IF NOT EXISTS notes      TEXT,
     ADD COLUMN IF NOT EXISTS metadata   JSONB,
-    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS actor_email VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS actor_name  VARCHAR(255);
 
 ALTER TABLE leave_audit
     ADD CONSTRAINT IF NOT EXISTS leave_audit_request_fk
-        FOREIGN KEY (request_id) REFERENCES leave_requests(request_id) ON DELETE CASCADE,
-    ADD CONSTRAINT IF NOT EXISTS leave_audit_actor_fk
-        FOREIGN KEY (actor_id) REFERENCES app_users(id) ON DELETE SET NULL;
+        FOREIGN KEY (request_id) REFERENCES leave_requests(request_id) ON DELETE CASCADE;
+
+ALTER TABLE leave_audit
+    DROP CONSTRAINT IF EXISTS leave_audit_actor_fk;
 
 -- Helpful indexes (created idempotently)
 CREATE INDEX IF NOT EXISTS idx_leave_requests_user ON leave_requests(user_id);
 CREATE INDEX IF NOT EXISTS idx_leave_requests_status ON leave_requests(status);
 CREATE INDEX IF NOT EXISTS idx_leave_requests_dates ON leave_requests(start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_leave_requests_created ON leave_requests(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_leave_requests_team ON leave_requests(user_team_id);
 CREATE INDEX IF NOT EXISTS idx_leave_balances_user ON leave_balances(user_id);
 CREATE INDEX IF NOT EXISTS idx_leave_balances_policy ON leave_balances(policy_id);
 CREATE INDEX IF NOT EXISTS idx_leave_balances_year ON leave_balances(year);
 CREATE INDEX IF NOT EXISTS idx_attendance_logs_user ON attendance_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_attendance_logs_clock_in ON attendance_logs(clock_in DESC);
 CREATE INDEX IF NOT EXISTS idx_attendance_logs_clock_out ON attendance_logs(clock_out DESC);
+CREATE INDEX IF NOT EXISTS idx_attendance_logs_team ON attendance_logs(user_team_id);
 CREATE INDEX IF NOT EXISTS idx_leave_audit_request ON leave_audit(request_id);
 CREATE INDEX IF NOT EXISTS idx_leave_audit_actor ON leave_audit(actor_id);
 

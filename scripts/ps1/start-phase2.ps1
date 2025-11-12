@@ -39,7 +39,13 @@ cd leave-attendance-backend
 if (-not (Test-Path ".env")) {
     Write-Host "   Creating .env file..." -ForegroundColor Gray
     @"
-DATABASE_URL=postgresql://itcenter:password@localhost:5432/itcenter_auth
+DB_HOST=itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com
+DB_PORT=5432
+DB_USER=postgres
+DB_PASS=password
+DB_NAME=itcenter-auth
+DB_SSL=true
+DB_POOL_MAX=10
 COGNITO_ISSUER_URI=https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_hTAYJId8y
 CORS_ORIGINS=http://localhost:5173
 GEO_VALIDATION_ENABLED=true

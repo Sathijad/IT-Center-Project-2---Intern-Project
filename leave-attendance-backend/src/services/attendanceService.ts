@@ -71,6 +71,9 @@ export class AttendanceService {
 
     const log = await this.repository.insertClockIn({
       userId: user.userId,
+      userEmail: user.email,
+      userName: user.displayName ?? user.email,
+      userTeamId: user.teamId ?? null,
       clockIn: timestamp,
       latitude: input.latitude,
       longitude: input.longitude,

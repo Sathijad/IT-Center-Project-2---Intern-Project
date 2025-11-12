@@ -1,8 +1,17 @@
+const rawApiBaseUrl = (import.meta as any).env.VITE_API_BASE_URL
+const rawLeaveApiBaseUrl = (import.meta as any).env.VITE_LEAVE_API_BASE_URL
+const useLocalPhase2 = String((import.meta as any).env.VITE_USE_LOCAL_PHASE2 || '').toLowerCase() === 'true'
+
+const defaultLeaveApiBaseUrl = 'https://xfub6mzcqg.execute-api.ap-southeast-2.amazonaws.com'
+
+const apiBaseUrl = rawApiBaseUrl || 'http://localhost:8080'
+const leaveApiBaseUrl = rawLeaveApiBaseUrl || (useLocalPhase2 ? 'http://localhost:3000' : defaultLeaveApiBaseUrl)
+
 export const config = {
   // Phase 1 Backend (Spring Boot) - Auth, Users, Audit
-  API_BASE_URL: (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8080',
-  // Phase 2 Backend (Node.js Lambda) - Leave, Attendance
-  LEAVE_API_BASE_URL: (import.meta as any).env.VITE_LEAVE_API_BASE_URL || 'http://localhost:3000',
+  API_BASE_URL: apiBaseUrl,
+  // Phase 2 Backend (AWS Lambda) - Leave, Attendance
+  LEAVE_API_BASE_URL: leaveApiBaseUrl,
   COGNITO_USER_POOL_ID: 'ap-southeast-2_hTAYJId8y',
   COGNITO_CLIENT_ID: '3rdnl5ind8guti89jrbob85r4i',
   COGNITO_DOMAIN: 'itcenter-auth.auth.ap-southeast-2.amazoncognito.com',

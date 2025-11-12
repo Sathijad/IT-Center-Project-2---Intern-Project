@@ -6,6 +6,9 @@ import { buildPaginationResult, normalizePagination, parseSort } from '../common
 interface AttendanceRow {
   log_id: number;
   user_id: number;
+  user_name: string | null;
+  user_email: string | null;
+  user_team_id: number | null;
   clock_in: string;
   clock_out: string | null;
   duration_minutes: number | null;
@@ -20,6 +23,9 @@ const attendanceSortFields = ['clock_in', 'clock_out', 'created_at'] as const;
 const mapAttendanceLog = (row: AttendanceRow): AttendanceLog => ({
   logId: row.log_id,
   userId: row.user_id,
+  userName: row.user_name,
+  userEmail: row.user_email,
+  userTeamId: row.user_team_id,
   clockIn: row.clock_in,
   clockOut: row.clock_out,
   durationMinutes: row.duration_minutes,
@@ -45,7 +51,6 @@ export class AttendanceRepository {
 
     let baseQuery = `
       FROM attendance_logs al
-      INNER JOIN app_users u ON al.user_id = u.id
       WHERE 1=1
     `;
 
@@ -68,6 +73,9 @@ export class AttendanceRepository {
       SELECT
         al.log_id,
         al.user_id,
+        al.user_name,
+        al.user_email,
+        al.user_team_id,
         al.clock_in,
         al.clock_out,
         al.duration_minutes,
@@ -98,6 +106,9 @@ export class AttendanceRepository {
       SELECT
         log_id,
         user_id,
+        user_name,
+        user_email,
+        user_team_id,
         clock_in,
         clock_out,
         duration_minutes,
@@ -122,6 +133,9 @@ export class AttendanceRepository {
 
   async insertClockIn(params: {
     userId: number;
+    userName: string | null;
+    userEmail: string | null;
+    userTeamId: number | null;
     clockIn: string;
     latitude?: number | null;
     longitude?: number | null;
@@ -129,11 +143,14 @@ export class AttendanceRepository {
   }): Promise<AttendanceLog> {
     const result = await query<AttendanceRow>(
       `
-      INSERT INTO attendance_logs (user_id, clock_in, latitude, longitude, source)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO attendance_logs (user_id, user_name, user_email, user_team_id, clock_in, latitude, longitude, source)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING
         log_id,
         user_id,
+        user_name,
+        user_email,
+        user_team_id,
         clock_in,
         clock_out,
         duration_minutes,
@@ -142,7 +159,16 @@ export class AttendanceRepository {
         source,
         created_at
       `,
-      [params.userId, params.clockIn, params.latitude ?? null, params.longitude ?? null, params.source ?? null],
+      [
+        params.userId,
+        params.userName ?? null,
+        params.userEmail ?? null,
+        params.userTeamId,
+        params.clockIn,
+        params.latitude ?? null,
+        params.longitude ?? null,
+        params.source ?? null,
+      ],
     );
 
     return mapAttendanceLog(result.rows[0]);
@@ -164,6 +190,9 @@ export class AttendanceRepository {
       RETURNING
         log_id,
         user_id,
+        user_name,
+        user_email,
+        user_team_id,
         clock_in,
         clock_out,
         duration_minutes,
@@ -192,6 +221,9 @@ export class AttendanceRepository {
         SELECT
           log_id,
           user_id,
+          user_name,
+          user_email,
+          user_team_id,
           clock_in,
           clock_out,
           duration_minutes,
@@ -224,6 +256,9 @@ export class AttendanceRepository {
         RETURNING
           log_id,
           user_id,
+          user_name,
+          user_email,
+          user_team_id,
           clock_in,
           clock_out,
           duration_minutes,

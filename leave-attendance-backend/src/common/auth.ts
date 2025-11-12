@@ -1,7 +1,6 @@
 import { APIGatewayProxyEventV2 } from 'aws-lambda';
 import jwt, { JwtHeader, JwtPayload, SigningKeyCallback } from 'jsonwebtoken';
 import jwksClient, { JwksClient } from 'jwks-rsa';
-import { query } from './db';
 import { AuthenticatedUser, UserRole } from './types';
 import { ForbiddenError, UnauthorizedError } from './errors';
 import { logger } from './logger';
@@ -10,12 +9,19 @@ interface CognitoJwtPayload extends JwtPayload {
   sub: string;
   email?: string;
   'cognito:groups'?: string[];
-}
-
-interface UserRow {
-  id: number;
-  email: string;
-  display_name: string | null;
+  'custom:user_id'?: string | number;
+  user_id?: string | number;
+  'employee_id'?: string | number;
+  'custom:employee_id'?: string | number;
+  'custom:roles'?: string[] | string;
+  roles?: string[] | string;
+  'custom:team_id'?: string | number;
+  team_id?: string | number;
+  'custom:display_name'?: string;
+  name?: string;
+  preferred_username?: string;
+  'custom:email'?: string;
+  'cognito:username'?: string;
 }
 
 let jwks: JwksClient | null = null;
@@ -99,39 +105,6 @@ const verifyJwt = (token: string): Promise<CognitoJwtPayload> => {
   });
 };
 
-const fetchUserFromDatabase = async (sub: string): Promise<AuthenticatedUser> => {
-  const userResult = await query<UserRow>(
-    `SELECT id, email, display_name
-     FROM app_users
-     WHERE cognito_sub = $1`,
-    [sub],
-  );
-
-  if (userResult.rowCount === 0) {
-    throw new UnauthorizedError('User not found');
-  }
-
-  const userRow = userResult.rows[0];
-
-  const roleResult = await query<{ name: string }>(
-    `SELECT r.name
-     FROM user_roles ur
-     INNER JOIN roles r ON ur.role_id = r.id
-     WHERE ur.user_id = $1`,
-    [userRow.id],
-  );
-
-  const roles = roleResult.rows.map((row) => row.name.toUpperCase() as UserRole);
-
-  return {
-    userId: userRow.id,
-    email: userRow.email,
-    displayName: userRow.display_name,
-    roles: roles.length ? roles : ['EMPLOYEE'],
-    sub,
-  };
-};
-
 const extractAuthorizationHeader = (event: APIGatewayProxyEventV2): string => {
   const header = event.headers?.authorization || event.headers?.Authorization;
   if (!header) {
@@ -155,7 +128,79 @@ export const authenticateRequest = async (event: APIGatewayProxyEventV2): Promis
   const payload = await verifyJwt(token);
   logger.debug('JWT verified', { sub: payload.sub });
 
-  const user = await fetchUserFromDatabase(payload.sub);
+  const userIdCandidate =
+    payload['custom:user_id'] ?? payload['user_id'] ?? payload['custom:employee_id'] ?? payload['employee_id'];
+  const userId =
+    typeof userIdCandidate === 'string' ? Number(userIdCandidate) : Number(userIdCandidate ?? Number.NaN);
+
+  if (!Number.isFinite(userId)) {
+    throw new UnauthorizedError('Token missing numeric user_id claim');
+  }
+
+  const emailClaim =
+    typeof payload.email === 'string'
+      ? payload.email
+      : typeof payload['custom:email'] === 'string'
+      ? payload['custom:email']
+      : typeof payload['preferred_username'] === 'string'
+      ? payload['preferred_username']
+      : typeof payload['cognito:username'] === 'string'
+      ? payload['cognito:username']
+      : null;
+
+  if (!emailClaim) {
+    throw new UnauthorizedError('Token missing email claim');
+  }
+
+  const roleCandidates: string[] = [];
+  const appendRoles = (value: unknown) => {
+    if (!value) {
+      return;
+    }
+    if (Array.isArray(value)) {
+      value
+        .filter((role): role is string => typeof role === 'string' && role.trim().length > 0)
+        .forEach((role) => roleCandidates.push(role.trim()));
+      return;
+    }
+    if (typeof value === 'string' && value.trim().length > 0) {
+      roleCandidates.push(value.trim());
+    }
+  };
+
+  appendRoles(payload['cognito:groups']);
+  appendRoles(payload['custom:roles']);
+  appendRoles(payload['roles']);
+
+  const normalizedRoles = Array.from(
+    new Set(
+      roleCandidates.map((role) => role.toUpperCase()).map((role) => (role === 'ADMIN' ? 'ADMIN' : 'EMPLOYEE')),
+    ),
+  ) as UserRole[];
+
+  if (normalizedRoles.length === 0) {
+    normalizedRoles.push('EMPLOYEE');
+  }
+
+  const displayName =
+    (typeof payload['custom:display_name'] === 'string' && payload['custom:display_name']) ||
+    (typeof payload.name === 'string' && payload.name) ||
+    emailClaim;
+
+  const teamClaim = payload['custom:team_id'] ?? payload['team_id'];
+  const teamNumeric =
+    typeof teamClaim === 'string' ? Number(teamClaim) : typeof teamClaim === 'number' ? teamClaim : Number.NaN;
+  const teamId = Number.isFinite(teamNumeric) ? Number(teamNumeric) : null;
+
+  const user: AuthenticatedUser = {
+    userId,
+    email: emailClaim,
+    displayName,
+    teamId,
+    roles: normalizedRoles,
+    sub: payload.sub,
+  };
+
   logger.debug('User roles resolved', { userId: user.userId, roles: user.roles });
 
   return user;

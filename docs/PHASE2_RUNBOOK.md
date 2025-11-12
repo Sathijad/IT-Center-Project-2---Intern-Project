@@ -17,7 +17,12 @@ This runbook covers operational procedures for the Leave & Attendance Management
 ### Lambda Functions
 
 ```
-DATABASE_URL=postgresql://user:password@host:5432/itcenter_auth
+DB_HOST=itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com
+DB_PORT=5432
+DB_USER=postgres
+DB_PASS=<password>
+DB_NAME=itcenter-auth
+DB_SSL=true
 COGNITO_ISSUER_URI=https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_hTAYJId8y
 CORS_ORIGINS=http://localhost:5173,https://admin.itcenter.com
 GEO_VALIDATION_ENABLED=true

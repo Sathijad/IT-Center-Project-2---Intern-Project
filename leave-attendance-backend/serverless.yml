@@ -37,9 +37,13 @@ provider:
     NODE_OPTIONS: '--enable-source-maps'
     NODE_ENV: ${self:provider.stage}
     TZ: 'UTC'
-    DB_SECRET_ARN: ${self:custom.env.dbSecretArn}
-    DB_PROXY_ENDPOINT: ${self:custom.env.dbProxyEndpoint}
-    DB_POOL_MAX: ${self:custom.env.dbPoolMax, 10}
+    DB_HOST: ${self:custom.env.database.host}
+    DB_PORT: ${self:custom.env.database.port, 5432}
+    DB_USER: ${self:custom.env.database.user}
+    DB_PASS: ${self:custom.env.database.password}
+    DB_NAME: ${self:custom.env.database.name}
+    DB_SSL: '${self:custom.env.database.ssl, true}'
+    DB_POOL_MAX: ${self:custom.env.database.poolMax, 10}
     COGNITO_REGION: ${self:custom.env.cognito.region}
     COGNITO_USER_POOL_ID: ${self:custom.env.cognito.userPoolId}
     COGNITO_CLIENT_ID: ${self:custom.env.cognito.clientId}
@@ -84,10 +88,6 @@ provider:
   iam:
     role:
       statements:
-        - Effect: Allow
-          Action:
-            - secretsmanager:GetSecretValue
-          Resource: ${self:custom.env.dbSecretArn}
         - Effect: Allow
           Action:
             - sqs:SendMessage

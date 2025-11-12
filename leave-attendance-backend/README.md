@@ -50,9 +50,14 @@ vpc:
   subnetIds: [subnet-aaaaaaaa, subnet-bbbbbbbb]
   securityGroupIds: [sg-cccccccc]
 
-dbSecretArn: arn:aws:secretsmanager:...:secret:itcenter/dev/db
-dbProxyEndpoint: itcenter-dev-proxy.proxy-abcdefghijklmnop.ap-southeast-2.rds.amazonaws.com
-...
+database:
+  host: itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com
+  port: 5432
+  user: postgres
+  password: password
+  name: itcenter-auth
+  ssl: true
+  poolMax: 10
 ```
 
 ## Deployment

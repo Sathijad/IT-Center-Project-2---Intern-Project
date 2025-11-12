@@ -109,6 +109,9 @@ export class LeaveService {
 
     const request = await this.repository.createLeaveRequest({
       userId: user.userId,
+      userEmail: user.email,
+      userName: user.displayName ?? user.email,
+      userTeamId: user.teamId ?? null,
       policyId: input.policyId,
       startDate: start,
       endDate: end,
@@ -196,6 +199,8 @@ export class LeaveService {
       requestId: request.requestId,
       newStatus,
       actorId: user.userId,
+      actorEmail: user.email,
+      actorName: user.displayName ?? user.email,
       notes: input.notes,
       daysToAdjust: newStatus === 'APPROVED' ? requestedDays : request.status === 'APPROVED' ? requestedDays : 0,
     });

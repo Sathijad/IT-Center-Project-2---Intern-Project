@@ -7,17 +7,25 @@ import '../src/auth_service.dart';
 
 class LeaveApiBase {
   static String get base {
-    if (kIsWeb) {
-      return 'http://localhost:3000';  // Flutter Web dev
+    const override = String.fromEnvironment('LEAVE_API_BASE', defaultValue: '');
+    if (override.isNotEmpty) {
+      return override;
     }
-    
-    // For Android emulator: use 10.0.2.2 to access host machine
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000';
+
+    const useLocalPhase2 = bool.fromEnvironment('USE_LOCAL_PHASE2', defaultValue: false);
+    if (useLocalPhase2) {
+      if (kIsWeb) {
+        return 'http://localhost:3000'; // Flutter Web dev
+      }
+
+      if (Platform.isAndroid) {
+        return 'http://10.0.2.2:3000';
+      }
+
+      return 'http://localhost:3000';
     }
-    
-    // For iOS simulator, Windows, Linux, macOS: use localhost
-    return 'http://localhost:3000';
+
+    return 'https://xfub6mzcqg.execute-api.ap-southeast-2.amazonaws.com';
   }
 }
 

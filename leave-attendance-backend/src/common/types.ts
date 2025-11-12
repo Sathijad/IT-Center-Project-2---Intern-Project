@@ -5,6 +5,7 @@ export interface AuthenticatedUser {
   email: string;
   roles: UserRole[];
   displayName?: string | null;
+  teamId?: number | null;
   sub: string;
 }
 

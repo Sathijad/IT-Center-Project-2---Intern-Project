@@ -17,6 +17,7 @@ interface LeaveRequestRow {
   user_id: number;
   user_email: string;
   user_name: string | null;
+  user_team_id: number | null;
   policy_id: number;
   policy_name: string;
   status: string;
@@ -45,6 +46,7 @@ const mapLeaveRequest = (row: LeaveRequestRow): LeaveRequest => ({
   userId: row.user_id,
   userEmail: row.user_email,
   userName: row.user_name,
+  userTeamId: row.user_team_id,
   policyId: row.policy_id,
   policyName: row.policy_name,
   status: row.status as LeaveRequest['status'],
@@ -115,7 +117,6 @@ export class LeaveRepository {
     let baseQuery = `
       FROM leave_requests lr
       INNER JOIN leave_policies lp ON lr.policy_id = lp.policy_id
-      INNER JOIN app_users u ON lr.user_id = u.id
       WHERE 1=1
     `;
 
@@ -143,8 +144,9 @@ export class LeaveRepository {
       SELECT
         lr.request_id,
         lr.user_id,
-        u.email AS user_email,
-        u.display_name AS user_name,
+        lr.user_email,
+        lr.user_name,
+        lr.user_team_id,
         lr.policy_id,
         lp.name AS policy_name,
         lr.status,
@@ -186,8 +188,9 @@ export class LeaveRepository {
       SELECT
         lr.request_id,
         lr.user_id,
-        u.email AS user_email,
-        u.display_name AS user_name,
+        lr.user_email,
+        lr.user_name,
+        lr.user_team_id,
         lr.policy_id,
         lp.name AS policy_name,
         lr.status,
@@ -204,7 +207,6 @@ export class LeaveRepository {
         END AS days_requested
       FROM leave_requests lr
       INNER JOIN leave_policies lp ON lr.policy_id = lp.policy_id
-      INNER JOIN app_users u ON lr.user_id = u.id
       WHERE lr.request_id = $1
       `,
       [requestId],
@@ -221,6 +223,9 @@ export class LeaveRepository {
     client: PoolClient,
     params: {
       userId: number;
+      userEmail: string;
+      userName: string | null;
+      userTeamId: number | null;
       policyId: number;
       startDate: string;
       endDate: string;
@@ -230,11 +235,32 @@ export class LeaveRepository {
   ): Promise<LeaveRequest> {
     const result = await client.query<{ request_id: number }>(
       `
-      INSERT INTO leave_requests (user_id, policy_id, start_date, end_date, half_day, reason, status)
-      VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')
+      INSERT INTO leave_requests (
+        user_id,
+        user_email,
+        user_name,
+        user_team_id,
+        policy_id,
+        start_date,
+        end_date,
+        half_day,
+        reason,
+        status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'PENDING')
       RETURNING request_id
       `,
-      [params.userId, params.policyId, params.startDate, params.endDate, params.halfDay, params.reason ?? null],
+      [
+        params.userId,
+        params.userEmail,
+        params.userName ?? null,
+        params.userTeamId,
+        params.policyId,
+        params.startDate,
+        params.endDate,
+        params.halfDay,
+        params.reason ?? null,
+      ],
     );
 
     const requestId = result.rows[0].request_id;
@@ -244,8 +270,9 @@ export class LeaveRepository {
       SELECT
         lr.request_id,
         lr.user_id,
-        u.email AS user_email,
-        u.display_name AS user_name,
+        lr.user_email,
+        lr.user_name,
+        lr.user_team_id,
         lr.policy_id,
         lp.name AS policy_name,
         lr.status,
@@ -262,7 +289,6 @@ export class LeaveRepository {
         END AS days_requested
       FROM leave_requests lr
       INNER JOIN leave_policies lp ON lr.policy_id = lp.policy_id
-      INNER JOIN app_users u ON lr.user_id = u.id
       WHERE lr.request_id = $1
       `,
       [requestId],
@@ -275,7 +301,7 @@ export class LeaveRepository {
     client: PoolClient,
     requestId: number,
     status: string,
-    actorId: number,
+    actor: { id: number; email: string; name: string | null },
     notes?: string | null,
   ): Promise<LeaveRequest> {
     const result = await client.query<{ request_id: number }>(
@@ -295,10 +321,10 @@ export class LeaveRepository {
 
     await client.query(
       `
-      INSERT INTO leave_audit (request_id, action, actor_id, notes)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO leave_audit (request_id, action, actor_id, actor_email, actor_name, notes)
+      VALUES ($1, $2, $3, $4, $5, $6)
       `,
-      [requestId, status, actorId, notes ?? null],
+      [requestId, status, actor.id, actor.email, actor.name ?? null, notes ?? null],
     );
 
     const updated = await client.query<LeaveRequestRow>(
@@ -306,8 +332,9 @@ export class LeaveRepository {
       SELECT
         lr.request_id,
         lr.user_id,
-        u.email AS user_email,
-        u.display_name AS user_name,
+        lr.user_email,
+        lr.user_name,
+        lr.user_team_id,
         lr.policy_id,
         lp.name AS policy_name,
         lr.status,
@@ -324,7 +351,6 @@ export class LeaveRepository {
         END AS days_requested
       FROM leave_requests lr
       INNER JOIN leave_policies lp ON lr.policy_id = lp.policy_id
-      INNER JOIN app_users u ON lr.user_id = u.id
       WHERE lr.request_id = $1
       `,
       [requestId],
@@ -409,6 +435,9 @@ export class LeaveRepository {
 
   createLeaveRequest(params: {
     userId: number;
+    userEmail: string;
+    userName: string | null;
+    userTeamId: number | null;
     policyId: number;
     startDate: string;
     endDate: string;
@@ -422,6 +451,8 @@ export class LeaveRepository {
     requestId: number;
     newStatus: string;
     actorId: number;
+    actorEmail: string;
+    actorName: string | null;
     notes?: string | null;
     daysToAdjust?: number;
   }): Promise<LeaveRequest> {
@@ -431,8 +462,9 @@ export class LeaveRepository {
         SELECT
           lr.request_id,
           lr.user_id,
-          u.email AS user_email,
-          u.display_name AS user_name,
+          lr.user_email,
+          lr.user_name,
+          lr.user_team_id,
           lr.policy_id,
           (SELECT name FROM leave_policies WHERE policy_id = lr.policy_id) AS policy_name,
           lr.status,
@@ -448,7 +480,6 @@ export class LeaveRepository {
             ELSE (lr.end_date - lr.start_date) + 1
           END AS days_requested
         FROM leave_requests lr
-        INNER JOIN app_users u ON lr.user_id = u.id
         WHERE lr.request_id = $1
         FOR UPDATE
         `,
@@ -463,7 +494,11 @@ export class LeaveRepository {
         client,
         params.requestId,
         params.newStatus,
-        params.actorId,
+        {
+          id: params.actorId,
+          email: params.actorEmail,
+          name: params.actorName,
+        },
         params.notes,
       );
 

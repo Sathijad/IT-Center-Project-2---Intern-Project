@@ -8,6 +8,7 @@ interface DbSecret {
   username: string;
   password: string;
   dbname: string;
+  ssl?: boolean;
 }
 
 interface DbSecretCache {
@@ -23,6 +24,29 @@ const secretsClient = new SecretsManagerClient({ region: REGION_FALLBACK });
 let pool: Pool | null = null;
 let poolPromise: Promise<Pool> | null = null;
 let secretCache: DbSecretCache | null = null;
+
+const getEnvDatabaseConfig = (): DbSecret | null => {
+  const host = process.env.DB_HOST;
+  const username = process.env.DB_USER;
+  const password = process.env.DB_PASS;
+  const dbname = process.env.DB_NAME;
+
+  if (!host || !username || !password || !dbname) {
+    return null;
+  }
+
+  const sslRaw = process.env.DB_SSL;
+  const ssl = sslRaw ? sslRaw.toLowerCase() === 'true' : undefined;
+
+  return {
+    host,
+    port: Number(process.env.DB_PORT || 5432),
+    username,
+    password,
+    dbname,
+    ssl,
+  };
+};
 
 const parseSecret = (secretString: string | undefined): DbSecret => {
   if (!secretString) {
@@ -41,6 +65,7 @@ const parseSecret = (secretString: string | undefined): DbSecret => {
     username: parsed.username,
     password: parsed.password,
     dbname: parsed.dbname,
+    ssl: typeof parsed.ssl === 'boolean' ? parsed.ssl : undefined,
   };
 };
 
@@ -68,21 +93,28 @@ const getDbSecret = async (): Promise<DbSecret> => {
 };
 
 const createPool = async (): Promise<Pool> => {
-  const secret = await getDbSecret();
+  const config = getEnvDatabaseConfig() ?? (await getDbSecret());
   const maxConnections = Number(process.env.DB_POOL_MAX || 10);
 
-  const host = process.env.DB_PROXY_ENDPOINT ?? secret.host;
+  const sslOptions =
+    typeof config.ssl === 'boolean'
+      ? config.ssl
+        ? { rejectUnauthorized: false }
+        : undefined
+      : process.env.DB_SSL?.toLowerCase() === 'true'
+      ? { rejectUnauthorized: false }
+      : undefined;
 
   const newPool = new Pool({
-    host,
-    port: secret.port,
-    user: secret.username,
-    password: secret.password,
-    database: secret.dbname,
+    host: config.host,
+    port: config.port,
+    user: config.username,
+    password: config.password,
+    database: config.dbname,
     max: maxConnections,
     idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS || 30_000),
     connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS || 5_000),
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
+    ssl: sslOptions,
   });
 
   newPool.on('error', (err) => {

@@ -55,7 +55,12 @@ npm run dev
 
 ### 1. Create `.env` file in `leave-attendance-backend/`
 ```env
-DATABASE_URL=postgresql://itcenter:password@localhost:5432/itcenter_auth
+DB_HOST=itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com
+DB_PORT=5432
+DB_USER=postgres
+DB_PASS=password
+DB_NAME=itcenter-auth
+DB_SSL=true
 COGNITO_ISSUER_URI=https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_hTAYJId8y
 CORS_ORIGINS=http://localhost:5173
 GEO_VALIDATION_ENABLED=true
@@ -69,13 +74,17 @@ NODE_ENV=development
 
 **Option A**: Update `admin-web/src/config/env.ts`
 ```typescript
-API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+LEAVE_API_BASE_URL: import.meta.env.VITE_LEAVE_API_BASE_URL || 'https://xfub6mzcqg.execute-api.ap-southeast-2.amazonaws.com'
 ```
 
-**Option B**: Create `admin-web/.env`
+**Option B**: Create `admin-web/.env.local`
 ```env
-VITE_API_BASE_URL=http://localhost:3000
+VITE_API_BASE_URL=http://localhost:8080
+VITE_LEAVE_API_BASE_URL=https://xfub6mzcqg.execute-api.ap-southeast-2.amazonaws.com
 ```
+
+**Optional (local Phase 2 development)**: set `VITE_USE_LOCAL_PHASE2=true` to force the frontend to call the local SAM/json-server running on port 3000.
 
 ---
 

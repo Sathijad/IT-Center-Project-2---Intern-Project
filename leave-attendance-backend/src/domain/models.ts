@@ -13,6 +13,7 @@ export interface LeaveRequest {
   userId: number;
   userEmail: string;
   userName: string | null;
+  userTeamId: number | null;
   policyId: number;
   policyName: string;
   status: LeaveStatus;
@@ -39,6 +40,9 @@ export interface LeaveRequestFilters {
 export interface AttendanceLog {
   logId: number;
   userId: number;
+  userName: string | null;
+  userEmail: string | null;
+  userTeamId: number | null;
   clockIn: string;
   clockOut: string | null;
   durationMinutes: number | null;

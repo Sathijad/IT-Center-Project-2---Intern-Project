@@ -53,7 +53,7 @@ export class ReportRepository {
     }
 
     if (filters.teamId) {
-      whereClause += ` AND u.team_id = $${index++}`;
+      whereClause += ` AND lr.user_team_id = $${index++}`;
       params.push(filters.teamId);
     }
 
@@ -74,7 +74,6 @@ export class ReportRepository {
         )::FLOAT AS approved_days
       FROM leave_requests lr
       INNER JOIN leave_policies lp ON lr.policy_id = lp.policy_id
-      INNER JOIN app_users u ON lr.user_id = u.id
       ${whereClause}
       GROUP BY lp.policy_id, lp.name
       ORDER BY lp.name ASC
