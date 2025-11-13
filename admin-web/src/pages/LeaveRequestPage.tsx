@@ -2,7 +2,12 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { getLeaveRequests, updateLeaveRequest, type LeaveRequest, type UpdateLeaveRequest } from '../lib/leaveApi'
+import {
+  getLeaveRequests,
+  updateLeaveRequest,
+  type LeaveRequest,
+  type UpdateLeaveRequest,
+} from '../lib/leaveApi'
 import { LeaveRequestTable } from '../components/LeaveRequestTable'
 import { LeaveApprovalCard } from '../components/LeaveApprovalCard'
 import { Calendar } from 'lucide-react'
@@ -13,29 +18,30 @@ const LeaveRequestPage: React.FC = () => {
   const queryClient = useQueryClient()
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('')
-  const [page, setPage] = useState(0)
+  const [page, setPage] = useState(1)
+  const pageSize = 20
 
   // Determine if this is the admin management view or user's own leave view
   const isAdminView = location.pathname === '/admin/leave'
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['leave-requests', isAdminView, user?.id, statusFilter, page],
-    queryFn: () => getLeaveRequests({
-      // For admin view on /admin/leave, don't pass user_id to get all requests
-      // For user view on /leave/history, explicitly pass user_id to show only their own requests (even if admin)
-      ...(isAdminView ? {} : { user_id: user?.id }),
-      status: statusFilter || undefined,
-      page,
-      size: 20,
-      sort: 'created_at,desc'
-    }),
+    queryFn: () =>
+      getLeaveRequests({
+        // For admin view on /admin/leave, request all users
+        // For user view on /leave/history, let backend scope to current user automatically
+        ...(isAdminView ? {} : {}),
+        status: statusFilter || undefined,
+        page,
+        size: pageSize,
+        sort: 'created_at,desc',
+      }),
     enabled: !!user, // Only fetch when user data is loaded
     staleTime: 60000, // 1 minute
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateLeaveRequest }) =>
-      updateLeaveRequest(id, data),
+    mutationFn: ({ id, data }: { id: number; data: UpdateLeaveRequest }) => updateLeaveRequest(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leave-requests'] })
       setSelectedRequest(null)
@@ -43,11 +49,11 @@ const LeaveRequestPage: React.FC = () => {
   })
 
   const handleApprove = (request: LeaveRequest) => {
-    updateMutation.mutate({ id: request.request_id, data: { action: 'APPROVE' } })
+    updateMutation.mutate({ id: request.requestId, data: { action: 'APPROVE' } })
   }
 
   const handleReject = (request: LeaveRequest, notes?: string) => {
-    updateMutation.mutate({ id: request.request_id, data: { action: 'REJECT', notes } })
+    updateMutation.mutate({ id: request.requestId, data: { action: 'REJECT', notes } })
   }
 
   if (isLoading) {
@@ -83,7 +89,7 @@ const LeaveRequestPage: React.FC = () => {
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value)
-              setPage(0)
+              setPage(1)
             }}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
           >
@@ -96,10 +102,10 @@ const LeaveRequestPage: React.FC = () => {
         </div>
       )}
 
-      {data?.content && data.content.length > 0 ? (
+      {data?.items && data.items.length > 0 ? (
         <>
           <LeaveRequestTable
-            requests={data.content}
+            requests={data.items}
             isAdmin={isAdminView}
             onSelect={setSelectedRequest}
           />
@@ -116,19 +122,23 @@ const LeaveRequestPage: React.FC = () => {
           {/* Pagination */}
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              Showing {data.page * data.size + 1} to {Math.min((data.page + 1) * data.size, data.totalElements)} of {data.totalElements} requests
+              {(() => {
+                const start = (data.page - 1) * data.size + 1
+                const end = Math.min(data.page * data.size, data.total)
+                return `Showing ${start} to ${end} of ${data.total} requests`
+              })()}
             </p>
             <div className="flex gap-2">
               <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={!data.hasPreviousPage}
                 className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage(p => p + 1)}
-                disabled={page >= data.totalPages - 1}
+                disabled={!data.hasNextPage}
                 className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
                 Next

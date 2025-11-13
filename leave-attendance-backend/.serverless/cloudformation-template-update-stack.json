@@ -1,0 +1,2461 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ServerlessDeploymentBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "ServerlessDeploymentBucket"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      },
+                      "/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "LeaveGetBalanceLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/leave-attendance-api-dev-leaveGetBalance",
+        "RetentionInDays": 30
+      }
+    },
+    "LeaveListRequestsLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/leave-attendance-api-dev-leaveListRequests",
+        "RetentionInDays": 30
+      }
+    },
+    "LeaveCreateRequestLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/leave-attendance-api-dev-leaveCreateRequest",
+        "RetentionInDays": 30
+      }
+    },
+    "LeaveUpdateRequestLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/leave-attendance-api-dev-leaveUpdateRequest",
+        "RetentionInDays": 30
+      }
+    },
+    "AttendanceGetLogsLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/leave-attendance-api-dev-attendanceGetLogs",
+        "RetentionInDays": 30
+      }
+    },
+    "AttendanceClockInLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/leave-attendance-api-dev-attendanceClockIn",
+        "RetentionInDays": 30
+      }
+    },
+    "AttendanceClockOutLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/leave-attendance-api-dev-attendanceClockOut",
+        "RetentionInDays": 30
+      }
+    },
+    "IntegrationsMsGraphSyncLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/leave-attendance-api-dev-integrationsMsGraphSync",
+        "RetentionInDays": 30
+      }
+    },
+    "ReportsLeaveSummaryLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/leave-attendance-api-dev-reportsLeaveSummary",
+        "RetentionInDays": 30
+      }
+    },
+    "HealthzLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/leave-attendance-api-dev-healthz",
+        "RetentionInDays": 30
+      }
+    },
+    "MsGraphSyncWorkerLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/leave-attendance-api-dev-msGraphSyncWorker",
+        "RetentionInDays": 30
+      }
+    },
+    "IamRoleLambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "leave-attendance-api",
+                  "dev",
+                  "lambda"
+                ]
+              ]
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:CreateLogGroup",
+                    "logs:TagResource"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/leave-attendance-api-dev*:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/leave-attendance-api-dev*:*:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "sqs:SendMessage",
+                    "sqs:SendMessageBatch",
+                    "sqs:GetQueueUrl"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "CalendarSyncQueue",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:GetQueueAttributes",
+                    "sqs:ChangeMessageVisibility"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "CalendarSyncQueue",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": "arn:aws:logs:ap-southeast-2:144395889864:log-group:/aws/lambda/leave-attendance-api-dev-*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "xray:PutTraceSegments",
+                    "xray:PutTelemetryRecords"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "xray:PutTraceSegments",
+                    "xray:PutTelemetryRecords"
+                  ],
+                  "Resource": [
+                    "*"
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:GetQueueAttributes"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "CalendarSyncQueue",
+                        "Arn"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "Path": "/",
+        "RoleName": {
+          "Fn::Join": [
+            "-",
+            [
+              "leave-attendance-api",
+              "dev",
+              {
+                "Ref": "AWS::Region"
+              },
+              "lambdaRole"
+            ]
+          ]
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "LeaveGetBalanceLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/leave-attendance-api/dev/1763034958089-2025-11-13T11:55:58.089Z/leaveGetBalance.zip"
+        },
+        "Handler": "src/handlers/leave/getBalance.handler",
+        "Runtime": "nodejs18.x",
+        "FunctionName": "leave-attendance-api-dev-leaveGetBalance",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Architectures": [
+          "arm64"
+        ],
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "NODE_ENV": "dev",
+            "TZ": "UTC",
+            "DB_HOST": "itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
+            "DB_PASS": "password",
+            "DB_NAME": "itcenter_auth",
+            "DB_SSL": "true",
+            "DB_POOL_MAX": "10",
+            "COGNITO_REGION": "ap-southeast-2",
+            "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
+            "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
+            "GEO_VALIDATION_ENABLED": "false",
+            "CALENDAR_SYNC_ENABLED": "true",
+            "GRAPH_TENANT": "dev-tenant-id",
+            "GRAPH_CLIENT_ID": "dev-graph-client-id",
+            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
+            "ALLOWED_ORIGINS": {
+              "Fn::Join": [
+                ",",
+                [
+                  "http://localhost:5173"
+                ]
+              ]
+            },
+            "CALENDAR_SYNC_QUEUE_URL": {
+              "Ref": "CalendarSyncQueue"
+            },
+            "CALENDAR_SYNC_QUEUE_ARN": {
+              "Fn::GetAtt": [
+                "CalendarSyncQueue",
+                "Arn"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-07b46cc5df8cba3db"
+          ],
+          "SubnetIds": [
+            "subnet-060d04de6760954b0",
+            "subnet-04faae770c7f5cb4a",
+            "subnet-0a9acd69d0477c50f"
+          ]
+        }
+      },
+      "DependsOn": [
+        "LeaveGetBalanceLogGroup"
+      ]
+    },
+    "LeaveListRequestsLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/leave-attendance-api/dev/1763034958089-2025-11-13T11:55:58.089Z/leaveListRequests.zip"
+        },
+        "Handler": "src/handlers/leave/listRequests.handler",
+        "Runtime": "nodejs18.x",
+        "FunctionName": "leave-attendance-api-dev-leaveListRequests",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Architectures": [
+          "arm64"
+        ],
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "NODE_ENV": "dev",
+            "TZ": "UTC",
+            "DB_HOST": "itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
+            "DB_PASS": "password",
+            "DB_NAME": "itcenter_auth",
+            "DB_SSL": "true",
+            "DB_POOL_MAX": "10",
+            "COGNITO_REGION": "ap-southeast-2",
+            "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
+            "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
+            "GEO_VALIDATION_ENABLED": "false",
+            "CALENDAR_SYNC_ENABLED": "true",
+            "GRAPH_TENANT": "dev-tenant-id",
+            "GRAPH_CLIENT_ID": "dev-graph-client-id",
+            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
+            "ALLOWED_ORIGINS": {
+              "Fn::Join": [
+                ",",
+                [
+                  "http://localhost:5173"
+                ]
+              ]
+            },
+            "CALENDAR_SYNC_QUEUE_URL": {
+              "Ref": "CalendarSyncQueue"
+            },
+            "CALENDAR_SYNC_QUEUE_ARN": {
+              "Fn::GetAtt": [
+                "CalendarSyncQueue",
+                "Arn"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-07b46cc5df8cba3db"
+          ],
+          "SubnetIds": [
+            "subnet-060d04de6760954b0",
+            "subnet-04faae770c7f5cb4a",
+            "subnet-0a9acd69d0477c50f"
+          ]
+        }
+      },
+      "DependsOn": [
+        "LeaveListRequestsLogGroup"
+      ]
+    },
+    "LeaveCreateRequestLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/leave-attendance-api/dev/1763034958089-2025-11-13T11:55:58.089Z/leaveCreateRequest.zip"
+        },
+        "Handler": "src/handlers/leave/createRequest.handler",
+        "Runtime": "nodejs18.x",
+        "FunctionName": "leave-attendance-api-dev-leaveCreateRequest",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Architectures": [
+          "arm64"
+        ],
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "NODE_ENV": "dev",
+            "TZ": "UTC",
+            "DB_HOST": "itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
+            "DB_PASS": "password",
+            "DB_NAME": "itcenter_auth",
+            "DB_SSL": "true",
+            "DB_POOL_MAX": "10",
+            "COGNITO_REGION": "ap-southeast-2",
+            "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
+            "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
+            "GEO_VALIDATION_ENABLED": "false",
+            "CALENDAR_SYNC_ENABLED": "true",
+            "GRAPH_TENANT": "dev-tenant-id",
+            "GRAPH_CLIENT_ID": "dev-graph-client-id",
+            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
+            "ALLOWED_ORIGINS": {
+              "Fn::Join": [
+                ",",
+                [
+                  "http://localhost:5173"
+                ]
+              ]
+            },
+            "CALENDAR_SYNC_QUEUE_URL": {
+              "Ref": "CalendarSyncQueue"
+            },
+            "CALENDAR_SYNC_QUEUE_ARN": {
+              "Fn::GetAtt": [
+                "CalendarSyncQueue",
+                "Arn"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-07b46cc5df8cba3db"
+          ],
+          "SubnetIds": [
+            "subnet-060d04de6760954b0",
+            "subnet-04faae770c7f5cb4a",
+            "subnet-0a9acd69d0477c50f"
+          ]
+        }
+      },
+      "DependsOn": [
+        "LeaveCreateRequestLogGroup"
+      ]
+    },
+    "LeaveUpdateRequestLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/leave-attendance-api/dev/1763034958089-2025-11-13T11:55:58.089Z/leaveUpdateRequest.zip"
+        },
+        "Handler": "src/handlers/leave/updateRequest.handler",
+        "Runtime": "nodejs18.x",
+        "FunctionName": "leave-attendance-api-dev-leaveUpdateRequest",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Architectures": [
+          "arm64"
+        ],
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "NODE_ENV": "dev",
+            "TZ": "UTC",
+            "DB_HOST": "itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
+            "DB_PASS": "password",
+            "DB_NAME": "itcenter_auth",
+            "DB_SSL": "true",
+            "DB_POOL_MAX": "10",
+            "COGNITO_REGION": "ap-southeast-2",
+            "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
+            "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
+            "GEO_VALIDATION_ENABLED": "false",
+            "CALENDAR_SYNC_ENABLED": "true",
+            "GRAPH_TENANT": "dev-tenant-id",
+            "GRAPH_CLIENT_ID": "dev-graph-client-id",
+            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
+            "ALLOWED_ORIGINS": {
+              "Fn::Join": [
+                ",",
+                [
+                  "http://localhost:5173"
+                ]
+              ]
+            },
+            "CALENDAR_SYNC_QUEUE_URL": {
+              "Ref": "CalendarSyncQueue"
+            },
+            "CALENDAR_SYNC_QUEUE_ARN": {
+              "Fn::GetAtt": [
+                "CalendarSyncQueue",
+                "Arn"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-07b46cc5df8cba3db"
+          ],
+          "SubnetIds": [
+            "subnet-060d04de6760954b0",
+            "subnet-04faae770c7f5cb4a",
+            "subnet-0a9acd69d0477c50f"
+          ]
+        }
+      },
+      "DependsOn": [
+        "LeaveUpdateRequestLogGroup"
+      ]
+    },
+    "AttendanceGetLogsLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/leave-attendance-api/dev/1763034958089-2025-11-13T11:55:58.089Z/attendanceGetLogs.zip"
+        },
+        "Handler": "src/handlers/attendance/getLogs.handler",
+        "Runtime": "nodejs18.x",
+        "FunctionName": "leave-attendance-api-dev-attendanceGetLogs",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Architectures": [
+          "arm64"
+        ],
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "NODE_ENV": "dev",
+            "TZ": "UTC",
+            "DB_HOST": "itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
+            "DB_PASS": "password",
+            "DB_NAME": "itcenter_auth",
+            "DB_SSL": "true",
+            "DB_POOL_MAX": "10",
+            "COGNITO_REGION": "ap-southeast-2",
+            "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
+            "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
+            "GEO_VALIDATION_ENABLED": "false",
+            "CALENDAR_SYNC_ENABLED": "true",
+            "GRAPH_TENANT": "dev-tenant-id",
+            "GRAPH_CLIENT_ID": "dev-graph-client-id",
+            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
+            "ALLOWED_ORIGINS": {
+              "Fn::Join": [
+                ",",
+                [
+                  "http://localhost:5173"
+                ]
+              ]
+            },
+            "CALENDAR_SYNC_QUEUE_URL": {
+              "Ref": "CalendarSyncQueue"
+            },
+            "CALENDAR_SYNC_QUEUE_ARN": {
+              "Fn::GetAtt": [
+                "CalendarSyncQueue",
+                "Arn"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-07b46cc5df8cba3db"
+          ],
+          "SubnetIds": [
+            "subnet-060d04de6760954b0",
+            "subnet-04faae770c7f5cb4a",
+            "subnet-0a9acd69d0477c50f"
+          ]
+        }
+      },
+      "DependsOn": [
+        "AttendanceGetLogsLogGroup"
+      ]
+    },
+    "AttendanceClockInLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/leave-attendance-api/dev/1763034958089-2025-11-13T11:55:58.089Z/attendanceClockIn.zip"
+        },
+        "Handler": "src/handlers/attendance/clockIn.handler",
+        "Runtime": "nodejs18.x",
+        "FunctionName": "leave-attendance-api-dev-attendanceClockIn",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Architectures": [
+          "arm64"
+        ],
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "NODE_ENV": "dev",
+            "TZ": "UTC",
+            "DB_HOST": "itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
+            "DB_PASS": "password",
+            "DB_NAME": "itcenter_auth",
+            "DB_SSL": "true",
+            "DB_POOL_MAX": "10",
+            "COGNITO_REGION": "ap-southeast-2",
+            "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
+            "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
+            "GEO_VALIDATION_ENABLED": "false",
+            "CALENDAR_SYNC_ENABLED": "true",
+            "GRAPH_TENANT": "dev-tenant-id",
+            "GRAPH_CLIENT_ID": "dev-graph-client-id",
+            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
+            "ALLOWED_ORIGINS": {
+              "Fn::Join": [
+                ",",
+                [
+                  "http://localhost:5173"
+                ]
+              ]
+            },
+            "CALENDAR_SYNC_QUEUE_URL": {
+              "Ref": "CalendarSyncQueue"
+            },
+            "CALENDAR_SYNC_QUEUE_ARN": {
+              "Fn::GetAtt": [
+                "CalendarSyncQueue",
+                "Arn"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-07b46cc5df8cba3db"
+          ],
+          "SubnetIds": [
+            "subnet-060d04de6760954b0",
+            "subnet-04faae770c7f5cb4a",
+            "subnet-0a9acd69d0477c50f"
+          ]
+        }
+      },
+      "DependsOn": [
+        "AttendanceClockInLogGroup"
+      ]
+    },
+    "AttendanceClockOutLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/leave-attendance-api/dev/1763034958089-2025-11-13T11:55:58.089Z/attendanceClockOut.zip"
+        },
+        "Handler": "src/handlers/attendance/clockOut.handler",
+        "Runtime": "nodejs18.x",
+        "FunctionName": "leave-attendance-api-dev-attendanceClockOut",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Architectures": [
+          "arm64"
+        ],
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "NODE_ENV": "dev",
+            "TZ": "UTC",
+            "DB_HOST": "itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
+            "DB_PASS": "password",
+            "DB_NAME": "itcenter_auth",
+            "DB_SSL": "true",
+            "DB_POOL_MAX": "10",
+            "COGNITO_REGION": "ap-southeast-2",
+            "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
+            "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
+            "GEO_VALIDATION_ENABLED": "false",
+            "CALENDAR_SYNC_ENABLED": "true",
+            "GRAPH_TENANT": "dev-tenant-id",
+            "GRAPH_CLIENT_ID": "dev-graph-client-id",
+            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
+            "ALLOWED_ORIGINS": {
+              "Fn::Join": [
+                ",",
+                [
+                  "http://localhost:5173"
+                ]
+              ]
+            },
+            "CALENDAR_SYNC_QUEUE_URL": {
+              "Ref": "CalendarSyncQueue"
+            },
+            "CALENDAR_SYNC_QUEUE_ARN": {
+              "Fn::GetAtt": [
+                "CalendarSyncQueue",
+                "Arn"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-07b46cc5df8cba3db"
+          ],
+          "SubnetIds": [
+            "subnet-060d04de6760954b0",
+            "subnet-04faae770c7f5cb4a",
+            "subnet-0a9acd69d0477c50f"
+          ]
+        }
+      },
+      "DependsOn": [
+        "AttendanceClockOutLogGroup"
+      ]
+    },
+    "IntegrationsMsGraphSyncLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/leave-attendance-api/dev/1763034958089-2025-11-13T11:55:58.089Z/integrationsMsGraphSync.zip"
+        },
+        "Handler": "src/handlers/integrations/msgraphSyncEnqueue.handler",
+        "Runtime": "nodejs18.x",
+        "FunctionName": "leave-attendance-api-dev-integrationsMsGraphSync",
+        "MemorySize": 512,
+        "Timeout": 10,
+        "Architectures": [
+          "arm64"
+        ],
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "NODE_ENV": "dev",
+            "TZ": "UTC",
+            "DB_HOST": "itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
+            "DB_PASS": "password",
+            "DB_NAME": "itcenter_auth",
+            "DB_SSL": "true",
+            "DB_POOL_MAX": "10",
+            "COGNITO_REGION": "ap-southeast-2",
+            "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
+            "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
+            "GEO_VALIDATION_ENABLED": "false",
+            "CALENDAR_SYNC_ENABLED": "true",
+            "GRAPH_TENANT": "dev-tenant-id",
+            "GRAPH_CLIENT_ID": "dev-graph-client-id",
+            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
+            "ALLOWED_ORIGINS": {
+              "Fn::Join": [
+                ",",
+                [
+                  "http://localhost:5173"
+                ]
+              ]
+            },
+            "CALENDAR_SYNC_QUEUE_URL": {
+              "Ref": "CalendarSyncQueue"
+            },
+            "CALENDAR_SYNC_QUEUE_ARN": {
+              "Fn::GetAtt": [
+                "CalendarSyncQueue",
+                "Arn"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-07b46cc5df8cba3db"
+          ],
+          "SubnetIds": [
+            "subnet-060d04de6760954b0",
+            "subnet-04faae770c7f5cb4a",
+            "subnet-0a9acd69d0477c50f"
+          ]
+        }
+      },
+      "DependsOn": [
+        "IntegrationsMsGraphSyncLogGroup"
+      ]
+    },
+    "ReportsLeaveSummaryLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/leave-attendance-api/dev/1763034958089-2025-11-13T11:55:58.089Z/reportsLeaveSummary.zip"
+        },
+        "Handler": "src/handlers/reports/leaveSummary.handler",
+        "Runtime": "nodejs18.x",
+        "FunctionName": "leave-attendance-api-dev-reportsLeaveSummary",
+        "MemorySize": 512,
+        "Timeout": 20,
+        "Architectures": [
+          "arm64"
+        ],
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "NODE_ENV": "dev",
+            "TZ": "UTC",
+            "DB_HOST": "itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
+            "DB_PASS": "password",
+            "DB_NAME": "itcenter_auth",
+            "DB_SSL": "true",
+            "DB_POOL_MAX": "10",
+            "COGNITO_REGION": "ap-southeast-2",
+            "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
+            "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
+            "GEO_VALIDATION_ENABLED": "false",
+            "CALENDAR_SYNC_ENABLED": "true",
+            "GRAPH_TENANT": "dev-tenant-id",
+            "GRAPH_CLIENT_ID": "dev-graph-client-id",
+            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
+            "ALLOWED_ORIGINS": {
+              "Fn::Join": [
+                ",",
+                [
+                  "http://localhost:5173"
+                ]
+              ]
+            },
+            "CALENDAR_SYNC_QUEUE_URL": {
+              "Ref": "CalendarSyncQueue"
+            },
+            "CALENDAR_SYNC_QUEUE_ARN": {
+              "Fn::GetAtt": [
+                "CalendarSyncQueue",
+                "Arn"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-07b46cc5df8cba3db"
+          ],
+          "SubnetIds": [
+            "subnet-060d04de6760954b0",
+            "subnet-04faae770c7f5cb4a",
+            "subnet-0a9acd69d0477c50f"
+          ]
+        }
+      },
+      "DependsOn": [
+        "ReportsLeaveSummaryLogGroup"
+      ]
+    },
+    "HealthzLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/leave-attendance-api/dev/1763034958089-2025-11-13T11:55:58.089Z/healthz.zip"
+        },
+        "Handler": "src/handlers/healthz.handler",
+        "Runtime": "nodejs18.x",
+        "FunctionName": "leave-attendance-api-dev-healthz",
+        "MemorySize": 256,
+        "Timeout": 5,
+        "Architectures": [
+          "arm64"
+        ],
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "NODE_ENV": "dev",
+            "TZ": "UTC",
+            "DB_HOST": "itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
+            "DB_PASS": "password",
+            "DB_NAME": "itcenter_auth",
+            "DB_SSL": "true",
+            "DB_POOL_MAX": "10",
+            "COGNITO_REGION": "ap-southeast-2",
+            "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
+            "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
+            "GEO_VALIDATION_ENABLED": "false",
+            "CALENDAR_SYNC_ENABLED": "true",
+            "GRAPH_TENANT": "dev-tenant-id",
+            "GRAPH_CLIENT_ID": "dev-graph-client-id",
+            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
+            "ALLOWED_ORIGINS": {
+              "Fn::Join": [
+                ",",
+                [
+                  "http://localhost:5173"
+                ]
+              ]
+            },
+            "CALENDAR_SYNC_QUEUE_URL": {
+              "Ref": "CalendarSyncQueue"
+            },
+            "CALENDAR_SYNC_QUEUE_ARN": {
+              "Fn::GetAtt": [
+                "CalendarSyncQueue",
+                "Arn"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-07b46cc5df8cba3db"
+          ],
+          "SubnetIds": [
+            "subnet-060d04de6760954b0",
+            "subnet-04faae770c7f5cb4a",
+            "subnet-0a9acd69d0477c50f"
+          ]
+        }
+      },
+      "DependsOn": [
+        "HealthzLogGroup"
+      ]
+    },
+    "MsGraphSyncWorkerLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/leave-attendance-api/dev/1763034958089-2025-11-13T11:55:58.089Z/msGraphSyncWorker.zip"
+        },
+        "Handler": "src/handlers/integrations/msgraphSyncWorker.handler",
+        "Runtime": "nodejs18.x",
+        "FunctionName": "leave-attendance-api-dev-msGraphSyncWorker",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Architectures": [
+          "arm64"
+        ],
+        "TracingConfig": {
+          "Mode": "PassThrough"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "NODE_ENV": "dev",
+            "TZ": "UTC",
+            "DB_HOST": "itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com",
+            "DB_PORT": "5432",
+            "DB_USER": "postgres",
+            "DB_PASS": "password",
+            "DB_NAME": "itcenter_auth",
+            "DB_SSL": "true",
+            "DB_POOL_MAX": "10",
+            "COGNITO_REGION": "ap-southeast-2",
+            "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
+            "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
+            "GEO_VALIDATION_ENABLED": "false",
+            "CALENDAR_SYNC_ENABLED": "true",
+            "GRAPH_TENANT": "dev-tenant-id",
+            "GRAPH_CLIENT_ID": "dev-graph-client-id",
+            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
+            "ALLOWED_ORIGINS": {
+              "Fn::Join": [
+                ",",
+                [
+                  "http://localhost:5173"
+                ]
+              ]
+            },
+            "CALENDAR_SYNC_QUEUE_URL": {
+              "Ref": "CalendarSyncQueue"
+            },
+            "CALENDAR_SYNC_QUEUE_ARN": {
+              "Fn::GetAtt": [
+                "CalendarSyncQueue",
+                "Arn"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-07b46cc5df8cba3db"
+          ],
+          "SubnetIds": [
+            "subnet-060d04de6760954b0",
+            "subnet-04faae770c7f5cb4a",
+            "subnet-0a9acd69d0477c50f"
+          ]
+        }
+      },
+      "DependsOn": [
+        "MsGraphSyncWorkerLogGroup"
+      ]
+    },
+    "AttendanceGetLogsLambdaVersionxMmZHU5B0XLH3mJkEmZmKXxP2y929mkTnms8vUPU": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "AttendanceGetLogsLambdaFunction"
+        },
+        "CodeSha256": "9+herLqpJZXgFy5IFeaH8MldIYqM/azVA7Con8ZkX5I="
+      }
+    },
+    "AttendanceClockInLambdaVersionQqwgZd18BY0uQ5e7VvsWPrCxr1KfM15XqqCCwryvI": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "AttendanceClockInLambdaFunction"
+        },
+        "CodeSha256": "pqKqfzAkyCG06tbjhNe6P+rHtUBYnF8DfIXOFbnHGVE="
+      }
+    },
+    "AttendanceClockOutLambdaVersion00RIafejg08dMYsT9g4raCND3EFqPdEl8jd6awxl4": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "AttendanceClockOutLambdaFunction"
+        },
+        "CodeSha256": "+m34ZmBucQ20HfXfJEKtTJps5pWbtNSlj/zH1qNcGYY="
+      }
+    },
+    "ReportsLeaveSummaryLambdaVersionutMmlmHaUQ9pcv5XE2Oc1KwkpmSsD0xeTgPVJR3CHg": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "ReportsLeaveSummaryLambdaFunction"
+        },
+        "CodeSha256": "K77Dyf4Y6BfaqkzJlQa7GyfrWUQxSOVaaoq7/rMxRsM="
+      }
+    },
+    "HealthzLambdaVersion8556qJtiTNVzhELeGmBF84eBIuA0B0v1Vme4CXOFCio": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "HealthzLambdaFunction"
+        },
+        "CodeSha256": "UgeK51M7T+83T6htquFvvmUf7ibbGW08vI3J3It8kc4="
+      }
+    },
+    "LeaveGetBalanceLambdaVersiontys4ZmlndIyaVGpTzwlfWwptvxKbQwvRipIWfQ9OEE": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "LeaveGetBalanceLambdaFunction"
+        },
+        "CodeSha256": "rwVNfnEm9mFnxoc6U8Vm6ykG8qYkyGwGXT6fXi9mNQE="
+      }
+    },
+    "LeaveListRequestsLambdaVersion1XT5Sem6nZ0y0pCYjiyJuvzWGimd4vItRVgQEiiF7OY": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "LeaveListRequestsLambdaFunction"
+        },
+        "CodeSha256": "oAP3Dfg+nKbi3dQ4JK/s0DwKNjLhLmJyBT5QLegXvtA="
+      }
+    },
+    "LeaveCreateRequestLambdaVersionD4lK7lTvpscvaKbadmUCS7XiwsVz3XluHSYg29Ll9Ys": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "LeaveCreateRequestLambdaFunction"
+        },
+        "CodeSha256": "6va7btcwbk1inDxQm8L/yABSqdXZ88fyin9JBAMV080="
+      }
+    },
+    "LeaveUpdateRequestLambdaVersionHScycPHPepwmsDdxiZfutwrKTuJUPkLQKdNxMgiXU": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "LeaveUpdateRequestLambdaFunction"
+        },
+        "CodeSha256": "YP+zROvKQwtquHm7/cOUdP2qF/2tD6VVQRU8oQbC7lk="
+      }
+    },
+    "IntegrationsMsGraphSyncLambdaVersion52jrSekmy052HECn9q0etB2ANzhb77SK9xOxMfNOXY": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "IntegrationsMsGraphSyncLambdaFunction"
+        },
+        "CodeSha256": "gOqGpztPVYWOpCSmXYL2VhORnuE8rzlXhwFk4RosViI="
+      }
+    },
+    "MsGraphSyncWorkerLambdaVersionNpz7CkvKBz3uZqKgux8CICEDLcAr78uLeIu4MbGk18": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "MsGraphSyncWorkerLambdaFunction"
+        },
+        "CodeSha256": "9uzHALBX1U1VD2mCBO/8TodGi/Es4i9aOGXh6mJ9Ik4="
+      }
+    },
+    "MsGraphSyncWorkerLambdaEvConf": {
+      "Type": "AWS::Lambda::EventInvokeConfig",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "MsGraphSyncWorkerLambdaFunction"
+        },
+        "DestinationConfig": {},
+        "Qualifier": "$LATEST",
+        "MaximumRetryAttempts": 2
+      }
+    },
+    "MsGraphSyncWorkerEventSourceMappingSQSCalendarSyncQueue": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "DependsOn": [
+        "IamRoleLambdaExecution"
+      ],
+      "Properties": {
+        "BatchSize": 5,
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "CalendarSyncQueue",
+            "Arn"
+          ]
+        },
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "MsGraphSyncWorkerLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Enabled": true
+      }
+    },
+    "HttpApi": {
+      "Type": "AWS::ApiGatewayV2::Api",
+      "Properties": {
+        "Name": "dev-leave-attendance-api",
+        "ProtocolType": "HTTP",
+        "CorsConfiguration": {
+          "AllowHeaders": [
+            "Authorization",
+            "Content-Type",
+            "Idempotency-Key",
+            "X-Amz-Date",
+            "X-Amz-Security-Token"
+          ],
+          "AllowMethods": [
+            "OPTIONS",
+            "GET",
+            "POST",
+            "PATCH"
+          ],
+          "AllowOrigins": [
+            "http://localhost:5173"
+          ]
+        }
+      }
+    },
+    "HttpApiStage": {
+      "Type": "AWS::ApiGatewayV2::Stage",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "StageName": "$default",
+        "AutoDeploy": true,
+        "DefaultRouteSettings": {
+          "DetailedMetricsEnabled": true
+        }
+      }
+    },
+    "HttpApiAuthorizerCognitoJwtAuthorizer": {
+      "Type": "AWS::ApiGatewayV2::Authorizer",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "Name": "cognitoJwtAuthorizer",
+        "IdentitySource": [
+          "$request.header.Authorization"
+        ],
+        "AuthorizerType": "JWT",
+        "JwtConfiguration": {
+          "Audience": [
+            "3rdnl5ind8guti89jrbob85r4i"
+          ],
+          "Issuer": "https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_hTAYJId8y"
+        }
+      }
+    },
+    "LeaveGetBalanceLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "LeaveGetBalanceLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationLeaveGetBalance": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "LeaveGetBalanceLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRouteGetApiV1LeaveBalance": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "GET /api/v1/leave/balance",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationLeaveGetBalance"
+              }
+            ]
+          ]
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiAuthorizerCognitoJwtAuthorizer"
+        }
+      },
+      "DependsOn": "HttpApiIntegrationLeaveGetBalance"
+    },
+    "LeaveListRequestsLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "LeaveListRequestsLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationLeaveListRequests": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "LeaveListRequestsLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRouteGetApiV1LeaveRequests": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "GET /api/v1/leave/requests",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationLeaveListRequests"
+              }
+            ]
+          ]
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiAuthorizerCognitoJwtAuthorizer"
+        }
+      },
+      "DependsOn": "HttpApiIntegrationLeaveListRequests"
+    },
+    "LeaveCreateRequestLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "LeaveCreateRequestLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationLeaveCreateRequest": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "LeaveCreateRequestLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRoutePostApiV1LeaveRequests": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "POST /api/v1/leave/requests",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationLeaveCreateRequest"
+              }
+            ]
+          ]
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiAuthorizerCognitoJwtAuthorizer"
+        }
+      },
+      "DependsOn": "HttpApiIntegrationLeaveCreateRequest"
+    },
+    "LeaveUpdateRequestLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "LeaveUpdateRequestLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationLeaveUpdateRequest": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "LeaveUpdateRequestLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRoutePatchApiV1LeaveRequestsIdVar": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "PATCH /api/v1/leave/requests/{id}",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationLeaveUpdateRequest"
+              }
+            ]
+          ]
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiAuthorizerCognitoJwtAuthorizer"
+        }
+      },
+      "DependsOn": "HttpApiIntegrationLeaveUpdateRequest"
+    },
+    "AttendanceGetLogsLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "AttendanceGetLogsLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationAttendanceGetLogs": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "AttendanceGetLogsLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRouteGetApiV1Attendance": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "GET /api/v1/attendance",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationAttendanceGetLogs"
+              }
+            ]
+          ]
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiAuthorizerCognitoJwtAuthorizer"
+        }
+      },
+      "DependsOn": "HttpApiIntegrationAttendanceGetLogs"
+    },
+    "AttendanceClockInLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "AttendanceClockInLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationAttendanceClockIn": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "AttendanceClockInLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRoutePostApiV1AttendanceClockDashin": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "POST /api/v1/attendance/clock-in",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationAttendanceClockIn"
+              }
+            ]
+          ]
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiAuthorizerCognitoJwtAuthorizer"
+        }
+      },
+      "DependsOn": "HttpApiIntegrationAttendanceClockIn"
+    },
+    "AttendanceClockOutLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "AttendanceClockOutLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationAttendanceClockOut": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "AttendanceClockOutLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRoutePostApiV1AttendanceClockDashout": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "POST /api/v1/attendance/clock-out",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationAttendanceClockOut"
+              }
+            ]
+          ]
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiAuthorizerCognitoJwtAuthorizer"
+        }
+      },
+      "DependsOn": "HttpApiIntegrationAttendanceClockOut"
+    },
+    "IntegrationsMsGraphSyncLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "IntegrationsMsGraphSyncLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationIntegrationsMsGraphSync": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "IntegrationsMsGraphSyncLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRoutePostApiV1IntegrationsMsgraphSync": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "POST /api/v1/integrations/msgraph/sync",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationIntegrationsMsGraphSync"
+              }
+            ]
+          ]
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiAuthorizerCognitoJwtAuthorizer"
+        }
+      },
+      "DependsOn": "HttpApiIntegrationIntegrationsMsGraphSync"
+    },
+    "ReportsLeaveSummaryLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ReportsLeaveSummaryLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationReportsLeaveSummary": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "ReportsLeaveSummaryLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRouteGetApiV1ReportsLeaveDashsummary": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "GET /api/v1/reports/leave-summary",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationReportsLeaveSummary"
+              }
+            ]
+          ]
+        },
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiAuthorizerCognitoJwtAuthorizer"
+        }
+      },
+      "DependsOn": "HttpApiIntegrationReportsLeaveSummary"
+    },
+    "HealthzLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "HealthzLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationHealthz": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "HealthzLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRouteGetHealthz": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "GET /healthz",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationHealthz"
+              }
+            ]
+          ]
+        }
+      },
+      "DependsOn": "HttpApiIntegrationHealthz"
+    },
+    "CalendarSyncDLQ": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": "leave-attendance-api-dev-calendar-sync-dlq",
+        "MessageRetentionPeriod": 1209600
+      }
+    },
+    "CalendarSyncQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": "leave-attendance-api-dev-calendar-sync",
+        "VisibilityTimeout": 60,
+        "RedrivePolicy": {
+          "deadLetterTargetArn": {
+            "Fn::GetAtt": [
+              "CalendarSyncDLQ",
+              "Arn"
+            ]
+          },
+          "maxReceiveCount": 3
+        }
+      }
+    },
+    "ApiErrorRateAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "leave-attendance-api-dev-error-rate",
+        "Namespace": "AWS/ApiGateway",
+        "MetricName": "5XXError",
+        "Dimensions": [
+          {
+            "Name": "ApiName",
+            "Value": "leave-attendance-api-dev"
+          }
+        ],
+        "Statistic": "Sum",
+        "Period": 300,
+        "EvaluationPeriods": 1,
+        "Threshold": 5,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "TreatMissingData": "notBreaching"
+      }
+    },
+    "ApiLatencyAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "leave-attendance-api-dev-latency",
+        "Namespace": "AWS/ApiGateway",
+        "MetricName": "Latency",
+        "Dimensions": [
+          {
+            "Name": "ApiName",
+            "Value": "leave-attendance-api-dev"
+          }
+        ],
+        "Statistic": "Average",
+        "Period": 300,
+        "EvaluationPeriods": 1,
+        "Threshold": 300,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "TreatMissingData": "notBreaching"
+      }
+    },
+    "CalendarSyncDLQAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": "leave-attendance-api-dev-calendar-sync-dlq-depth",
+        "Namespace": "AWS/SQS",
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "CalendarSyncDLQ",
+                "QueueName"
+              ]
+            }
+          }
+        ],
+        "Statistic": "Average",
+        "Period": 300,
+        "EvaluationPeriods": 1,
+        "Threshold": 1,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "TreatMissingData": "notBreaching"
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-ServerlessDeploymentBucketName"
+      }
+    },
+    "AttendanceGetLogsLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "AttendanceGetLogsLambdaVersionxMmZHU5B0XLH3mJkEmZmKXxP2y929mkTnms8vUPU"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-AttendanceGetLogsLambdaFunctionQualifiedArn"
+      }
+    },
+    "AttendanceClockInLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "AttendanceClockInLambdaVersionQqwgZd18BY0uQ5e7VvsWPrCxr1KfM15XqqCCwryvI"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-AttendanceClockInLambdaFunctionQualifiedArn"
+      }
+    },
+    "AttendanceClockOutLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "AttendanceClockOutLambdaVersion00RIafejg08dMYsT9g4raCND3EFqPdEl8jd6awxl4"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-AttendanceClockOutLambdaFunctionQualifiedArn"
+      }
+    },
+    "ReportsLeaveSummaryLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "ReportsLeaveSummaryLambdaVersionutMmlmHaUQ9pcv5XE2Oc1KwkpmSsD0xeTgPVJR3CHg"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-ReportsLeaveSummaryLambdaFunctionQualifiedArn"
+      }
+    },
+    "HealthzLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "HealthzLambdaVersion8556qJtiTNVzhELeGmBF84eBIuA0B0v1Vme4CXOFCio"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-HealthzLambdaFunctionQualifiedArn"
+      }
+    },
+    "LeaveGetBalanceLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "LeaveGetBalanceLambdaVersiontys4ZmlndIyaVGpTzwlfWwptvxKbQwvRipIWfQ9OEE"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-LeaveGetBalanceLambdaFunctionQualifiedArn"
+      }
+    },
+    "LeaveListRequestsLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "LeaveListRequestsLambdaVersion1XT5Sem6nZ0y0pCYjiyJuvzWGimd4vItRVgQEiiF7OY"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-LeaveListRequestsLambdaFunctionQualifiedArn"
+      }
+    },
+    "LeaveCreateRequestLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "LeaveCreateRequestLambdaVersionD4lK7lTvpscvaKbadmUCS7XiwsVz3XluHSYg29Ll9Ys"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-LeaveCreateRequestLambdaFunctionQualifiedArn"
+      }
+    },
+    "LeaveUpdateRequestLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "LeaveUpdateRequestLambdaVersionHScycPHPepwmsDdxiZfutwrKTuJUPkLQKdNxMgiXU"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-LeaveUpdateRequestLambdaFunctionQualifiedArn"
+      }
+    },
+    "IntegrationsMsGraphSyncLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "IntegrationsMsGraphSyncLambdaVersion52jrSekmy052HECn9q0etB2ANzhb77SK9xOxMfNOXY"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-IntegrationsMsGraphSyncLambdaFunctionQualifiedArn"
+      }
+    },
+    "MsGraphSyncWorkerLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "MsGraphSyncWorkerLambdaVersionNpz7CkvKBz3uZqKgux8CICEDLcAr78uLeIu4MbGk18"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-MsGraphSyncWorkerLambdaFunctionQualifiedArn"
+      }
+    },
+    "HttpApiId": {
+      "Description": "Id of the HTTP API",
+      "Value": {
+        "Ref": "HttpApi"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-HttpApiId"
+      }
+    },
+    "HttpApiUrl": {
+      "Description": "URL of the HTTP API",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "HttpApi"
+            },
+            ".execute-api.",
+            {
+              "Ref": "AWS::Region"
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix"
+            }
+          ]
+        ]
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-HttpApiUrl"
+      }
+    },
+    "HttpApiInvokeUrl": {
+      "Description": "Invoke URL for the HTTP API",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "HttpApi"
+            },
+            ".execute-api.",
+            "ap-southeast-2",
+            ".amazonaws.com"
+          ]
+        ]
+      }
+    },
+    "CalendarSyncQueueArn": {
+      "Description": "ARN of the calendar sync SQS queue",
+      "Value": {
+        "Fn::GetAtt": [
+          "CalendarSyncQueue",
+          "Arn"
+        ]
+      }
+    }
+  }
+}

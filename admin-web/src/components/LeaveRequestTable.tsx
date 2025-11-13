@@ -1,6 +1,6 @@
 import React from 'react'
 import { type LeaveRequest } from '../lib/leaveApi'
-import { Calendar, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 
 interface LeaveRequestTableProps {
   requests: LeaveRequest[]
@@ -58,30 +58,39 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {requests.map((request) => (
-            <tr
-              key={request.request_id}
+          {requests.map((request) => {
+            const days =
+              typeof request.daysRequested === 'number'
+                ? request.daysRequested
+                : Number(request.daysRequested) || 0
+            const formattedDays = Number.isInteger(days) ? days : Number(days.toFixed(1))
+
+            return (
+              <tr
+              key={request.requestId}
               className="hover:bg-gray-50 cursor-pointer"
               onClick={() => onSelect?.(request)}
             >
               {isAdmin && (
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">{request.user_name}</div>
-                    <div className="text-sm text-gray-500">{request.user_email}</div>
+                    <div className="text-sm font-medium text-gray-900">{request.userName ?? 'Unknown user'}</div>
+                    <div className="text-sm text-gray-500">{request.userEmail}</div>
                   </div>
                 </td>
               )}
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">{request.policy_name}</div>
+                <div className="text-sm text-gray-900">{request.policyName}</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-900">
-                  {new Date(request.start_date).toLocaleDateString()} - {new Date(request.end_date).toLocaleDateString()}
+                  {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">{request.days} days</div>
+                <div className="text-sm text-gray-900">
+                  {formattedDays} {formattedDays === 1 ? 'day' : 'days'}
+                </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
@@ -90,7 +99,7 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {new Date(request.created_at).toLocaleDateString()}
+                {new Date(request.createdAt).toLocaleDateString()}
               </td>
               {isAdmin && (
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -107,8 +116,9 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({
                   )}
                 </td>
               )}
-            </tr>
-          ))}
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>

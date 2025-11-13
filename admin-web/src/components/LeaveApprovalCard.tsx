@@ -40,28 +40,39 @@ export const LeaveApprovalCard: React.FC<LeaveApprovalCardProps> = ({
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Employee</label>
-              <p className="mt-1 text-sm text-gray-900">{request.user_name} ({request.user_email})</p>
+              <p className="mt-1 text-sm text-gray-900">
+                {request.userName ?? 'Unknown user'} ({request.userEmail})
+              </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Leave Policy</label>
-              <p className="mt-1 text-sm text-gray-900">{request.policy_name}</p>
+              <p className="mt-1 text-sm text-gray-900">{request.policyName}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                <p className="mt-1 text-sm text-gray-900">{new Date(request.start_date).toLocaleDateString()}</p>
+                <p className="mt-1 text-sm text-gray-900">{new Date(request.startDate).toLocaleDateString()}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">End Date</label>
-                <p className="mt-1 text-sm text-gray-900">{new Date(request.end_date).toLocaleDateString()}</p>
+                <p className="mt-1 text-sm text-gray-900">{new Date(request.endDate).toLocaleDateString()}</p>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Total Days</label>
-              <p className="mt-1 text-sm text-gray-900">{request.days} days</p>
+              <p className="mt-1 text-sm text-gray-900">
+                {(() => {
+                  const days =
+                    typeof request.daysRequested === 'number'
+                      ? request.daysRequested
+                      : Number(request.daysRequested) || 0
+                  const formatted = Number.isInteger(days) ? days : Number(days.toFixed(1))
+                  return `${formatted} ${formatted === 1 ? 'day' : 'days'}`
+                })()}
+              </p>
             </div>
 
             {request.reason && (

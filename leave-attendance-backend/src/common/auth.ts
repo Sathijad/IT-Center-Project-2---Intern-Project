@@ -1,11 +1,10 @@
 import { APIGatewayProxyEventV2 } from 'aws-lambda';
-import jwt, { JwtHeader, JwtPayload, SigningKeyCallback } from 'jsonwebtoken';
-import jwksClient, { JwksClient } from 'jwks-rsa';
 import { AuthenticatedUser, UserRole } from './types';
 import { ForbiddenError, UnauthorizedError } from './errors';
 import { logger } from './logger';
+import { UserRepository } from '../repositories/userRepository';
 
-interface CognitoJwtPayload extends JwtPayload {
+interface CognitoJwtPayload {
   sub: string;
   email?: string;
   'cognito:groups'?: string[];
@@ -24,133 +23,92 @@ interface CognitoJwtPayload extends JwtPayload {
   'cognito:username'?: string;
 }
 
-let jwks: JwksClient | null = null;
-
-const getIssuer = (): string => {
-  const region = process.env.COGNITO_REGION;
-  const userPoolId = process.env.COGNITO_USER_POOL_ID;
-
-  if (!region || !userPoolId) {
-    throw new Error('Cognito configuration is missing (COGNITO_REGION or COGNITO_USER_POOL_ID)');
-  }
-
-  return `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`;
+type JwtAuthorizerContext = {
+  jwt?: {
+    claims: Record<string, unknown>;
+    scopes?: string[];
+  };
 };
 
-const getJwksClient = (): JwksClient => {
-  if (!jwks) {
-    const issuer = getIssuer();
-    jwks = jwksClient({
-      jwksUri: `${issuer}/.well-known/jwks.json`,
-      cache: true,
-      cacheMaxEntries: 5,
-      cacheMaxAge: Number(process.env.JWKS_CACHE_MS || 3_600_000),
-      timeout: Number(process.env.JWKS_TIMEOUT_MS || 5000),
-    });
-  }
-
-  return jwks;
+type RequestContextWithAuthorizer = APIGatewayProxyEventV2['requestContext'] & {
+  authorizer?: JwtAuthorizerContext;
 };
 
-const getSigningKey = (header: JwtHeader, callback: SigningKeyCallback) => {
-  const client = getJwksClient();
-  if (!header.kid) {
-    callback(new Error('Token header missing kid'));
-    return;
-  }
+const userRepository = new UserRepository();
 
-  client.getSigningKey(header.kid, (error, key) => {
-    if (error) {
-      callback(error);
-      return;
+const parseMaybeJsonArray = (value: string): string[] => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return [];
+  }
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((item): item is string => typeof item === 'string')
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0);
+      }
+    } catch {
+      // fall through to comma split
     }
-    const signingKey = key?.getPublicKey();
-    callback(null, signingKey);
-  });
-};
-
-const verifyJwt = (token: string): Promise<CognitoJwtPayload> => {
-  const issuer = getIssuer();
-  const audience = process.env.COGNITO_CLIENT_ID;
-
-  return new Promise((resolve, reject) => {
-    jwt.verify(
-      token,
-      getSigningKey,
-      {
-        audience,
-        issuer,
-      },
-      (error, decoded) => {
-        if (error) {
-          reject(new UnauthorizedError('Invalid or expired token'));
-          return;
-        }
-
-        if (!decoded || typeof decoded === 'string') {
-          reject(new UnauthorizedError('Invalid token payload'));
-          return;
-        }
-
-        const payload = decoded as CognitoJwtPayload;
-
-        if (!payload.sub) {
-          reject(new UnauthorizedError('Token missing subject'));
-          return;
-        }
-
-        resolve(payload);
-      },
-    );
-  });
-};
-
-const extractAuthorizationHeader = (event: APIGatewayProxyEventV2): string => {
-  const header = event.headers?.authorization || event.headers?.Authorization;
-  if (!header) {
-    throw new UnauthorizedError('Missing Authorization header');
   }
-  return header;
+  if (trimmed.includes(',')) {
+    return trimmed
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+  return [trimmed];
 };
 
-const extractBearerToken = (authHeader: string): string => {
-  const [scheme, token] = authHeader.split(' ');
-  if (!token || scheme.toLowerCase() !== 'bearer') {
-    throw new UnauthorizedError('Authorization header must be Bearer token');
+const coerceClaimValue = (key: string, value: unknown): unknown => {
+  if (typeof value === 'string') {
+    switch (key) {
+      case 'cognito:groups':
+      case 'custom:roles':
+      case 'roles':
+        return parseMaybeJsonArray(value);
+      default:
+        return value;
+    }
   }
-  return token;
+  return value;
+};
+
+const getClaims = (event: APIGatewayProxyEventV2): CognitoJwtPayload => {
+  const requestContext = event.requestContext as RequestContextWithAuthorizer;
+  const claims = requestContext.authorizer?.jwt?.claims;
+  if (!claims) {
+    throw new UnauthorizedError('Missing JWT claims from authorizer');
+  }
+
+  const normalizedClaims = Object.entries(claims).reduce<Partial<CognitoJwtPayload> & Record<string, unknown>>(
+    (acc, [key, value]) => {
+    acc[key] = coerceClaimValue(key, value);
+    return acc;
+  },
+    {},
+  );
+
+  if (!normalizedClaims.sub || typeof normalizedClaims.sub !== 'string') {
+    throw new UnauthorizedError('Token missing subject');
+  }
+
+  return normalizedClaims as CognitoJwtPayload;
 };
 
 export const authenticateRequest = async (event: APIGatewayProxyEventV2): Promise<AuthenticatedUser> => {
-  const authHeader = extractAuthorizationHeader(event);
-  const token = extractBearerToken(authHeader);
-
-  const payload = await verifyJwt(token);
-  logger.debug('JWT verified', { sub: payload.sub });
-
-  const userIdCandidate =
-    payload['custom:user_id'] ?? payload['user_id'] ?? payload['custom:employee_id'] ?? payload['employee_id'];
-  const userId =
-    typeof userIdCandidate === 'string' ? Number(userIdCandidate) : Number(userIdCandidate ?? Number.NaN);
-
-  if (!Number.isFinite(userId)) {
-    throw new UnauthorizedError('Token missing numeric user_id claim');
-  }
+  const payload = getClaims(event);
+  logger.debug('JWT claims received', { sub: payload.sub });
 
   const emailClaim =
     typeof payload.email === 'string'
       ? payload.email
       : typeof payload['custom:email'] === 'string'
       ? payload['custom:email']
-      : typeof payload['preferred_username'] === 'string'
-      ? payload['preferred_username']
-      : typeof payload['cognito:username'] === 'string'
-      ? payload['cognito:username']
       : null;
-
-  if (!emailClaim) {
-    throw new UnauthorizedError('Token missing email claim');
-  }
 
   const roleCandidates: string[] = [];
   const appendRoles = (value: unknown) => {
@@ -185,18 +143,32 @@ export const authenticateRequest = async (event: APIGatewayProxyEventV2): Promis
   const displayName =
     (typeof payload['custom:display_name'] === 'string' && payload['custom:display_name']) ||
     (typeof payload.name === 'string' && payload.name) ||
-    emailClaim;
+    (typeof payload['preferred_username'] === 'string' && payload['preferred_username']) ||
+    (typeof payload['cognito:username'] === 'string' && payload['cognito:username']) ||
+    emailClaim ||
+    payload.sub;
 
   const teamClaim = payload['custom:team_id'] ?? payload['team_id'];
   const teamNumeric =
     typeof teamClaim === 'string' ? Number(teamClaim) : typeof teamClaim === 'number' ? teamClaim : Number.NaN;
-  const teamId = Number.isFinite(teamNumeric) ? Number(teamNumeric) : null;
+  const teamIdFromClaims = Number.isFinite(teamNumeric) ? Number(teamNumeric) : null;
 
-  const user: AuthenticatedUser = {
-    userId,
+  const userRecord = await userRepository.upsertFromClaims({
+    cognitoSub: payload.sub,
     email: emailClaim,
     displayName,
-    teamId,
+    teamId: teamIdFromClaims ?? undefined,
+  });
+
+  const resolvedTeamId = userRecord.teamId ?? teamIdFromClaims ?? null;
+  const resolvedEmail = userRecord.email ?? emailClaim ?? undefined;
+  const resolvedDisplayName = userRecord.displayName ?? displayName ?? resolvedEmail;
+
+  const user: AuthenticatedUser = {
+    userId: userRecord.userId,
+    email: resolvedEmail ?? payload.sub,
+    displayName: resolvedDisplayName,
+    teamId: resolvedTeamId,
     roles: normalizedRoles,
     sub: payload.sub,
   };

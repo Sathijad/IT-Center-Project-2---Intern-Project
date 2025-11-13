@@ -2,29 +2,29 @@ import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
 import { getAttendanceLogs, clockIn, clockOut, type AttendanceLog } from '../lib/attendanceApi'
-import { Clock, Download, Calendar, LogIn, LogOut, CheckCircle, XCircle } from 'lucide-react'
+import { Download, Calendar, LogIn, LogOut, CheckCircle, XCircle } from 'lucide-react'
 
 const MyAttendancePage: React.FC = () => {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const [startDate, setStartDate] = useState<string>('')
   const [endDate, setEndDate] = useState<string>('')
-  const [page, setPage] = useState(0)
+  const [page, setPage] = useState(1)
   const [clockingIn, setClockingIn] = useState(false)
   const [clockingOut, setClockingOut] = useState(false)
+  const pageSize = 20
 
   // Get user's attendance logs - always filter by current user's ID
   const { data, isLoading, error } = useQuery({
     queryKey: ['my-attendance-logs', user?.id, startDate, endDate, page],
     queryFn: () => {
-      // Always pass the current user's ID to ensure "My Attendance" shows only current user's data
-      // Even if user is admin, this page should show only their own attendance
+      // Backend automatically scopes to the authenticated user when no user_id is provided
       return getAttendanceLogs({
-        user_id: user?.id, // Explicitly pass current user's ID
+        // Do not pass user_id to let backend infer current user
         start_date: startDate || undefined,
         end_date: endDate || undefined,
         page,
-        size: 20,
+        size: pageSize,
         sort: 'clock_in,desc'
       })
     },
@@ -33,13 +33,13 @@ const MyAttendancePage: React.FC = () => {
   })
 
   // Check if user is currently clocked in (has an open session)
-  const todayLogs = data?.content?.filter((log: AttendanceLog) => {
-    const logDate = new Date(log.clock_in).toDateString()
+  const todayLogs = data?.items?.filter((log: AttendanceLog) => {
+    const logDate = new Date(log.clockIn).toDateString()
     const today = new Date().toDateString()
     return logDate === today
   }) || []
 
-  const currentOpenSession = todayLogs.find((log: AttendanceLog) => !log.clock_out)
+  const currentOpenSession = todayLogs.find((log: AttendanceLog) => !log.clockOut)
 
   // Clock in mutation
   const clockInMutation = useMutation({
@@ -150,11 +150,11 @@ const MyAttendancePage: React.FC = () => {
   const handleExport = () => {
     const csv = [
       ['Date', 'Clock In', 'Clock Out', 'Duration (minutes)'],
-      ...(data?.content || []).map((log: AttendanceLog) => [
-        new Date(log.clock_in).toLocaleDateString(),
-        new Date(log.clock_in).toLocaleString(),
-        log.clock_out ? new Date(log.clock_out).toLocaleString() : 'N/A',
-        log.duration_minutes || 'N/A'
+      ...(data?.items || []).map((log: AttendanceLog) => [
+        new Date(log.clockIn).toLocaleDateString(),
+        new Date(log.clockIn).toLocaleString(),
+        log.clockOut ? new Date(log.clockOut).toLocaleString() : 'N/A',
+        log.durationMinutes ?? 'N/A'
       ])
     ].map(row => row.join(',')).join('\n')
 
@@ -199,7 +199,7 @@ const MyAttendancePage: React.FC = () => {
                 <CheckCircle className="w-5 h-5" />
                 <span className="font-medium">Clocked In</span>
                 <span className="text-gray-600 text-sm">
-                  Since {new Date(currentOpenSession.clock_in).toLocaleTimeString()}
+                  Since {new Date(currentOpenSession.clockIn).toLocaleTimeString()}
                 </span>
               </div>
             ) : (
@@ -261,7 +261,7 @@ const MyAttendancePage: React.FC = () => {
               value={startDate}
               onChange={(e) => {
                 setStartDate(e.target.value)
-                setPage(0)
+                setPage(1)
               }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
             />
@@ -276,7 +276,7 @@ const MyAttendancePage: React.FC = () => {
               value={endDate}
               onChange={(e) => {
                 setEndDate(e.target.value)
-                setPage(0)
+                setPage(1)
               }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
             />
@@ -292,7 +292,7 @@ const MyAttendancePage: React.FC = () => {
           </div>
         </div>
 
-        {data?.content && data.content.length > 0 ? (
+        {data?.items && data.items.length > 0 ? (
           <>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -306,32 +306,32 @@ const MyAttendancePage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {data.content.map((log: AttendanceLog) => (
-                    <tr key={log.log_id} className="hover:bg-gray-50">
+                  {data.items.map((log: AttendanceLog) => (
+                    <tr key={log.logId} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {new Date(log.clock_in).toLocaleDateString()}
+                          {new Date(log.clockIn).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {new Date(log.clock_in).toLocaleTimeString()}
+                          {new Date(log.clockIn).toLocaleTimeString()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {log.clock_out ? new Date(log.clock_out).toLocaleTimeString() : '-'}
+                          {log.clockOut ? new Date(log.clockOut).toLocaleTimeString() : '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {log.duration_minutes
-                            ? `${Math.floor(log.duration_minutes / 60)}h ${log.duration_minutes % 60}m`
+                          {log.durationMinutes
+                            ? `${Math.floor(log.durationMinutes / 60)}h ${log.durationMinutes % 60}m`
                             : '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {log.clock_out ? (
+                        {log.clockOut ? (
                           <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                             Complete
                           </span>
@@ -350,19 +350,23 @@ const MyAttendancePage: React.FC = () => {
             {/* Pagination */}
             <div className="mt-6 flex items-center justify-between">
               <p className="text-sm text-gray-600">
-                Showing {data.page * data.size + 1} to {Math.min((data.page + 1) * data.size, data.totalElements)} of {data.totalElements} records
+                {(() => {
+                  const start = (data.page - 1) * data.size + 1
+                  const end = Math.min(data.page * data.size, data.total)
+                  return `Showing ${start} to ${end} of ${data.total} records`
+                })()}
               </p>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={!data.hasPreviousPage}
                   className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPage(p => p + 1)}
-                  disabled={page >= data.totalPages - 1}
+                  disabled={!data.hasNextPage}
                   className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
                   Next

@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { createLeaveRequest, getLeaveBalance } from '../lib/leaveApi'
-import { Calendar, Send, AlertCircle } from 'lucide-react'
+import { createLeaveRequest, getLeaveBalance, type LeaveBalance } from '../lib/leaveApi'
+import { Send, AlertCircle } from 'lucide-react'
 
 const leaveRequestSchema = z.object({
   policy_id: z.number().min(1, 'Please select a leave policy'),
@@ -27,7 +27,7 @@ const ApplyLeavePage: React.FC = () => {
     resolver: zodResolver(leaveRequestSchema),
   })
 
-  const { data: balances } = useQuery({
+  const { data: balanceData } = useQuery({
     queryKey: ['leave-balance'],
     queryFn: () => getLeaveBalance(),
   })
@@ -58,14 +58,23 @@ const ApplyLeavePage: React.FC = () => {
         <p className="mt-2 text-gray-600">Submit a new leave request</p>
       </div>
 
-      {balances?.balances && balances.balances.length > 0 && (
+      {balanceData?.balances && balanceData.balances.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 className="font-semibold text-blue-900 mb-2">Your Leave Balances</h3>
           <div className="grid grid-cols-2 gap-4">
-            {balances.balances.map((balance: any) => (
-              <div key={balance.policy_id}>
-                <p className="text-sm text-blue-700">{balance.policy_name}</p>
-                <p className="text-lg font-bold text-blue-900">{balance.balance_days} days</p>
+            {balanceData.balances.map((balance: LeaveBalance) => (
+              <div key={balance.policyId}>
+                <p className="text-sm text-blue-700">{balance.policyName}</p>
+                <p className="text-lg font-bold text-blue-900">
+                  {(() => {
+                    const days =
+                      typeof balance.balanceDays === 'number'
+                        ? balance.balanceDays
+                        : Number(balance.balanceDays) || 0
+                    const formatted = Number.isInteger(days) ? days : Number(days.toFixed(1))
+                    return `${formatted} ${formatted === 1 ? 'day' : 'days'}`
+                  })()}
+                </p>
               </div>
             ))}
           </div>

@@ -69,6 +69,12 @@ provider:
     shouldStartNameWithService: true
   httpApi:
     metrics: true
+    authorizers:
+      cognitoJwtAuthorizer:
+        identitySource: $request.header.Authorization
+        issuerUrl: https://cognito-idp.${self:provider.region}.amazonaws.com/${self:custom.env.cognito.userPoolId}
+        audience:
+          - ${self:custom.env.cognito.clientId}
     cors:
       allowedOrigins: ${self:custom.env.allowedOrigins}
       allowedHeaders:
@@ -128,6 +134,7 @@ functions:
       - httpApi:
           method: GET
           path: /api/v1/leave/balance
+          authorizer: cognitoJwtAuthorizer
 
   leaveListRequests:
     handler: src/handlers/leave/listRequests.handler
@@ -135,6 +142,7 @@ functions:
       - httpApi:
           method: GET
           path: /api/v1/leave/requests
+          authorizer: cognitoJwtAuthorizer
 
   leaveCreateRequest:
     handler: src/handlers/leave/createRequest.handler
@@ -142,6 +150,7 @@ functions:
       - httpApi:
           method: POST
           path: /api/v1/leave/requests
+          authorizer: cognitoJwtAuthorizer
 
   leaveUpdateRequest:
     handler: src/handlers/leave/updateRequest.handler
@@ -149,6 +158,7 @@ functions:
       - httpApi:
           method: PATCH
           path: /api/v1/leave/requests/{id}
+          authorizer: cognitoJwtAuthorizer
 
   attendanceGetLogs:
     handler: src/handlers/attendance/getLogs.handler
@@ -156,6 +166,7 @@ functions:
       - httpApi:
           method: GET
           path: /api/v1/attendance
+          authorizer: cognitoJwtAuthorizer
 
   attendanceClockIn:
     handler: src/handlers/attendance/clockIn.handler
@@ -164,6 +175,7 @@ functions:
       - httpApi:
           method: POST
           path: /api/v1/attendance/clock-in
+          authorizer: cognitoJwtAuthorizer
 
   attendanceClockOut:
     handler: src/handlers/attendance/clockOut.handler
@@ -172,6 +184,7 @@ functions:
       - httpApi:
           method: POST
           path: /api/v1/attendance/clock-out
+          authorizer: cognitoJwtAuthorizer
 
   integrationsMsGraphSync:
     handler: src/handlers/integrations/msgraphSyncEnqueue.handler
@@ -180,6 +193,7 @@ functions:
       - httpApi:
           method: POST
           path: /api/v1/integrations/msgraph/sync
+          authorizer: cognitoJwtAuthorizer
 
   reportsLeaveSummary:
     handler: src/handlers/reports/leaveSummary.handler
@@ -188,6 +202,7 @@ functions:
       - httpApi:
           method: GET
           path: /api/v1/reports/leave-summary
+          authorizer: cognitoJwtAuthorizer
 
   healthz:
     handler: src/handlers/healthz.handler
