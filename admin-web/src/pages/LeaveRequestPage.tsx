@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import {
   getLeaveRequests,
   updateLeaveRequest,
+  getLeaveBalance,
   type LeaveRequest,
   type UpdateLeaveRequest,
 } from '../lib/leaveApi'
@@ -23,20 +24,40 @@ const LeaveRequestPage: React.FC = () => {
 
   // Determine if this is the admin management view or user's own leave view
   const isAdminView = location.pathname === '/admin/leave'
+  const isAdminUser = !!user?.roles?.includes('ADMIN')
+  const isPersonalView = !isAdminView
+
+  const shouldFetchPhase2Profile = isPersonalView && isAdminUser
+
+  const {
+    data: phase2Profile,
+    isLoading: profileLoading,
+  } = useQuery({
+    queryKey: ['leave-phase2-profile'],
+    queryFn: () => getLeaveBalance(),
+    enabled: shouldFetchPhase2Profile,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const fallbackUserId = user?.id ? Number(user.id) : undefined
+  const phase2UserId = phase2Profile?.userId
+  const userIdFilter = shouldFetchPhase2Profile ? phase2UserId ?? fallbackUserId : undefined
+  const waitingForProfile = shouldFetchPhase2Profile && profileLoading && phase2UserId === undefined
+  const profileUnavailable = shouldFetchPhase2Profile && !profileLoading && userIdFilter === undefined
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['leave-requests', isAdminView, user?.id, statusFilter, page],
+    queryKey: ['leave-requests', isAdminView, userIdFilter ?? 'self', statusFilter, page],
     queryFn: () =>
       getLeaveRequests({
         // For admin view on /admin/leave, request all users
-        // For user view on /leave/history, let backend scope to current user automatically
-        ...(isAdminView ? {} : {}),
+        // For admin personal view, explicitly scope to their Phase 2 user id
+        ...(userIdFilter !== undefined ? { user_id: userIdFilter } : {}),
         status: statusFilter || undefined,
         page,
         size: pageSize,
         sort: 'created_at,desc',
       }),
-    enabled: !!user, // Only fetch when user data is loaded
+    enabled: !!user && (!shouldFetchPhase2Profile || userIdFilter !== undefined),
     staleTime: 60000, // 1 minute
   })
 
@@ -54,6 +75,24 @@ const LeaveRequestPage: React.FC = () => {
 
   const handleReject = (request: LeaveRequest, notes?: string) => {
     updateMutation.mutate({ id: request.requestId, data: { action: 'REJECT', notes } })
+  }
+
+  if (waitingForProfile) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (profileUnavailable) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <p className="text-yellow-800">
+          Unable to load your leave profile right now. Please refresh or contact an administrator.
+        </p>
+      </div>
+    )
   }
 
   if (isLoading) {

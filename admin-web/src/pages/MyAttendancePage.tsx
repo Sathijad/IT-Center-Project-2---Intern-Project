@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
 import { getAttendanceLogs, clockIn, clockOut, type AttendanceLog } from '../lib/attendanceApi'
@@ -12,15 +12,26 @@ const MyAttendancePage: React.FC = () => {
   const [page, setPage] = useState(1)
   const [clockingIn, setClockingIn] = useState(false)
   const [clockingOut, setClockingOut] = useState(false)
+  const [activeClockInIso, setActiveClockInIso] = useState<string | null>(null)
+  const [liveDurationMs, setLiveDurationMs] = useState(0)
+  const [liveClock, setLiveClock] = useState(new Date())
+  const [pendingClockSync, setPendingClockSync] = useState(false)
   const pageSize = 20
 
   // Get user's attendance logs - always filter by current user's ID
+  const currentUserId = user?.id ? Number(user.id) : undefined
+
+  const attendanceQueryKey = useMemo(
+    () => ['my-attendance-logs', currentUserId, startDate, endDate, page] as const,
+    [currentUserId, startDate, endDate, page]
+  )
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['my-attendance-logs', user?.id, startDate, endDate, page],
+    queryKey: attendanceQueryKey,
     queryFn: () => {
-      // Backend automatically scopes to the authenticated user when no user_id is provided
+      // Always pass user_id so admins viewing this page still get their own records only
       return getAttendanceLogs({
-        // Do not pass user_id to let backend infer current user
+        user_id: currentUserId,
         start_date: startDate || undefined,
         end_date: endDate || undefined,
         page,
@@ -28,7 +39,7 @@ const MyAttendancePage: React.FC = () => {
         sort: 'clock_in,desc'
       })
     },
-    enabled: !!user?.id, // Only fetch when user ID is available
+    enabled: !!currentUserId, // Only fetch when user ID is available
     staleTime: 30000, // 30 seconds
   })
 
@@ -40,6 +51,49 @@ const MyAttendancePage: React.FC = () => {
   }) || []
 
   const currentOpenSession = todayLogs.find((log: AttendanceLog) => !log.clockOut)
+
+  useEffect(() => {
+    if (currentOpenSession?.clockIn) {
+      setActiveClockInIso(currentOpenSession.clockIn)
+    } else if (!currentOpenSession && !pendingClockSync) {
+      setActiveClockInIso(null)
+      setLiveDurationMs(0)
+    }
+  }, [currentOpenSession?.clockIn, pendingClockSync])
+
+  useEffect(() => {
+    if (!activeClockInIso) {
+      return
+    }
+
+    const start = new Date(activeClockInIso).getTime()
+    setLiveDurationMs(Date.now() - start)
+
+    const intervalId = window.setInterval(() => {
+      setLiveDurationMs(Date.now() - start)
+    }, 1000)
+
+    return () => window.clearInterval(intervalId)
+  }, [activeClockInIso])
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setLiveClock(new Date())
+    }, 1000)
+
+    return () => window.clearInterval(intervalId)
+  }, [])
+
+  const clockStartIso = activeClockInIso ?? currentOpenSession?.clockIn ?? null
+  const hasLiveClock = !!clockStartIso
+
+  const formattedLiveDuration = useMemo(() => {
+    const totalSeconds = Math.max(0, Math.floor(liveDurationMs / 1000))
+    const hours = Math.floor(totalSeconds / 3600).toString().padStart(2, '0')
+    const minutes = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0')
+    const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, '0')
+    return `${hours}:${minutes}:${seconds}`
+  }, [liveDurationMs])
 
   // Clock in mutation
   const clockInMutation = useMutation({
@@ -77,13 +131,23 @@ const MyAttendancePage: React.FC = () => {
     onMutate: () => {
       setClockingIn(true)
     },
-    onSuccess: () => {
-      // Invalidate the correct query key to refresh the attendance list
-      queryClient.invalidateQueries({ queryKey: ['my-attendance-logs'] })
-      setClockingIn(false)
+    onSuccess: async () => {
+      setPendingClockSync(true)
+      setActiveClockInIso(new Date().toISOString())
+      try {
+        // Invalidate the correct query key to refresh the attendance list
+        await queryClient.invalidateQueries({ queryKey: ['my-attendance-logs'] })
+        await queryClient.refetchQueries({ queryKey: attendanceQueryKey, type: 'active' })
+      } finally {
+        setPendingClockSync(false)
+        setClockingIn(false)
+      }
     },
     onError: (error: any) => {
       console.error('Clock in error:', error)
+      setPendingClockSync(false)
+      setActiveClockInIso(null)
+      setLiveDurationMs(0)
       setClockingIn(false)
       alert(error.response?.data?.message || 'Failed to clock in. Please try again.')
     }
@@ -119,13 +183,22 @@ const MyAttendancePage: React.FC = () => {
     onMutate: () => {
       setClockingOut(true)
     },
-    onSuccess: () => {
-      // Invalidate the correct query key to refresh the attendance list
-      queryClient.invalidateQueries({ queryKey: ['my-attendance-logs'] })
-      setClockingOut(false)
+    onSuccess: async () => {
+      setPendingClockSync(true)
+      setActiveClockInIso(null)
+      setLiveDurationMs(0)
+      try {
+        // Invalidate the correct query key to refresh the attendance list
+        await queryClient.invalidateQueries({ queryKey: ['my-attendance-logs'] })
+        await queryClient.refetchQueries({ queryKey: attendanceQueryKey, type: 'active' })
+      } finally {
+        setPendingClockSync(false)
+        setClockingOut(false)
+      }
     },
     onError: (error: any) => {
       console.error('Clock out error:', error)
+      setPendingClockSync(false)
       setClockingOut(false)
       alert(error.response?.data?.message || 'Failed to clock out. Please try again.')
     }
@@ -194,13 +267,28 @@ const MyAttendancePage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Today's Status</h2>
-            {currentOpenSession ? (
-              <div className="flex items-center gap-2 text-green-600">
-                <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">Clocked In</span>
-                <span className="text-gray-600 text-sm">
-                  Since {new Date(currentOpenSession.clockIn).toLocaleTimeString()}
-                </span>
+            {hasLiveClock ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-green-600">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-medium">Clocked In</span>
+                  <span className="text-gray-600 text-sm">
+                    Since {clockStartIso ? new Date(clockStartIso).toLocaleTimeString() : '—'}
+                  </span>
+                </div>
+                <div className="bg-green-50 border border-green-100 rounded-lg p-4">
+                  <p className="text-sm text-green-700 mb-1">Live Duration</p>
+                  <p className="text-2xl font-mono text-green-900">{formattedLiveDuration}</p>
+                  {clockStartIso && (
+                    <p className="text-xs text-green-700 mt-1">
+                      Clock started at {new Date(clockStartIso).toLocaleTimeString()}
+                    </p>
+                  )}
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 mb-1">Current Time</p>
+                  <p className="text-2xl font-mono text-gray-900">{liveClock.toLocaleTimeString()}</p>
+                </div>
               </div>
             ) : (
               <div className="flex items-center gap-2 text-gray-600">
@@ -212,7 +300,7 @@ const MyAttendancePage: React.FC = () => {
           <div className="flex gap-3">
             <button
               onClick={handleClockIn}
-              disabled={clockingIn || currentOpenSession !== undefined}
+              disabled={clockingIn || pendingClockSync || currentOpenSession !== undefined}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium transition"
             >
               {clockingIn ? (
@@ -229,7 +317,7 @@ const MyAttendancePage: React.FC = () => {
             </button>
             <button
               onClick={handleClockOut}
-              disabled={clockingOut || currentOpenSession === undefined}
+              disabled={clockingOut || pendingClockSync || currentOpenSession === undefined}
               className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium transition"
             >
               {clockingOut ? (
