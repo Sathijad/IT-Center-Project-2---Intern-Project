@@ -58,16 +58,46 @@ export class LeaveService {
   }
 
   async createRequest(user: AuthenticatedUser, input: CreateLeaveInput): Promise<LeaveRequest> {
+    const rawInput = input as unknown as Record<string, unknown>;
     const policies = await this.repository.getLeavePolicies();
-    const policy = policies.find((p) => p.policy_id === input.policyId);
+    logger.debug('Leave policies loaded', { count: policies.length, sample: policies.slice(0, 3) });
+
+    const rawPolicyId = rawInput.policyId ?? rawInput.policy_id;
+    const policyId = Number(rawPolicyId);
+
+    if (!Number.isFinite(policyId)) {
+      logger.warn('Invalid policy id in request', { rawPolicyId, input });
+      throw new ApplicationError('POLICY_INVALID', 'Invalid leave policy id', 400);
+    }
+
+    const policy = (policies as Array<Record<string, unknown>>).find((p) => {
+      const dbId = p.policy_id ?? p.policyId ?? p.id;
+      return Number(dbId) === policyId;
+    });
 
     if (!policy) {
+      logger.warn('Leave policy not found after normalization', {
+        requestedPolicyId: policyId,
+        availablePolicyIds: (policies as Array<Record<string, unknown>>).map(
+          (p) => p.policy_id ?? p.policyId ?? p.id,
+        ),
+      });
       throw new ApplicationError('POLICY_NOT_FOUND', 'Leave policy does not exist', 404);
     }
 
-    const start = normalizeDateOnly(input.startDate);
-    const end = normalizeDateOnly(input.endDate);
-    const halfDay = Boolean(input.halfDay);
+    const rawStart = rawInput.startDate ?? rawInput.start_date;
+    const rawEnd = rawInput.endDate ?? rawInput.end_date;
+
+    if (typeof rawStart !== 'string' || typeof rawEnd !== 'string') {
+      logger.warn('Missing or invalid start/end dates in request', { rawStart, rawEnd, input });
+      throw new ApplicationError('VALIDATION_ERROR', 'Start and end dates are required', 400);
+    }
+
+    const start = normalizeDateOnly(rawStart);
+    const end = normalizeDateOnly(rawEnd);
+
+    const rawHalfDay = rawInput.halfDay ?? rawInput.half_day;
+    const halfDay = Boolean(rawHalfDay);
 
     if (halfDay && start !== end) {
       throw new ApplicationError('HALF_DAY_INVALID', 'Half-day requests must have identical start and end dates', 400);
@@ -80,8 +110,7 @@ export class LeaveService {
 
     const year = new Date(start).getUTCFullYear();
     const balances = await this.getBalances(user.userId, year);
-
-    const balance = balances.find((b) => b.policyId === input.policyId);
+    const balance = balances.find((b) => Number(b.policyId) === policyId);
     if (!balance) {
       throw new ApplicationError('BALANCE_NOT_INITIALIZED', 'Leave balance not initialized for the selected policy', 400);
     }
@@ -93,12 +122,7 @@ export class LeaveService {
       });
     }
 
-    const hasOverlap = await this.repository.hasOverlappingRequest(
-      user.userId,
-      input.policyId,
-      start,
-      end,
-    );
+    const hasOverlap = await this.repository.hasOverlappingRequest(user.userId, policyId, start, end);
 
     if (hasOverlap) {
       throw new ApplicationError('LEAVE_OVERLAP', 'Overlapping leave request exists', 409, {
@@ -112,7 +136,7 @@ export class LeaveService {
       userEmail: user.email,
       userName: user.displayName ?? user.email,
       userTeamId: user.teamId ?? null,
-      policyId: input.policyId,
+      policyId,
       startDate: start,
       endDate: end,
       halfDay,
@@ -170,10 +194,23 @@ export class LeaveService {
 
     if (input.action === 'APPROVE') {
       const balances = await this.getBalances(request.userId, year);
-      const balance = balances.find((b) => b.policyId === request.policyId);
-      if (!balance || balance.balanceDays < requestedDays) {
+
+      const requestPolicyId =
+        Number((request as unknown as Record<string, unknown>).policyId ?? (request as unknown as Record<string, unknown>).policy_id) ||
+        request.policyId;
+
+      const balance = balances.find((b) => {
+        const raw = b as unknown as Record<string, unknown>;
+        const dbPolicyId = Number(raw.policyId ?? raw.policy_id ?? raw.policy);
+        return Number(dbPolicyId) === Number(requestPolicyId);
+      });
+
+      const balanceRecord = balance as unknown as Record<string, unknown>;
+      const available = Number(balanceRecord?.balanceDays ?? balanceRecord?.balance_days ?? balance?.balanceDays ?? 0);
+
+      if (!balance || available < requestedDays) {
         throw new ApplicationError('INSUFFICIENT_BALANCE', 'Not enough balance to approve the leave request', 409, {
-          available: balance?.balanceDays ?? 0,
+          available,
           requested: requestedDays,
         });
       }

@@ -34,8 +34,8 @@ interface LeaveRequestRow {
 const leaveSortFields = ['created_at', 'updated_at', 'start_date', 'end_date', 'status'] as const;
 
 const mapLeaveBalance = (row: LeaveBalanceRow): LeaveBalance => ({
-  balanceId: row.balance_id,
-  policyId: row.policy_id,
+  balanceId: Number(row.balance_id),
+  policyId: Number(row.policy_id),
   policyName: row.policy_name,
   balanceDays: Number(row.balance_days),
   year: row.year,

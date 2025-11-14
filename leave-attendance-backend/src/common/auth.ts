@@ -130,11 +130,12 @@ export const authenticateRequest = async (event: APIGatewayProxyEventV2): Promis
   appendRoles(payload['custom:roles']);
   appendRoles(payload['roles']);
 
-  const normalizedRoles = Array.from(
-    new Set(
-      roleCandidates.map((role) => role.toUpperCase()).map((role) => (role === 'ADMIN' ? 'ADMIN' : 'EMPLOYEE')),
-    ),
-  ) as UserRole[];
+  const normalizeRole = (value: string): UserRole => {
+    const upper = value.trim().toUpperCase();
+    return upper.includes('ADMIN') ? 'ADMIN' : 'EMPLOYEE';
+  };
+
+  const normalizedRoles = Array.from(new Set(roleCandidates.map(normalizeRole))) as UserRole[];
 
   if (normalizedRoles.length === 0) {
     normalizedRoles.push('EMPLOYEE');

@@ -27,10 +27,12 @@ const ApplyLeavePage: React.FC = () => {
     resolver: zodResolver(leaveRequestSchema),
   })
 
-  const { data: balanceData } = useQuery({
+  const { data: balanceData, isLoading: balancesLoading, error: balancesError } = useQuery({
     queryKey: ['leave-balance'],
     queryFn: () => getLeaveBalance(),
   })
+
+  const availablePolicies = balanceData?.balances ?? []
 
   const createMutation = useMutation({
     mutationFn: createLeaveRequest,
@@ -58,11 +60,11 @@ const ApplyLeavePage: React.FC = () => {
         <p className="mt-2 text-gray-600">Submit a new leave request</p>
       </div>
 
-      {balanceData?.balances && balanceData.balances.length > 0 && (
+      {availablePolicies.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 className="font-semibold text-blue-900 mb-2">Your Leave Balances</h3>
           <div className="grid grid-cols-2 gap-4">
-            {balanceData.balances.map((balance: LeaveBalance) => (
+            {availablePolicies.map((balance: LeaveBalance) => (
               <div key={balance.policyId}>
                 <p className="text-sm text-blue-700">{balance.policyName}</p>
                 <p className="text-lg font-bold text-blue-900">
@@ -82,8 +84,8 @@ const ApplyLeavePage: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-lg shadow p-6 space-y-6">
-        <div>
-          <label htmlFor="policy_id" className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="space-y-2">
+          <label htmlFor="policy_id" className="block text-sm font-medium text-gray-700">
             Leave Policy *
           </label>
           <select
@@ -92,16 +94,30 @@ const ApplyLeavePage: React.FC = () => {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
             aria-invalid={errors.policy_id ? 'true' : 'false'}
             aria-describedby={errors.policy_id ? 'policy-error' : undefined}
+            disabled={balancesLoading || availablePolicies.length === 0}
           >
-            <option value="">Select a policy</option>
-            <option value="1">Annual Leave (14 days)</option>
-            <option value="2">Casual Leave (7 days)</option>
-            <option value="3">Sick Leave (10 days)</option>
-            <option value="4">Personal Leave (5 days)</option>
+            <option value="">
+              {balancesLoading ? 'Loading policies...' : 'Select a policy'}
+            </option>
+            {availablePolicies.map((balance: LeaveBalance) => (
+              <option key={balance.policyId} value={balance.policyId}>
+                {balance.policyName}
+              </option>
+            ))}
           </select>
           {errors.policy_id && (
             <p id="policy-error" className="mt-1 text-sm text-red-600" role="alert">
               {errors.policy_id.message}
+            </p>
+          )}
+          {balancesError && (
+            <p className="text-sm text-red-600" role="alert">
+              Unable to load leave policies right now. Please try again later.
+            </p>
+          )}
+          {!balancesLoading && availablePolicies.length === 0 && !balancesError && (
+            <p className="text-sm text-gray-600">
+              No leave policies are available for your account yet. Please contact an administrator.
             </p>
           )}
         </div>
@@ -185,7 +201,7 @@ const ApplyLeavePage: React.FC = () => {
         <div className="flex gap-4">
           <button
             type="submit"
-            disabled={createMutation.isPending}
+            disabled={createMutation.isPending || availablePolicies.length === 0}
             className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {createMutation.isPending ? (
