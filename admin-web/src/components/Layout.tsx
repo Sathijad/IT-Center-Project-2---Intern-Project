@@ -37,7 +37,6 @@ const Layout: React.FC = () => {
     ] : []),
     { name: 'My Leave', href: '/leave/history', icon: Calendar },
     { name: 'Apply Leave', href: '/leave', icon: CalendarCheck },
-    { name: 'My Attendance', href: '/attendance', icon: Clock },
     { name: 'Profile', href: '/profile', icon: UserIcon },
   ]
 

@@ -18,7 +18,7 @@ const AttendancePage: React.FC = () => {
     queryKey: ['users-for-filter'],
     queryFn: async () => {
       const response = await api.get('/api/v1/admin/users', {
-        params: { page: 0, size: 1000 } // Get all users for filter
+        params: { page: 0, size: 1000 }, // Get all users for filter
       })
       return response.data
     },
@@ -45,12 +45,14 @@ const AttendancePage: React.FC = () => {
       ['Date', 'User', 'Clock In', 'Clock Out', 'Duration (minutes)'],
       ...(data?.items || []).map((log: AttendanceLog) => [
         new Date(log.clockIn).toLocaleDateString(),
-        log.userName ?? 'Unknown user',
+        log.userEmail ?? log.userName ?? 'Unknown user',
         new Date(log.clockIn).toLocaleString(),
         log.clockOut ? new Date(log.clockOut).toLocaleString() : 'N/A',
         log.durationMinutes ?? 'N/A',
-      ])
-    ].map(row => row.join(',')).join('\n')
+      ]),
+    ]
+      .map((row) => row.join(','))
+      .join('\n')
 
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
@@ -167,7 +169,9 @@ const AttendancePage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <Users className="w-4 h-4 text-gray-400 mr-2" />
-                          <div className="text-sm font-medium text-gray-900">{log.userName ?? 'Unknown user'}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {log.userEmail ?? log.userName ?? 'Unknown user'}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
