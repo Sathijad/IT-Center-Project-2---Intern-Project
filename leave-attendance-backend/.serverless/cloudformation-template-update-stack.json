@@ -319,7 +319,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/leaveGetBalance.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763285853245-2025-11-16T09:37:33.245Z/leaveGetBalance.zip"
         },
         "Handler": "src/handlers/leave/getBalance.handler",
         "Runtime": "nodejs18.x",
@@ -349,9 +349,9 @@
             "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
             "GEO_VALIDATION_ENABLED": "false",
             "CALENDAR_SYNC_ENABLED": "true",
-            "GRAPH_TENANT": "dev-tenant-id",
-            "GRAPH_CLIENT_ID": "dev-graph-client-id",
-            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_TENANT": "c7886144-869f-423d-a018-9158602dc467",
+            "GRAPH_CLIENT_ID": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
+            "GRAPH_CLIENT_SECRET": "a202a2f2-c3f5-4485-b177-dc9b6c012216",
             "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
             "ALLOWED_ORIGINS": {
               "Fn::Join": [
@@ -402,7 +402,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/leaveListRequests.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763285853245-2025-11-16T09:37:33.245Z/leaveListRequests.zip"
         },
         "Handler": "src/handlers/leave/listRequests.handler",
         "Runtime": "nodejs18.x",
@@ -432,9 +432,9 @@
             "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
             "GEO_VALIDATION_ENABLED": "false",
             "CALENDAR_SYNC_ENABLED": "true",
-            "GRAPH_TENANT": "dev-tenant-id",
-            "GRAPH_CLIENT_ID": "dev-graph-client-id",
-            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_TENANT": "c7886144-869f-423d-a018-9158602dc467",
+            "GRAPH_CLIENT_ID": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
+            "GRAPH_CLIENT_SECRET": "a202a2f2-c3f5-4485-b177-dc9b6c012216",
             "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
             "ALLOWED_ORIGINS": {
               "Fn::Join": [
@@ -485,7 +485,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/leaveCreateRequest.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763285853245-2025-11-16T09:37:33.245Z/leaveCreateRequest.zip"
         },
         "Handler": "src/handlers/leave/createRequest.handler",
         "Runtime": "nodejs18.x",
@@ -515,9 +515,9 @@
             "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
             "GEO_VALIDATION_ENABLED": "false",
             "CALENDAR_SYNC_ENABLED": "true",
-            "GRAPH_TENANT": "dev-tenant-id",
-            "GRAPH_CLIENT_ID": "dev-graph-client-id",
-            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_TENANT": "c7886144-869f-423d-a018-9158602dc467",
+            "GRAPH_CLIENT_ID": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
+            "GRAPH_CLIENT_SECRET": "a202a2f2-c3f5-4485-b177-dc9b6c012216",
             "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
             "ALLOWED_ORIGINS": {
               "Fn::Join": [
@@ -568,7 +568,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/leaveUpdateRequest.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763285853245-2025-11-16T09:37:33.245Z/leaveUpdateRequest.zip"
         },
         "Handler": "src/handlers/leave/updateRequest.handler",
         "Runtime": "nodejs18.x",
@@ -598,9 +598,9 @@
             "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
             "GEO_VALIDATION_ENABLED": "false",
             "CALENDAR_SYNC_ENABLED": "true",
-            "GRAPH_TENANT": "dev-tenant-id",
-            "GRAPH_CLIENT_ID": "dev-graph-client-id",
-            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_TENANT": "c7886144-869f-423d-a018-9158602dc467",
+            "GRAPH_CLIENT_ID": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
+            "GRAPH_CLIENT_SECRET": "a202a2f2-c3f5-4485-b177-dc9b6c012216",
             "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
             "ALLOWED_ORIGINS": {
               "Fn::Join": [
@@ -651,7 +651,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/attendanceGetLogs.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763285853245-2025-11-16T09:37:33.245Z/attendanceGetLogs.zip"
         },
         "Handler": "src/handlers/attendance/getLogs.handler",
         "Runtime": "nodejs18.x",
@@ -681,9 +681,9 @@
             "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
             "GEO_VALIDATION_ENABLED": "false",
             "CALENDAR_SYNC_ENABLED": "true",
-            "GRAPH_TENANT": "dev-tenant-id",
-            "GRAPH_CLIENT_ID": "dev-graph-client-id",
-            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_TENANT": "c7886144-869f-423d-a018-9158602dc467",
+            "GRAPH_CLIENT_ID": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
+            "GRAPH_CLIENT_SECRET": "a202a2f2-c3f5-4485-b177-dc9b6c012216",
             "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
             "ALLOWED_ORIGINS": {
               "Fn::Join": [
@@ -734,7 +734,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/attendanceClockIn.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763285853245-2025-11-16T09:37:33.245Z/attendanceClockIn.zip"
         },
         "Handler": "src/handlers/attendance/clockIn.handler",
         "Runtime": "nodejs18.x",
@@ -764,9 +764,9 @@
             "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
             "GEO_VALIDATION_ENABLED": "false",
             "CALENDAR_SYNC_ENABLED": "true",
-            "GRAPH_TENANT": "dev-tenant-id",
-            "GRAPH_CLIENT_ID": "dev-graph-client-id",
-            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_TENANT": "c7886144-869f-423d-a018-9158602dc467",
+            "GRAPH_CLIENT_ID": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
+            "GRAPH_CLIENT_SECRET": "a202a2f2-c3f5-4485-b177-dc9b6c012216",
             "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
             "ALLOWED_ORIGINS": {
               "Fn::Join": [
@@ -817,7 +817,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/attendanceClockOut.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763285853245-2025-11-16T09:37:33.245Z/attendanceClockOut.zip"
         },
         "Handler": "src/handlers/attendance/clockOut.handler",
         "Runtime": "nodejs18.x",
@@ -847,9 +847,9 @@
             "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
             "GEO_VALIDATION_ENABLED": "false",
             "CALENDAR_SYNC_ENABLED": "true",
-            "GRAPH_TENANT": "dev-tenant-id",
-            "GRAPH_CLIENT_ID": "dev-graph-client-id",
-            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_TENANT": "c7886144-869f-423d-a018-9158602dc467",
+            "GRAPH_CLIENT_ID": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
+            "GRAPH_CLIENT_SECRET": "a202a2f2-c3f5-4485-b177-dc9b6c012216",
             "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
             "ALLOWED_ORIGINS": {
               "Fn::Join": [
@@ -900,7 +900,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/integrationsMsGraphSync.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763285853245-2025-11-16T09:37:33.245Z/integrationsMsGraphSync.zip"
         },
         "Handler": "src/handlers/integrations/msgraphSyncEnqueue.handler",
         "Runtime": "nodejs18.x",
@@ -930,9 +930,9 @@
             "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
             "GEO_VALIDATION_ENABLED": "false",
             "CALENDAR_SYNC_ENABLED": "true",
-            "GRAPH_TENANT": "dev-tenant-id",
-            "GRAPH_CLIENT_ID": "dev-graph-client-id",
-            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_TENANT": "c7886144-869f-423d-a018-9158602dc467",
+            "GRAPH_CLIENT_ID": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
+            "GRAPH_CLIENT_SECRET": "a202a2f2-c3f5-4485-b177-dc9b6c012216",
             "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
             "ALLOWED_ORIGINS": {
               "Fn::Join": [
@@ -983,7 +983,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/reportsLeaveSummary.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763285853245-2025-11-16T09:37:33.245Z/reportsLeaveSummary.zip"
         },
         "Handler": "src/handlers/reports/leaveSummary.handler",
         "Runtime": "nodejs18.x",
@@ -1013,9 +1013,9 @@
             "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
             "GEO_VALIDATION_ENABLED": "false",
             "CALENDAR_SYNC_ENABLED": "true",
-            "GRAPH_TENANT": "dev-tenant-id",
-            "GRAPH_CLIENT_ID": "dev-graph-client-id",
-            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_TENANT": "c7886144-869f-423d-a018-9158602dc467",
+            "GRAPH_CLIENT_ID": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
+            "GRAPH_CLIENT_SECRET": "a202a2f2-c3f5-4485-b177-dc9b6c012216",
             "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
             "ALLOWED_ORIGINS": {
               "Fn::Join": [
@@ -1066,7 +1066,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/healthz.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763285853245-2025-11-16T09:37:33.245Z/healthz.zip"
         },
         "Handler": "src/handlers/healthz.handler",
         "Runtime": "nodejs18.x",
@@ -1096,9 +1096,9 @@
             "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
             "GEO_VALIDATION_ENABLED": "false",
             "CALENDAR_SYNC_ENABLED": "true",
-            "GRAPH_TENANT": "dev-tenant-id",
-            "GRAPH_CLIENT_ID": "dev-graph-client-id",
-            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_TENANT": "c7886144-869f-423d-a018-9158602dc467",
+            "GRAPH_CLIENT_ID": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
+            "GRAPH_CLIENT_SECRET": "a202a2f2-c3f5-4485-b177-dc9b6c012216",
             "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
             "ALLOWED_ORIGINS": {
               "Fn::Join": [
@@ -1149,7 +1149,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/msGraphSyncWorker.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763285853245-2025-11-16T09:37:33.245Z/msGraphSyncWorker.zip"
         },
         "Handler": "src/handlers/integrations/msgraphSyncWorker.handler",
         "Runtime": "nodejs18.x",
@@ -1179,9 +1179,9 @@
             "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
             "GEO_VALIDATION_ENABLED": "false",
             "CALENDAR_SYNC_ENABLED": "true",
-            "GRAPH_TENANT": "dev-tenant-id",
-            "GRAPH_CLIENT_ID": "dev-graph-client-id",
-            "GRAPH_CLIENT_SECRET": "dev-graph-client-secret",
+            "GRAPH_TENANT": "c7886144-869f-423d-a018-9158602dc467",
+            "GRAPH_CLIENT_ID": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
+            "GRAPH_CLIENT_SECRET": "a202a2f2-c3f5-4485-b177-dc9b6c012216",
             "GRAPH_SCOPE": "https://graph.microsoft.com/.default",
             "ALLOWED_ORIGINS": {
               "Fn::Join": [
@@ -1225,7 +1225,7 @@
         "MsGraphSyncWorkerLogGroup"
       ]
     },
-    "AttendanceGetLogsLambdaVersion1KiIsV2Noji8rMjIIEzuSAn6baLoTH5cGt036f0gQ": {
+    "AttendanceGetLogsLambdaVersion1veYtpAT279BStdeInTzokg2JwFSHKtrYkbeauIbjbQ": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1235,17 +1235,7 @@
         "CodeSha256": "LpoUoZ0Ea82rI3ewYzTEUou3Q9pUTiRr5mcnDIvFX0c="
       }
     },
-    "AttendanceClockOutLambdaVersionHsIuwR9gLdFrz2k3UOFk0w0v29XDyWq49uFSp7QzQFg": {
-      "Type": "AWS::Lambda::Version",
-      "DeletionPolicy": "Retain",
-      "Properties": {
-        "FunctionName": {
-          "Ref": "AttendanceClockOutLambdaFunction"
-        },
-        "CodeSha256": "YaxC60qec45QiCb0qIMbyE4WqjDXFfukgUWfyJwQA8A="
-      }
-    },
-    "AttendanceClockInLambdaVersionCe7AAbsFp6O5UPuJP8w5C51rlhlrY7PFWUNHfDCd4": {
+    "AttendanceClockInLambdaVersionKMP2UXHtnwZBQIrt7GU76zF5Fd77oA4xdmvp2XM6Vag": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1255,27 +1245,17 @@
         "CodeSha256": "Xzajs3RPru1YVBeLVIXfNop/q0VlQyJ5Z5kVP/IKYgc="
       }
     },
-    "HealthzLambdaVersionj6Jbhq5ANtfuIsyDOUTUMj1OylQAQ83UzV7ypDEw": {
+    "AttendanceClockOutLambdaVersionn8ceOWpVs5WYrAIuyE2UrJM0HaOa40r4nyjzqdY4A": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
-          "Ref": "HealthzLambdaFunction"
+          "Ref": "AttendanceClockOutLambdaFunction"
         },
-        "CodeSha256": "XYBN3D8wd6uQczg1WTQN/BVXtTHdJgV9l4cHTCMO07A="
+        "CodeSha256": "YaxC60qec45QiCb0qIMbyE4WqjDXFfukgUWfyJwQA8A="
       }
     },
-    "LeaveGetBalanceLambdaVersion1CZHMePiFtw4fjxkk2XWknQ1MUbpO9zwRhNWNGz3MA": {
-      "Type": "AWS::Lambda::Version",
-      "DeletionPolicy": "Retain",
-      "Properties": {
-        "FunctionName": {
-          "Ref": "LeaveGetBalanceLambdaFunction"
-        },
-        "CodeSha256": "xNd4mcMkV2zth5inTNSuezUElIov3GoCHwo7zoYj7IQ="
-      }
-    },
-    "ReportsLeaveSummaryLambdaVersiondaP4m2QVa2JSQYM3iJQyCmNw7ZxPatGU8kGYzE2OI": {
+    "ReportsLeaveSummaryLambdaVersionGDGclrxQRBrZdH1IRaOsrdFwFNmSa4JKoOtHDXq52ac": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1285,7 +1265,27 @@
         "CodeSha256": "Rjk2TEBiFMuK20Mn4E6zmp9pRn+/6xiyD8YSi0csr3I="
       }
     },
-    "LeaveListRequestsLambdaVersionViFrB1xc9wQLtwqFkZSTsbTdsxVdHuiPb7oTgZOGboU": {
+    "HealthzLambdaVersionXlXNTXL8l2cnSDJYgJA73OgRiFg86f3FjeXZd41bxY": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "HealthzLambdaFunction"
+        },
+        "CodeSha256": "XYBN3D8wd6uQczg1WTQN/BVXtTHdJgV9l4cHTCMO07A="
+      }
+    },
+    "LeaveGetBalanceLambdaVersiond2pMWOSC3SrdOZqI7fWOwHe3dLw9a2R7Gk6GYqj6qo": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "LeaveGetBalanceLambdaFunction"
+        },
+        "CodeSha256": "xNd4mcMkV2zth5inTNSuezUElIov3GoCHwo7zoYj7IQ="
+      }
+    },
+    "LeaveListRequestsLambdaVersionpQPOrnzHDS1jbhgHn9u0GYs2xT3Y2hGYC63Y06L4": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1295,17 +1295,7 @@
         "CodeSha256": "FnWWrO+tpSUeqUaq+PTpUNG0EEpR3PrgBuQu4R8bBNY="
       }
     },
-    "LeaveUpdateRequestLambdaVersioniYgDGPyBozYyKYIJ6vI8QryUlYYc6FSOGCiOP05U": {
-      "Type": "AWS::Lambda::Version",
-      "DeletionPolicy": "Retain",
-      "Properties": {
-        "FunctionName": {
-          "Ref": "LeaveUpdateRequestLambdaFunction"
-        },
-        "CodeSha256": "scvlcUlw6vWd3wIFl2da88J/iTJGVoXsU21WViW4XQ8="
-      }
-    },
-    "LeaveCreateRequestLambdaVersion8cwd03VHetqg9HB4JWATZM4ELrP85Yg2jyxslpzw4": {
+    "LeaveCreateRequestLambdaVersionD2NZu89iZusEQPaPJtktlqsopwTFVopfmaQUGvKtg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1315,7 +1305,17 @@
         "CodeSha256": "3yptbFf0rxU6g3FrQ9HCIdLXZ3hOwtCssnQAuG71mt4="
       }
     },
-    "IntegrationsMsGraphSyncLambdaVersionASFRfrVufH3KxIKFkHoouuoudifGrQDlk6XsGTHIc18": {
+    "LeaveUpdateRequestLambdaVersionYm1mGokwzwZ7x5AZZDYTVaJhG7H9K2Cg8o46LulxUE": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "LeaveUpdateRequestLambdaFunction"
+        },
+        "CodeSha256": "scvlcUlw6vWd3wIFl2da88J/iTJGVoXsU21WViW4XQ8="
+      }
+    },
+    "IntegrationsMsGraphSyncLambdaVersionSW6BqF5vosw0Mhqwh6VrM1Acmz8fgjB4mKIr4R12h5o": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1325,7 +1325,7 @@
         "CodeSha256": "kmMn22LwYfoUu4TIEoxSFWe8vHchVNuPjxTx8KA2A7o="
       }
     },
-    "MsGraphSyncWorkerLambdaVersionvMlPztOpPbjrPYCYsVcw4zbL67LzrhiYOcoYvFVmU": {
+    "MsGraphSyncWorkerLambdaVersion32s1aybVUF8dJLB5UVoUmqWUxOaTQkjGp2a5zbTBngE": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -2317,34 +2317,43 @@
     "AttendanceGetLogsLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AttendanceGetLogsLambdaVersion1KiIsV2Noji8rMjIIEzuSAn6baLoTH5cGt036f0gQ"
+        "Ref": "AttendanceGetLogsLambdaVersion1veYtpAT279BStdeInTzokg2JwFSHKtrYkbeauIbjbQ"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-AttendanceGetLogsLambdaFunctionQualifiedArn"
       }
     },
-    "AttendanceClockOutLambdaFunctionQualifiedArn": {
-      "Description": "Current Lambda function version",
-      "Value": {
-        "Ref": "AttendanceClockOutLambdaVersionHsIuwR9gLdFrz2k3UOFk0w0v29XDyWq49uFSp7QzQFg"
-      },
-      "Export": {
-        "Name": "sls-leave-attendance-api-dev-AttendanceClockOutLambdaFunctionQualifiedArn"
-      }
-    },
     "AttendanceClockInLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AttendanceClockInLambdaVersionCe7AAbsFp6O5UPuJP8w5C51rlhlrY7PFWUNHfDCd4"
+        "Ref": "AttendanceClockInLambdaVersionKMP2UXHtnwZBQIrt7GU76zF5Fd77oA4xdmvp2XM6Vag"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-AttendanceClockInLambdaFunctionQualifiedArn"
       }
     },
+    "AttendanceClockOutLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "AttendanceClockOutLambdaVersionn8ceOWpVs5WYrAIuyE2UrJM0HaOa40r4nyjzqdY4A"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-AttendanceClockOutLambdaFunctionQualifiedArn"
+      }
+    },
+    "ReportsLeaveSummaryLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "ReportsLeaveSummaryLambdaVersionGDGclrxQRBrZdH1IRaOsrdFwFNmSa4JKoOtHDXq52ac"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-ReportsLeaveSummaryLambdaFunctionQualifiedArn"
+      }
+    },
     "HealthzLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "HealthzLambdaVersionj6Jbhq5ANtfuIsyDOUTUMj1OylQAQ83UzV7ypDEw"
+        "Ref": "HealthzLambdaVersionXlXNTXL8l2cnSDJYgJA73OgRiFg86f3FjeXZd41bxY"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-HealthzLambdaFunctionQualifiedArn"
@@ -2353,52 +2362,43 @@
     "LeaveGetBalanceLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "LeaveGetBalanceLambdaVersion1CZHMePiFtw4fjxkk2XWknQ1MUbpO9zwRhNWNGz3MA"
+        "Ref": "LeaveGetBalanceLambdaVersiond2pMWOSC3SrdOZqI7fWOwHe3dLw9a2R7Gk6GYqj6qo"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-LeaveGetBalanceLambdaFunctionQualifiedArn"
       }
     },
-    "ReportsLeaveSummaryLambdaFunctionQualifiedArn": {
-      "Description": "Current Lambda function version",
-      "Value": {
-        "Ref": "ReportsLeaveSummaryLambdaVersiondaP4m2QVa2JSQYM3iJQyCmNw7ZxPatGU8kGYzE2OI"
-      },
-      "Export": {
-        "Name": "sls-leave-attendance-api-dev-ReportsLeaveSummaryLambdaFunctionQualifiedArn"
-      }
-    },
     "LeaveListRequestsLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "LeaveListRequestsLambdaVersionViFrB1xc9wQLtwqFkZSTsbTdsxVdHuiPb7oTgZOGboU"
+        "Ref": "LeaveListRequestsLambdaVersionpQPOrnzHDS1jbhgHn9u0GYs2xT3Y2hGYC63Y06L4"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-LeaveListRequestsLambdaFunctionQualifiedArn"
       }
     },
-    "LeaveUpdateRequestLambdaFunctionQualifiedArn": {
-      "Description": "Current Lambda function version",
-      "Value": {
-        "Ref": "LeaveUpdateRequestLambdaVersioniYgDGPyBozYyKYIJ6vI8QryUlYYc6FSOGCiOP05U"
-      },
-      "Export": {
-        "Name": "sls-leave-attendance-api-dev-LeaveUpdateRequestLambdaFunctionQualifiedArn"
-      }
-    },
     "LeaveCreateRequestLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "LeaveCreateRequestLambdaVersion8cwd03VHetqg9HB4JWATZM4ELrP85Yg2jyxslpzw4"
+        "Ref": "LeaveCreateRequestLambdaVersionD2NZu89iZusEQPaPJtktlqsopwTFVopfmaQUGvKtg"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-LeaveCreateRequestLambdaFunctionQualifiedArn"
       }
     },
+    "LeaveUpdateRequestLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "LeaveUpdateRequestLambdaVersionYm1mGokwzwZ7x5AZZDYTVaJhG7H9K2Cg8o46LulxUE"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-LeaveUpdateRequestLambdaFunctionQualifiedArn"
+      }
+    },
     "IntegrationsMsGraphSyncLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "IntegrationsMsGraphSyncLambdaVersionASFRfrVufH3KxIKFkHoouuoudifGrQDlk6XsGTHIc18"
+        "Ref": "IntegrationsMsGraphSyncLambdaVersionSW6BqF5vosw0Mhqwh6VrM1Acmz8fgjB4mKIr4R12h5o"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-IntegrationsMsGraphSyncLambdaFunctionQualifiedArn"
@@ -2407,7 +2407,7 @@
     "MsGraphSyncWorkerLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "MsGraphSyncWorkerLambdaVersionvMlPztOpPbjrPYCYsVcw4zbL67LzrhiYOcoYvFVmU"
+        "Ref": "MsGraphSyncWorkerLambdaVersion32s1aybVUF8dJLB5UVoUmqWUxOaTQkjGp2a5zbTBngE"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-MsGraphSyncWorkerLambdaFunctionQualifiedArn"

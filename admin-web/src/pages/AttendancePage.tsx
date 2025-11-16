@@ -160,55 +160,65 @@ const AttendancePage: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clock In</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clock Out</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {data.items.map((log: AttendanceLog) => (
-                    <tr key={log.logId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Users className="w-4 h-4 text-gray-400 mr-2" />
-                          <div className="text-sm font-medium text-gray-900">
-                            {log.userEmail ?? log.userName ?? 'Unknown user'}
+                  {data.items.map((log: AttendanceLog) => {
+                    const hasLocation = typeof log.latitude === 'number' && typeof log.longitude === 'number'
+                    const locationText = hasLocation
+                      ? `${log.latitude!.toFixed(6)}, ${log.longitude!.toFixed(6)}`
+                      : '-'
+                    return (
+                      <tr key={log.logId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <Users className="w-4 h-4 text-gray-400 mr-2" />
+                            <div className="text-sm font-medium text-gray-900">
+                              {log.userEmail ?? log.userName ?? 'Unknown user'}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {new Date(log.clockIn).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {new Date(log.clockIn).toLocaleTimeString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {log.clockOut ? new Date(log.clockOut).toLocaleTimeString() : '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {log.durationMinutes
-                            ? `${Math.floor(log.durationMinutes / 60)}h ${log.durationMinutes % 60}m`
-                            : '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {log.clockOut ? (
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                            Complete
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                            Open
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {new Date(log.clockIn).toLocaleDateString()}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {new Date(log.clockIn).toLocaleTimeString()}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {log.clockOut ? new Date(log.clockOut).toLocaleTimeString() : '-'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {log.durationMinutes
+                              ? `${Math.floor(log.durationMinutes / 60)}h ${log.durationMinutes % 60}m`
+                              : '-'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {locationText}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {log.clockOut ? (
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                              Complete
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                              Open
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

@@ -233,121 +233,109 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
       appBar: AppBar(
         title: const Text('Clock In/Out'),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      _hasActiveClockIn ? Icons.access_time_filled : Icons.access_time,
-                      size: 80,
-                      color: _hasActiveClockIn ? Colors.orange : Colors.blue,
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      _hasActiveClockIn ? 'Currently Clocked In' : 'Ready to Clock In',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (_currentPosition != null) ...[
-                      Text(
-                        'Location: ${_currentPosition!.latitude.toStringAsFixed(6)}, ${_currentPosition!.longitude.toStringAsFixed(6)}',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    if (_errorMessage != null) ...[
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.red.shade200),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(
+              _hasActiveClockIn ? Icons.access_time_filled : Icons.access_time,
+              size: 80,
+              color: _hasActiveClockIn ? Colors.orange : Colors.blue,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              _hasActiveClockIn ? 'Currently Clocked In' : 'Ready to Clock In',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            if (_currentPosition != null) ...[
+              Text(
+                'Location: ${_currentPosition!.latitude.toStringAsFixed(6)}, ${_currentPosition!.longitude.toStringAsFixed(6)}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (_errorMessage != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Text(
+                  _errorMessage!,
+                  style: TextStyle(color: Colors.red.shade800),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : (_hasActiveClockIn ? _clockOut : _clockIn),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: _hasActiveClockIn ? Colors.orange : Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
-                        child: Text(
-                          _errorMessage!,
-                          style: TextStyle(color: Colors.red.shade800),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : (_hasActiveClockIn ? _clockOut : _clockIn),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: _hasActiveClockIn ? Colors.orange : Colors.blue,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : Text(
-                                _hasActiveClockIn ? 'Clock Out' : 'Clock In',
-                                style: const TextStyle(fontSize: 18),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Recent Clock In/Out',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (_recentLogs.isEmpty)
-                      Text(
-                        'No recent attendance logs found',
-                        style: TextStyle(color: Colors.grey[600]),
                       )
-                    else
-                      Column(
-                        children: _recentLogs
-                            .map((log) => _buildLogTile(log))
-                            .toList(),
+                    : const Text(
+                        'Clock In/Out',
+                        style: TextStyle(fontSize: 18),
                       ),
-                    if (_totalLogs > _recentLogs.length) ...[
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Showing ${_recentLogs.length} of $_totalLogs entries',
-                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                        ),
-                      ),
-                    ],
-                  ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Recent Clock In/Out',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
                 ),
               ),
             ),
-          );
-        },
+            const SizedBox(height: 12),
+            if (_recentLogs.isEmpty)
+              Text(
+                'No recent attendance logs found',
+                style: TextStyle(color: Colors.grey[600]),
+              )
+            else
+              Column(
+                children: _recentLogs.map((log) => _buildLogTile(log)).toList(),
+              ),
+            if (_totalLogs > _recentLogs.length) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Showing ${_recentLogs.length} of $_totalLogs entries',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -369,12 +357,39 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
     final clockIn = formatDateTime(log['clockIn'] ?? log['clock_in']);
     final clockOut = formatDateTime(log['clockOut'] ?? log['clock_out']);
 
+    // Location can come from the API as latitude/longitude (number or string).
+    final latRaw = log['latitude'];
+    final longRaw = log['longitude'];
+
+    String? locationText;
+    if (latRaw != null && longRaw != null) {
+      final lat = double.tryParse(latRaw.toString());
+      final long = double.tryParse(longRaw.toString());
+      if (lat != null && long != null) {
+        locationText =
+            'Location: ${lat.toStringAsFixed(6)}, ${long.toStringAsFixed(6)}';
+      }
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: const Icon(Icons.access_time),
         title: Text('In: $clockIn'),
-        subtitle: Text('Out: ${clockOut == '-' ? '—' : clockOut}'),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Out: ${clockOut == '-' ? '—' : clockOut}'),
+            if (locationText != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(
+                  locationText,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
