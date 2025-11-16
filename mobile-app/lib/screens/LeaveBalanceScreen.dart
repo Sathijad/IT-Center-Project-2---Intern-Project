@@ -1,31 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../src/auth_service.dart';
-
-class LeaveApiBase {
-  static String get base {
-    const override = String.fromEnvironment('LEAVE_API_BASE', defaultValue: '');
-    if (override.isNotEmpty) {
-      return override;
-    }
-
-    const useLocalPhase2 = bool.fromEnvironment('USE_LOCAL_PHASE2', defaultValue: false);
-    if (useLocalPhase2) {
-      if (kIsWeb) {
-        return 'http://localhost:3000';
-      }
-      if (Platform.isAndroid) {
-        return 'http://10.0.2.2:3000';
-      }
-      return 'http://localhost:3000';
-    }
-
-    return 'https://xfub6mzcqg.execute-api.ap-southeast-2.amazonaws.com';
-  }
-}
+import '../src/leave_api_base.dart';
 
 class LeaveBalanceScreen extends StatefulWidget {
   const LeaveBalanceScreen({super.key});
@@ -40,6 +17,7 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
   Map<String, dynamic>? _leaveBalance;
   Map<String, dynamic>? _leaveRequests;
   int _selectedTab = 0; // 0 for balance, 1 for history
+  int? _currentUserId;
 
   @override
   void initState() {
@@ -59,11 +37,11 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
         throw Exception('Not authenticated');
       }
 
-      // Load leave balance and requests in parallel
-      await Future.wait([
-        _loadLeaveBalance(token),
-        _loadLeaveRequests(token),
-      ]);
+      await _loadLeaveBalance(token);
+      // Always load the history for the currently logged‑in user.
+      // The backend automatically scopes non‑admin users to their own requests,
+      // so we don't need to (and shouldn't) guess the user id on the client.
+      await _loadLeaveRequests(token);
     } catch (e) {
       setState(() {
         _error = e.toString().replaceAll('Exception: ', '');
@@ -84,9 +62,21 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
       );
 
       if (res.statusCode == 200) {
-        final data = json.decode(res.body);
+        final data = json.decode(res.body) as Map<String, dynamic>;
+        final balances = (data['balances'] as List? ?? [])
+            .whereType<Map<String, dynamic>>()
+            .map(_normalizeBalance)
+            .toList();
+
+        final userId = data['userId'] ?? data['user_id'];
+
         setState(() {
-          _leaveBalance = data;
+          _currentUserId = userId is int ? userId : int.tryParse(userId?.toString() ?? '');
+          _leaveBalance = {
+            'userId': _currentUserId,
+            'year': data['year'],
+            'balances': balances,
+          };
         });
       } else if (res.statusCode == 401) {
         final refreshedToken = await AuthService.instance.getAccessToken(forceRefresh: true);
@@ -108,8 +98,19 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
 
   Future<void> _loadLeaveRequests(String token) async {
     try {
+      // Backend will automatically scope results to the authenticated user
+      // (unless the caller is an ADMIN). This avoids issues where we fail
+      // to resolve the correct user id on the mobile client.
+      final queryParams = {
+        'page': '1',
+        'size': '50',
+        'sort': 'created_at,desc',
+      };
+
+      final uri = Uri.parse('${LeaveApiBase.base}/api/v1/leave/requests').replace(queryParameters: queryParams);
+
       final res = await http.get(
-        Uri.parse('${LeaveApiBase.base}/api/v1/leave/requests?page=0&size=50&sort=created_at,desc'),
+        uri,
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -117,12 +118,23 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
       );
 
       if (res.statusCode == 200) {
+        final data = json.decode(res.body) as Map<String, dynamic>;
+        final rawItems = (data['items'] ?? data['content'] ?? []) as List<dynamic>;
+        final items = rawItems.whereType<Map<String, dynamic>>().map(_normalizeRequest).toList();
+        final total = data['total'] ?? data['totalElements'] ?? data['total_elements'] ?? items.length;
+
         setState(() {
-          _leaveRequests = json.decode(res.body);
+          _leaveRequests = {
+            'items': items,
+            'total': total,
+          };
         });
       } else if (res.statusCode == 401) {
-        final refreshedToken = await AuthService.instance.getAccessToken(forceRefresh: true);
-        if (refreshedToken != null && refreshedToken.isNotEmpty && refreshedToken != token) {
+        final refreshedToken =
+            await AuthService.instance.getAccessToken(forceRefresh: true);
+        if (refreshedToken != null &&
+            refreshedToken.isNotEmpty &&
+            refreshedToken != token) {
           return _loadLeaveRequests(refreshedToken);
         }
         throw Exception('Session expired. Please sign in again.');
@@ -132,9 +144,40 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
     } catch (e) {
       // If requests fail, continue with balance
       setState(() {
-        _leaveRequests = {'content': [], 'totalElements': 0};
+        _leaveRequests = {'items': [], 'total': 0};
       });
     }
+  }
+
+  Map<String, dynamic> _normalizeBalance(Map<String, dynamic> raw) {
+    return {
+      'balanceId': raw['balanceId'] ?? raw['balance_id'],
+      'policyId': raw['policyId'] ?? raw['policy_id'],
+      'policyName': raw['policyName'] ?? raw['policy_name'] ?? 'Leave Policy',
+      'balanceDays': _toDouble(raw['balanceDays'] ?? raw['balance_days'] ?? raw['balance']),
+      'year': raw['year'] ?? DateTime.now().year,
+    };
+  }
+
+  Map<String, dynamic> _normalizeRequest(Map<String, dynamic> raw) {
+    return {
+      'requestId': raw['requestId'] ?? raw['request_id'],
+      'policyName': raw['policyName'] ?? raw['policy_name'] ?? 'Leave Policy',
+      'status': (raw['status'] ?? 'UNKNOWN').toString(),
+      'startDate': raw['startDate'] ?? raw['start_date'] ?? '',
+      'endDate': raw['endDate'] ?? raw['end_date'] ?? '',
+      'daysRequested': _toDouble(
+        raw['daysRequested'] ?? raw['days_requested'] ?? raw['days'],
+      ),
+      'reason': raw['reason'] ?? '',
+      'createdAt': raw['createdAt'] ?? raw['created_at'] ?? '',
+    };
+  }
+
+  double _toDouble(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString()) ?? 0;
   }
 
   String _getStatusColor(String status) {
@@ -268,7 +311,7 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
   }
 
   Widget _buildBalanceTab() {
-    final balances = _leaveBalance?['balances'] as List? ?? [];
+    final balances = (_leaveBalance?['balances'] as List?)?.whereType<Map<String, dynamic>>().toList() ?? [];
 
     if (balances.isEmpty && _leaveBalance != null) {
       return Center(
@@ -318,8 +361,8 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
   }
 
   Widget _buildBalanceCard(Map<String, dynamic> balance) {
-    final balanceDays = balance['balance_days'] ?? 0.0;
-    final policyName = balance['policy_name'] ?? 'Unknown';
+    final balanceDays = (balance['balanceDays'] as double?) ?? 0.0;
+    final policyName = balance['policyName']?.toString() ?? 'Unknown';
     final year = balance['year'] ?? DateTime.now().year;
 
     return Card(
@@ -390,8 +433,8 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
   }
 
   Widget _buildHistoryTab() {
-    final requests = _leaveRequests?['content'] as List? ?? [];
-    final totalElements = _leaveRequests?['totalElements'] ?? 0;
+    final requests = (_leaveRequests?['items'] as List?)?.whereType<Map<String, dynamic>>().toList() ?? [];
+    final totalElements = _leaveRequests?['total'] ?? requests.length;
 
     if (requests.isEmpty) {
       return Center(
@@ -448,14 +491,13 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
   }
 
   Widget _buildRequestCard(Map<String, dynamic> request) {
-    final requestId = request['request_id'] ?? 0;
-    final policyName = request['policy_name'] ?? 'Unknown';
+    final policyName = request['policyName'] ?? 'Unknown';
     final status = request['status'] ?? 'UNKNOWN';
-    final startDate = request['start_date'] ?? '';
-    final endDate = request['end_date'] ?? '';
-    final days = request['days'] ?? 0;
+    final startDate = request['startDate'] ?? '';
+    final endDate = request['endDate'] ?? '';
+    final days = (request['daysRequested'] as double?) ?? 0.0;
     final reason = request['reason'] ?? '';
-    final createdAt = request['created_at'] ?? '';
+    final createdAt = request['createdAt'] ?? '';
 
     // Parse dates
     String formatDate(String dateStr) {
@@ -527,7 +569,7 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
                 Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
                 const SizedBox(width: 8),
                 Text(
-                  '$days ${days == 1 ? 'day' : 'days'}',
+                  '${days % 1 == 0 ? days.toInt() : days.toStringAsFixed(1)} ${days == 1 ? 'day' : 'days'}',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[700],

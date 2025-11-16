@@ -319,7 +319,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763108727704-2025-11-14T08:25:27.704Z/leaveGetBalance.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/leaveGetBalance.zip"
         },
         "Handler": "src/handlers/leave/getBalance.handler",
         "Runtime": "nodejs18.x",
@@ -357,7 +357,8 @@
               "Fn::Join": [
                 ",",
                 [
-                  "http://localhost:5173"
+                  "http://localhost:5173",
+                  "http://localhost:56956"
                 ]
               ]
             },
@@ -401,7 +402,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763108727704-2025-11-14T08:25:27.704Z/leaveListRequests.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/leaveListRequests.zip"
         },
         "Handler": "src/handlers/leave/listRequests.handler",
         "Runtime": "nodejs18.x",
@@ -439,7 +440,8 @@
               "Fn::Join": [
                 ",",
                 [
-                  "http://localhost:5173"
+                  "http://localhost:5173",
+                  "http://localhost:56956"
                 ]
               ]
             },
@@ -483,7 +485,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763108727704-2025-11-14T08:25:27.704Z/leaveCreateRequest.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/leaveCreateRequest.zip"
         },
         "Handler": "src/handlers/leave/createRequest.handler",
         "Runtime": "nodejs18.x",
@@ -521,7 +523,8 @@
               "Fn::Join": [
                 ",",
                 [
-                  "http://localhost:5173"
+                  "http://localhost:5173",
+                  "http://localhost:56956"
                 ]
               ]
             },
@@ -565,7 +568,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763108727704-2025-11-14T08:25:27.704Z/leaveUpdateRequest.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/leaveUpdateRequest.zip"
         },
         "Handler": "src/handlers/leave/updateRequest.handler",
         "Runtime": "nodejs18.x",
@@ -603,7 +606,8 @@
               "Fn::Join": [
                 ",",
                 [
-                  "http://localhost:5173"
+                  "http://localhost:5173",
+                  "http://localhost:56956"
                 ]
               ]
             },
@@ -647,7 +651,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763108727704-2025-11-14T08:25:27.704Z/attendanceGetLogs.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/attendanceGetLogs.zip"
         },
         "Handler": "src/handlers/attendance/getLogs.handler",
         "Runtime": "nodejs18.x",
@@ -685,7 +689,8 @@
               "Fn::Join": [
                 ",",
                 [
-                  "http://localhost:5173"
+                  "http://localhost:5173",
+                  "http://localhost:56956"
                 ]
               ]
             },
@@ -729,7 +734,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763108727704-2025-11-14T08:25:27.704Z/attendanceClockIn.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/attendanceClockIn.zip"
         },
         "Handler": "src/handlers/attendance/clockIn.handler",
         "Runtime": "nodejs18.x",
@@ -767,7 +772,8 @@
               "Fn::Join": [
                 ",",
                 [
-                  "http://localhost:5173"
+                  "http://localhost:5173",
+                  "http://localhost:56956"
                 ]
               ]
             },
@@ -811,7 +817,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763108727704-2025-11-14T08:25:27.704Z/attendanceClockOut.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/attendanceClockOut.zip"
         },
         "Handler": "src/handlers/attendance/clockOut.handler",
         "Runtime": "nodejs18.x",
@@ -849,7 +855,8 @@
               "Fn::Join": [
                 ",",
                 [
-                  "http://localhost:5173"
+                  "http://localhost:5173",
+                  "http://localhost:56956"
                 ]
               ]
             },
@@ -893,7 +900,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763108727704-2025-11-14T08:25:27.704Z/integrationsMsGraphSync.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/integrationsMsGraphSync.zip"
         },
         "Handler": "src/handlers/integrations/msgraphSyncEnqueue.handler",
         "Runtime": "nodejs18.x",
@@ -931,7 +938,8 @@
               "Fn::Join": [
                 ",",
                 [
-                  "http://localhost:5173"
+                  "http://localhost:5173",
+                  "http://localhost:56956"
                 ]
               ]
             },
@@ -975,7 +983,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763108727704-2025-11-14T08:25:27.704Z/reportsLeaveSummary.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/reportsLeaveSummary.zip"
         },
         "Handler": "src/handlers/reports/leaveSummary.handler",
         "Runtime": "nodejs18.x",
@@ -1013,7 +1021,8 @@
               "Fn::Join": [
                 ",",
                 [
-                  "http://localhost:5173"
+                  "http://localhost:5173",
+                  "http://localhost:56956"
                 ]
               ]
             },
@@ -1057,7 +1066,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763108727704-2025-11-14T08:25:27.704Z/healthz.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/healthz.zip"
         },
         "Handler": "src/handlers/healthz.handler",
         "Runtime": "nodejs18.x",
@@ -1095,7 +1104,8 @@
               "Fn::Join": [
                 ",",
                 [
-                  "http://localhost:5173"
+                  "http://localhost:5173",
+                  "http://localhost:56956"
                 ]
               ]
             },
@@ -1139,7 +1149,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/leave-attendance-api/dev/1763108727704-2025-11-14T08:25:27.704Z/msGraphSyncWorker.zip"
+          "S3Key": "serverless/leave-attendance-api/dev/1763122422332-2025-11-14T12:13:42.332Z/msGraphSyncWorker.zip"
         },
         "Handler": "src/handlers/integrations/msgraphSyncWorker.handler",
         "Runtime": "nodejs18.x",
@@ -1177,7 +1187,8 @@
               "Fn::Join": [
                 ",",
                 [
-                  "http://localhost:5173"
+                  "http://localhost:5173",
+                  "http://localhost:56956"
                 ]
               ]
             },
@@ -1214,7 +1225,7 @@
         "MsGraphSyncWorkerLogGroup"
       ]
     },
-    "AttendanceGetLogsLambdaVersionVOOKvUosTIasUOQjMlixP900j4QrjFbesKqZcw08hI": {
+    "AttendanceGetLogsLambdaVersion1KiIsV2Noji8rMjIIEzuSAn6baLoTH5cGt036f0gQ": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1224,17 +1235,7 @@
         "CodeSha256": "LpoUoZ0Ea82rI3ewYzTEUou3Q9pUTiRr5mcnDIvFX0c="
       }
     },
-    "AttendanceClockInLambdaVersionA08DU4axflzHrmVa6o2M6CaPyATevqw08kOEjD2fK4": {
-      "Type": "AWS::Lambda::Version",
-      "DeletionPolicy": "Retain",
-      "Properties": {
-        "FunctionName": {
-          "Ref": "AttendanceClockInLambdaFunction"
-        },
-        "CodeSha256": "Xzajs3RPru1YVBeLVIXfNop/q0VlQyJ5Z5kVP/IKYgc="
-      }
-    },
-    "AttendanceClockOutLambdaVersiona4l96MkR5ox7lTvXgePSTOoIwAQs0fYHVKY9SlS4sk": {
+    "AttendanceClockOutLambdaVersionHsIuwR9gLdFrz2k3UOFk0w0v29XDyWq49uFSp7QzQFg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1244,17 +1245,17 @@
         "CodeSha256": "YaxC60qec45QiCb0qIMbyE4WqjDXFfukgUWfyJwQA8A="
       }
     },
-    "LeaveGetBalanceLambdaVersionHQRWJ8IXzaVag8AZ8XTDEPHSWXeQVJcPnXZ33D4y6EU": {
+    "AttendanceClockInLambdaVersionCe7AAbsFp6O5UPuJP8w5C51rlhlrY7PFWUNHfDCd4": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
-          "Ref": "LeaveGetBalanceLambdaFunction"
+          "Ref": "AttendanceClockInLambdaFunction"
         },
-        "CodeSha256": "xNd4mcMkV2zth5inTNSuezUElIov3GoCHwo7zoYj7IQ="
+        "CodeSha256": "Xzajs3RPru1YVBeLVIXfNop/q0VlQyJ5Z5kVP/IKYgc="
       }
     },
-    "HealthzLambdaVersionAj5tMjzdQTvo9LTa0vRe0AozB5a19XDZEjdoMOlAr8": {
+    "HealthzLambdaVersionj6Jbhq5ANtfuIsyDOUTUMj1OylQAQ83UzV7ypDEw": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1264,27 +1265,17 @@
         "CodeSha256": "XYBN3D8wd6uQczg1WTQN/BVXtTHdJgV9l4cHTCMO07A="
       }
     },
-    "LeaveCreateRequestLambdaVersionuQtlanVRkwoKecSd9IlIF7zHgKwCGMkRFAX1Lvgn3A": {
+    "LeaveGetBalanceLambdaVersion1CZHMePiFtw4fjxkk2XWknQ1MUbpO9zwRhNWNGz3MA": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
-          "Ref": "LeaveCreateRequestLambdaFunction"
+          "Ref": "LeaveGetBalanceLambdaFunction"
         },
-        "CodeSha256": "3yptbFf0rxU6g3FrQ9HCIdLXZ3hOwtCssnQAuG71mt4="
+        "CodeSha256": "xNd4mcMkV2zth5inTNSuezUElIov3GoCHwo7zoYj7IQ="
       }
     },
-    "LeaveListRequestsLambdaVersionkL1mFfH1AyWzar3WCkgveO0nMV3wyLVqiSuPAnVwdw": {
-      "Type": "AWS::Lambda::Version",
-      "DeletionPolicy": "Retain",
-      "Properties": {
-        "FunctionName": {
-          "Ref": "LeaveListRequestsLambdaFunction"
-        },
-        "CodeSha256": "FnWWrO+tpSUeqUaq+PTpUNG0EEpR3PrgBuQu4R8bBNY="
-      }
-    },
-    "ReportsLeaveSummaryLambdaVersionGxdjj7y0Mf4LUvNh5qqla7RomdEN7CPJMk5hqarRzE": {
+    "ReportsLeaveSummaryLambdaVersiondaP4m2QVa2JSQYM3iJQyCmNw7ZxPatGU8kGYzE2OI": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1294,7 +1285,17 @@
         "CodeSha256": "Rjk2TEBiFMuK20Mn4E6zmp9pRn+/6xiyD8YSi0csr3I="
       }
     },
-    "LeaveUpdateRequestLambdaVersionFHRdhKXNSHeyVajijvr62Mb9QuUzbrxqhcV5ibHrPI": {
+    "LeaveListRequestsLambdaVersionViFrB1xc9wQLtwqFkZSTsbTdsxVdHuiPb7oTgZOGboU": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "LeaveListRequestsLambdaFunction"
+        },
+        "CodeSha256": "FnWWrO+tpSUeqUaq+PTpUNG0EEpR3PrgBuQu4R8bBNY="
+      }
+    },
+    "LeaveUpdateRequestLambdaVersioniYgDGPyBozYyKYIJ6vI8QryUlYYc6FSOGCiOP05U": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1304,7 +1305,17 @@
         "CodeSha256": "scvlcUlw6vWd3wIFl2da88J/iTJGVoXsU21WViW4XQ8="
       }
     },
-    "IntegrationsMsGraphSyncLambdaVersion8IDTaGdLBc2hvT3iq6NSRzByeJ1Bm1bNS20sGV37Aw": {
+    "LeaveCreateRequestLambdaVersion8cwd03VHetqg9HB4JWATZM4ELrP85Yg2jyxslpzw4": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "LeaveCreateRequestLambdaFunction"
+        },
+        "CodeSha256": "3yptbFf0rxU6g3FrQ9HCIdLXZ3hOwtCssnQAuG71mt4="
+      }
+    },
+    "IntegrationsMsGraphSyncLambdaVersionASFRfrVufH3KxIKFkHoouuoudifGrQDlk6XsGTHIc18": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1314,7 +1325,7 @@
         "CodeSha256": "kmMn22LwYfoUu4TIEoxSFWe8vHchVNuPjxTx8KA2A7o="
       }
     },
-    "MsGraphSyncWorkerLambdaVersiont6wU45QdRAb9ChZdGxOGPeahogt5VGRermrFwVeQAE": {
+    "MsGraphSyncWorkerLambdaVersionvMlPztOpPbjrPYCYsVcw4zbL67LzrhiYOcoYvFVmU": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
@@ -1363,9 +1374,11 @@
         "Name": "dev-leave-attendance-api",
         "ProtocolType": "HTTP",
         "CorsConfiguration": {
+          "AllowCredentials": true,
           "AllowHeaders": [
             "Authorization",
             "Content-Type",
+            "X-Api-Key",
             "Idempotency-Key",
             "X-Amz-Date",
             "X-Amz-Security-Token"
@@ -1374,10 +1387,13 @@
             "OPTIONS",
             "GET",
             "POST",
-            "PATCH"
+            "PUT",
+            "PATCH",
+            "DELETE"
           ],
           "AllowOrigins": [
-            "http://localhost:5173"
+            "http://localhost:5173",
+            "http://localhost:56956"
           ]
         }
       }
@@ -2301,88 +2317,88 @@
     "AttendanceGetLogsLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AttendanceGetLogsLambdaVersionVOOKvUosTIasUOQjMlixP900j4QrjFbesKqZcw08hI"
+        "Ref": "AttendanceGetLogsLambdaVersion1KiIsV2Noji8rMjIIEzuSAn6baLoTH5cGt036f0gQ"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-AttendanceGetLogsLambdaFunctionQualifiedArn"
       }
     },
-    "AttendanceClockInLambdaFunctionQualifiedArn": {
-      "Description": "Current Lambda function version",
-      "Value": {
-        "Ref": "AttendanceClockInLambdaVersionA08DU4axflzHrmVa6o2M6CaPyATevqw08kOEjD2fK4"
-      },
-      "Export": {
-        "Name": "sls-leave-attendance-api-dev-AttendanceClockInLambdaFunctionQualifiedArn"
-      }
-    },
     "AttendanceClockOutLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AttendanceClockOutLambdaVersiona4l96MkR5ox7lTvXgePSTOoIwAQs0fYHVKY9SlS4sk"
+        "Ref": "AttendanceClockOutLambdaVersionHsIuwR9gLdFrz2k3UOFk0w0v29XDyWq49uFSp7QzQFg"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-AttendanceClockOutLambdaFunctionQualifiedArn"
       }
     },
-    "LeaveGetBalanceLambdaFunctionQualifiedArn": {
+    "AttendanceClockInLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "LeaveGetBalanceLambdaVersionHQRWJ8IXzaVag8AZ8XTDEPHSWXeQVJcPnXZ33D4y6EU"
+        "Ref": "AttendanceClockInLambdaVersionCe7AAbsFp6O5UPuJP8w5C51rlhlrY7PFWUNHfDCd4"
       },
       "Export": {
-        "Name": "sls-leave-attendance-api-dev-LeaveGetBalanceLambdaFunctionQualifiedArn"
+        "Name": "sls-leave-attendance-api-dev-AttendanceClockInLambdaFunctionQualifiedArn"
       }
     },
     "HealthzLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "HealthzLambdaVersionAj5tMjzdQTvo9LTa0vRe0AozB5a19XDZEjdoMOlAr8"
+        "Ref": "HealthzLambdaVersionj6Jbhq5ANtfuIsyDOUTUMj1OylQAQ83UzV7ypDEw"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-HealthzLambdaFunctionQualifiedArn"
       }
     },
-    "LeaveCreateRequestLambdaFunctionQualifiedArn": {
+    "LeaveGetBalanceLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "LeaveCreateRequestLambdaVersionuQtlanVRkwoKecSd9IlIF7zHgKwCGMkRFAX1Lvgn3A"
+        "Ref": "LeaveGetBalanceLambdaVersion1CZHMePiFtw4fjxkk2XWknQ1MUbpO9zwRhNWNGz3MA"
       },
       "Export": {
-        "Name": "sls-leave-attendance-api-dev-LeaveCreateRequestLambdaFunctionQualifiedArn"
-      }
-    },
-    "LeaveListRequestsLambdaFunctionQualifiedArn": {
-      "Description": "Current Lambda function version",
-      "Value": {
-        "Ref": "LeaveListRequestsLambdaVersionkL1mFfH1AyWzar3WCkgveO0nMV3wyLVqiSuPAnVwdw"
-      },
-      "Export": {
-        "Name": "sls-leave-attendance-api-dev-LeaveListRequestsLambdaFunctionQualifiedArn"
+        "Name": "sls-leave-attendance-api-dev-LeaveGetBalanceLambdaFunctionQualifiedArn"
       }
     },
     "ReportsLeaveSummaryLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "ReportsLeaveSummaryLambdaVersionGxdjj7y0Mf4LUvNh5qqla7RomdEN7CPJMk5hqarRzE"
+        "Ref": "ReportsLeaveSummaryLambdaVersiondaP4m2QVa2JSQYM3iJQyCmNw7ZxPatGU8kGYzE2OI"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-ReportsLeaveSummaryLambdaFunctionQualifiedArn"
       }
     },
+    "LeaveListRequestsLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "LeaveListRequestsLambdaVersionViFrB1xc9wQLtwqFkZSTsbTdsxVdHuiPb7oTgZOGboU"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-LeaveListRequestsLambdaFunctionQualifiedArn"
+      }
+    },
     "LeaveUpdateRequestLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "LeaveUpdateRequestLambdaVersionFHRdhKXNSHeyVajijvr62Mb9QuUzbrxqhcV5ibHrPI"
+        "Ref": "LeaveUpdateRequestLambdaVersioniYgDGPyBozYyKYIJ6vI8QryUlYYc6FSOGCiOP05U"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-LeaveUpdateRequestLambdaFunctionQualifiedArn"
       }
     },
+    "LeaveCreateRequestLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "LeaveCreateRequestLambdaVersion8cwd03VHetqg9HB4JWATZM4ELrP85Yg2jyxslpzw4"
+      },
+      "Export": {
+        "Name": "sls-leave-attendance-api-dev-LeaveCreateRequestLambdaFunctionQualifiedArn"
+      }
+    },
     "IntegrationsMsGraphSyncLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "IntegrationsMsGraphSyncLambdaVersion8IDTaGdLBc2hvT3iq6NSRzByeJ1Bm1bNS20sGV37Aw"
+        "Ref": "IntegrationsMsGraphSyncLambdaVersionASFRfrVufH3KxIKFkHoouuoudifGrQDlk6XsGTHIc18"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-IntegrationsMsGraphSyncLambdaFunctionQualifiedArn"
@@ -2391,7 +2407,7 @@
     "MsGraphSyncWorkerLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "MsGraphSyncWorkerLambdaVersiont6wU45QdRAb9ChZdGxOGPeahogt5VGRermrFwVeQAE"
+        "Ref": "MsGraphSyncWorkerLambdaVersionvMlPztOpPbjrPYCYsVcw4zbL67LzrhiYOcoYvFVmU"
       },
       "Export": {
         "Name": "sls-leave-attendance-api-dev-MsGraphSyncWorkerLambdaFunctionQualifiedArn"

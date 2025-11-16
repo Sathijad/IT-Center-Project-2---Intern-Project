@@ -80,6 +80,7 @@ provider:
       allowedHeaders:
         - Authorization
         - Content-Type
+        - X-Api-Key
         - Idempotency-Key
         - X-Amz-Date
         - X-Amz-Security-Token
@@ -87,7 +88,10 @@ provider:
         - OPTIONS
         - GET
         - POST
+        - PUT
         - PATCH
+        - DELETE
+      allowCredentials: true
   vpc:
     subnetIds: ${self:custom.env.vpc.subnetIds}
     securityGroupIds: ${self:custom.env.vpc.securityGroupIds}

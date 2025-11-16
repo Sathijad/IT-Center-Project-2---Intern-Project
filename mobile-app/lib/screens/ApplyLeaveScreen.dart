@@ -1,33 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../src/auth_service.dart';
-
-class LeaveApiBase {
-  static String get base {
-    const override = String.fromEnvironment('LEAVE_API_BASE', defaultValue: '');
-    if (override.isNotEmpty) {
-      return override;
-    }
-
-    const useLocalPhase2 = bool.fromEnvironment('USE_LOCAL_PHASE2', defaultValue: false);
-    if (useLocalPhase2) {
-      if (kIsWeb) {
-        return 'http://localhost:3000'; // Flutter Web dev
-      }
-
-      if (Platform.isAndroid) {
-        return 'http://10.0.2.2:3000';
-      }
-
-      return 'http://localhost:3000';
-    }
-
-    return 'https://xfub6mzcqg.execute-api.ap-southeast-2.amazonaws.com';
-  }
-}
+import '../src/leave_api_base.dart';
 
 class ApplyLeaveScreen extends StatefulWidget {
   const ApplyLeaveScreen({super.key});
@@ -52,6 +27,17 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     _loadPolicies();
   }
 
+  List<Map<String, dynamic>> _defaultPolicies() {
+    // Fallback list used only if the API is unavailable.
+    // Includes Personal Leave so all standard types are visible even in offline/error states.
+    return [
+      {'id': 1, 'name': 'Annual Leave', 'limit': 14},
+      {'id': 2, 'name': 'Casual Leave', 'limit': 7},
+      {'id': 3, 'name': 'Sick Leave', 'limit': 10},
+      {'id': 4, 'name': 'Personal Leave', 'limit': 5},
+    ];
+  }
+
   Future<void> _loadPolicies() async {
     setState(() => _loadingPolicies = true);
     try {
@@ -60,8 +46,12 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         throw Exception('Not authenticated');
       }
 
+      // Use the leave balance endpoint (which already powers other screens)
+      // to derive the available leave policies for this user.
+      // This ensures types like "Personal Leave" appear whenever they exist
+      // and the user has a balance record for them.
       final res = await http.get(
-        Uri.parse('${LeaveApiBase.base}/api/v1/leave/policies'),
+        Uri.parse('${LeaveApiBase.base}/api/v1/leave/balance'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -69,47 +59,51 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       );
 
       if (res.statusCode == 200) {
-        final data = json.decode(res.body);
+        final data = json.decode(res.body) as Map<String, dynamic>;
+        final balances = (data['balances'] as List? ?? []).whereType<Map<String, dynamic>>().toList();
+
         setState(() {
           final parsedPolicies = <Map<String, dynamic>>[];
-          for (final rawPolicy in (data as List)) {
-            final rawId = rawPolicy['policy_id'];
+          for (final balance in balances) {
+            final rawId = balance['policyId'] ?? balance['policy_id'];
             final parsedId = rawId is int ? rawId : int.tryParse(rawId.toString());
             if (parsedId == null) {
               continue;
             }
 
-            final rawLimit = rawPolicy['annual_limit'];
-            final parsedLimit = rawLimit is num
-                ? rawLimit.toInt()
-                : int.tryParse(rawLimit.toString()) ?? 0;
+            final rawName = balance['policyName'] ?? balance['policy_name'];
+            final name = (rawName?.toString().isNotEmpty ?? false) ? rawName.toString() : 'Leave Policy';
+
+            // We don't get the original annual_limit here, only remaining balance.
+            // Showing the current balance as "days" is more useful for users anyway.
+            final rawBalance = balance['balanceDays'] ?? balance['balance_days'] ?? balance['balance'];
+            int remainingDays;
+            if (rawBalance is num) {
+              remainingDays = rawBalance.round();
+            } else {
+              remainingDays = int.tryParse(rawBalance?.toString() ?? '') ?? 0;
+            }
 
             parsedPolicies.add({
               'id': parsedId,
-              'name': rawPolicy['name']?.toString() ?? 'Leave Policy',
-              'limit': parsedLimit,
+              'name': name,
+              'limit': remainingDays,
             });
           }
-          _policies = parsedPolicies;
+
+          // If for some reason the API returned no balances, fall back to defaults.
+          _policies = parsedPolicies.isNotEmpty ? parsedPolicies : _defaultPolicies();
         });
       } else {
         // Fallback to default policies if API fails
         setState(() {
-          _policies = [
-            {'id': 1, 'name': 'Annual Leave', 'limit': 14},
-            {'id': 2, 'name': 'Casual Leave', 'limit': 7},
-            {'id': 3, 'name': 'Sick Leave', 'limit': 10},
-          ];
+          _policies = _defaultPolicies();
         });
       }
     } catch (e) {
       // Fallback to default policies
       setState(() {
-        _policies = [
-          {'id': 1, 'name': 'Annual Leave', 'limit': 14},
-          {'id': 2, 'name': 'Casual Leave', 'limit': 7},
-          {'id': 3, 'name': 'Sick Leave', 'limit': 10},
-        ];
+        _policies = _defaultPolicies();
       });
     } finally {
       setState(() => _loadingPolicies = false);

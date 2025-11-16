@@ -2,25 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../src/auth_service.dart';
-
-class LeaveApiBase {
-  static String get base {
-    if (kIsWeb) {
-      return 'http://localhost:3000';  // Flutter Web dev
-    }
-    
-    // For Android emulator: use 10.0.2.2 to access host machine
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000';
-    }
-    
-    // For iOS simulator, Windows, Linux, macOS: use localhost
-    return 'http://localhost:3000';
-  }
-}
+import '../src/leave_api_base.dart';
 
 class ClockInOutScreen extends StatefulWidget {
   const ClockInOutScreen({super.key});
@@ -34,6 +17,8 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
   bool _hasActiveClockIn = false;
   Position? _currentPosition;
   String? _errorMessage;
+  List<Map<String, dynamic>> _recentLogs = [];
+  int _totalLogs = 0;
 
   @override
   void initState() {
@@ -48,9 +33,9 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
         return;
       }
 
-      // Get recent attendance logs to check for active clock-in
+      // Get recent attendance logs to check for active clock-in and show history list
       final res = await http.get(
-        Uri.parse('${LeaveApiBase.base}/api/v1/attendance?page=0&size=1&sort=clock_in,desc'),
+        Uri.parse('${LeaveApiBase.base}/api/v1/attendance?page=1&size=10&sort=clock_in,desc'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -58,15 +43,25 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
       );
 
       if (res.statusCode == 200) {
-        final data = json.decode(res.body);
-        final logs = data['content'] as List;
+        final data = json.decode(res.body) as Map<String, dynamic>;
+        final rawItems = (data['items'] ?? data['content'] ?? []) as List<dynamic>;
+        final logs = rawItems.whereType<Map<String, dynamic>>().toList();
+
+        bool hasActive = false;
         if (logs.isNotEmpty) {
           final lastLog = logs[0];
-          // Check if there's a clock-in without a clock-out
-          setState(() {
-            _hasActiveClockIn = lastLog['clock_out'] == null;
-          });
+          final clockOut = lastLog['clockOut'] ?? lastLog['clock_out'];
+          hasActive = clockOut == null;
         }
+
+        final total = data['total'] ?? data['totalElements'] ?? data['total_elements'];
+        final parsedTotal = total is int ? total : int.tryParse(total?.toString() ?? '') ?? logs.length;
+
+        setState(() {
+          _hasActiveClockIn = hasActive;
+          _recentLogs = logs;
+          _totalLogs = parsedTotal;
+        });
       }
     } catch (e) {
       // Error checking, assume no active clock-in
@@ -135,6 +130,8 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
             ),
           );
           setState(() => _hasActiveClockIn = true);
+          // Refresh recent logs after successful clock-in
+          _checkActiveClockIn();
         }
       } else {
         final error = json.decode(res.body);
@@ -204,6 +201,8 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
             ),
           );
           setState(() => _hasActiveClockIn = false);
+          // Refresh recent logs after successful clock-out
+          _checkActiveClockIn();
         }
       } else {
         final error = json.decode(res.body);
@@ -310,12 +309,72 @@ class _ClockInOutScreenState extends State<ClockInOutScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Recent Clock In/Out',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (_recentLogs.isEmpty)
+                      Text(
+                        'No recent attendance logs found',
+                        style: TextStyle(color: Colors.grey[600]),
+                      )
+                    else
+                      Column(
+                        children: _recentLogs
+                            .map((log) => _buildLogTile(log))
+                            .toList(),
+                      ),
+                    if (_totalLogs > _recentLogs.length) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Showing ${_recentLogs.length} of $_totalLogs entries',
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildLogTile(Map<String, dynamic> log) {
+    String formatDateTime(dynamic value) {
+      if (value == null) return '-';
+      final str = value.toString();
+      if (str.isEmpty) return '-';
+      try {
+        final dt = DateTime.parse(str).toLocal();
+        String two(int v) => v.toString().padLeft(2, '0');
+        return '${dt.day}/${dt.month}/${dt.year} ${two(dt.hour)}:${two(dt.minute)}';
+      } catch (_) {
+        return str;
+      }
+    }
+
+    final clockIn = formatDateTime(log['clockIn'] ?? log['clock_in']);
+    final clockOut = formatDateTime(log['clockOut'] ?? log['clock_out']);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: const Icon(Icons.access_time),
+        title: Text('In: $clockIn'),
+        subtitle: Text('Out: ${clockOut == '-' ? '—' : clockOut}'),
       ),
     );
   }
