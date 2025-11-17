@@ -10,6 +10,10 @@
     "lint": "eslint \"src/**/*.ts\"",
     "test": "cross-env NODE_ENV=test jest --coverage",
     "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:allure": "cross-env NODE_ENV=test jest --coverage --reporters=default --reporters=jest-allure2-reporter",
+    "allure:generate": "node ../scripts/allure-command.js generate allure-results allure-report",
+    "allure:open": "node ../scripts/allure-command.js open allure-report",
+    "allure:serve": "node ../scripts/allure-command.js serve allure-results",
     "package": "npm run build",
     "deploy:dev": "serverless deploy --stage dev",
     "deploy:stg": "serverless deploy --stage stg",
@@ -55,11 +59,26 @@
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "jest-allure2-reporter": "^2.0.0",
+    "allure-commandline": "^2.29.0"
   },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/src-legacy/"
+    ],
+    "reporters": [
+      "default",
+      [
+        "jest-allure2-reporter",
+        {
+          "resultsDir": "allure-results"
+        }
+      ]
+    ],
     "coverageThreshold": {
       "global": {
         "branches": 85,

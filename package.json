@@ -5,7 +5,17 @@
   "scripts": {
     "e2e": "cd admin-web && npm run e2e",
     "test:with-capture": "node scripts/network-capture.js",
-    "test:capture": "node scripts/network-capture.js --test-command \"cd admin-web && npm run ui:test\""
+    "test:capture": "node scripts/network-capture.js --test-command \"cd admin-web && npm run ui:test\"",
+    "allure:aggregate": "node scripts/allure-aggregate.js",
+    "allure:aggregate:open": "node scripts/allure-command.js open allure-report-aggregated",
+    "allure:aggregate:serve": "node scripts/allure-command.js serve allure-results-aggregated",
+    "test:all:allure": "npm run test:backend:allure && npm run test:frontend:allure && npm run test:mobile:allure && npm run allure:aggregate",
+    "test:backend:allure": "cd leave-attendance-backend && npm run test:allure",
+    "test:frontend:allure": "cd admin-web && npm run a11y:test:allure && npm run e2e:test:allure",
+    "test:mobile:allure": "cd mobile-app && npm run mobile:test"
+  },
+  "devDependencies": {
+    "allure-commandline": "^2.29.0"
   },
   "private": true
 }

@@ -9,7 +9,13 @@
     "test": "vitest",
     "a11y:test": "jest --runInBand --selectProjects a11y",
     "a11y:test:leave": "jest tests/a11y/leave-a11y.test.tsx tests/a11y/components-a11y.test.tsx",
-    "ui:test": "mocha --require ts-node/register --recursive tests/ui/**/*.spec.ts --timeout 60000",
+    "a11y:test:allure": "jest --runInBand --selectProjects a11y --reporters=default --reporters=jest-allure2-reporter",
+    "ui:test": "mocha --require ts-node/register --recursive tests/ui/**/*.spec.ts --timeout 60000 --reporter mocha-allure-reporter",
+    "ui:test:allure": "mocha --require ts-node/register --recursive tests/ui/**/*.spec.ts --timeout 60000 --reporter mocha-allure-reporter",
+    "e2e:test:allure": "cross-env NODE_OPTIONS=\"--loader ts-node/esm\" TS_NODE_TRANSPILE_ONLY=true HEADFUL=false mocha \"tests/ui/**/*.spec.ts\" -r ts-node/esm --timeout 120000 --reporter mocha-allure-reporter",
+    "allure:generate": "node ../scripts/allure-command.js generate allure-results allure-report",
+    "allure:open": "node ../scripts/allure-command.js open allure-report",
+    "allure:serve": "node ../scripts/allure-command.js serve allure-results",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "e2e:api": "node mock/server.js",
     "e2e:web": "cross-env VITE_API_BASE_URL=http://localhost:5050 vite --port 5173",
@@ -80,6 +86,9 @@
     "typescript": "^5.2.2",
     "vite": "^5.0.8",
     "vitest": "^1.0.4",
-    "vitest-axe": "^0.1.0"
+    "vitest-axe": "^0.1.0",
+    "jest-allure2-reporter": "^2.0.0",
+    "mocha-allure-reporter": "^2.11.0",
+    "allure-commandline": "^2.29.0"
   }
 }

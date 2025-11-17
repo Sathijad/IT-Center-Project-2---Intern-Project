@@ -15,6 +15,15 @@ module.exports = {
 			moduleNameMapper: {
 				'\\.(css|less|scss|sass)$': 'identity-obj-proxy',
 			},
+			reporters: [
+				'default',
+				[
+					'jest-allure2-reporter',
+					{
+						resultsDir: 'allure-results',
+					},
+				],
+			],
 		},
 	],
 };

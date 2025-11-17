@@ -6,4 +6,6 @@ samconfig.toml.local
 .DS_Store
 coverage/
 .nyc_output/
+allure-results/
+allure-report/
 
