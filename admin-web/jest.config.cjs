@@ -25,6 +25,13 @@ module.exports = {
 				],
 			],
 		},
+		{
+			displayName: 'selenium',
+			testEnvironment: 'node',
+			testMatch: ['<rootDir>/tests/selenium/**/*.test.js'],
+			setupFilesAfterEnv: ['<rootDir>/tests/selenium/setup.js'],
+			maxWorkers: 1, // Run tests serially to avoid multiple browser windows
+		},
 	],
 };
 
