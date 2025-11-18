@@ -28,6 +28,8 @@
     "selenium:test:users:headful": "cross-env HEADFUL=true jest tests/selenium/users-functional.test.js --runInBand",
     "selenium:test:profile": "jest tests/selenium/profile-functional.test.js --runInBand",
     "selenium:test:profile:headful": "cross-env HEADFUL=true jest tests/selenium/profile-functional.test.js --runInBand",
+    "selenium:test:allure": "jest --selectProjects selenium --runInBand --reporters=default --reporters=jest-allure2-reporter",
+    "selenium:test:allure:headful": "cross-env HEADFUL=true jest --selectProjects selenium --runInBand --reporters=default --reporters=jest-allure2-reporter",
     "selenium:test:with-mock": "concurrently -k -s first -n \"MOCK,FRONTEND,TEST\" -c \"blue,green,yellow\" \"npm run e2e:api\" \"npm run e2e:web\" \"node -e \\\"require('child_process').exec('timeout /t 10 /nobreak >nul 2>&1 & npm run selenium:test', (e,o) => {console.log(o); process.exit(e?1:0)})\\\"\"",
     "ui:test:allure": "cross-env NODE_ENV=test mocha --require ts-node/register --require allure-mocha/dist/reporter --recursive tests/ui/**/*.spec.ts --timeout 60000",
     "e2e:test:allure": "cross-env NODE_OPTIONS=\"--loader ts-node/esm\" TS_NODE_TRANSPILE_ONLY=true HEADFUL=false mocha \"tests/ui/**/*.spec.ts\" -r ts-node/esm -r allure-mocha/dist/reporter --timeout 120000",
