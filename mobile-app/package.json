@@ -4,13 +4,14 @@
   "description": "Appium E2E tests for IT Center Flutter mobile app",
   "scripts": {
     "appium:start": "appium --base-path /wd/hub",
-    "mobile:test": "mocha -r ts-node/register tests/mobile/**/*.spec.ts --timeout 120000 --reporter mocha-allure-reporter",
-    "mobile:test:login": "mocha -r ts-node/register tests/mobile/login.spec.ts --timeout 120000 --reporter mocha-allure-reporter",
-    "mobile:test:profile": "mocha -r ts-node/register tests/mobile/profile.spec.ts --timeout 120000 --reporter mocha-allure-reporter",
-    "mobile:test:roles": "mocha -r ts-node/register tests/mobile/roles.read.spec.ts --timeout 120000 --reporter mocha-allure-reporter",
-    "allure:generate": "node ../scripts/allure-command.js generate allure-results allure-report",
-    "allure:open": "node ../scripts/allure-command.js open allure-report",
-    "allure:serve": "node ../scripts/allure-command.js serve allure-results"
+    "mobile:test": "mocha -r ts-node/register tests/mobile/**/*.spec.ts --timeout 120000",
+    "mobile:test:login": "mocha -r ts-node/register tests/mobile/login.spec.ts --timeout 120000",
+    "mobile:test:profile": "mocha -r ts-node/register tests/mobile/profile.spec.ts --timeout 120000",
+    "mobile:test:roles": "mocha -r ts-node/register tests/mobile/roles.read.spec.ts --timeout 120000",
+    "mobile:test:leave": "mocha -r ts-node/register tests/mobile/leave-management.spec.ts --timeout 120000",
+    "mobile:test:attendance": "mocha -r ts-node/register tests/mobile/attendance-management.spec.ts --timeout 120000",
+    "mobile:test:phase2": "mocha -r ts-node/register tests/mobile/leave-management.spec.ts tests/mobile/attendance-management.spec.ts --timeout 120000",
+    "mobile:test:verification": "mocha -r ts-node/register tests/mobile/login-with-verification.spec.ts --timeout 180000"
   },
   "dependencies": {
     "@wdio/cli": "^8.35.0",
@@ -27,8 +28,6 @@
     "chai": "^4.3.10",
     "mocha": "^10.3.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3",
-    "mocha-allure-reporter": "^2.11.0",
-    "allure-commandline": "^2.29.0"
+    "typescript": "^5.3.3"
   }
 }

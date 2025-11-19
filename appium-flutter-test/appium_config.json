@@ -1,0 +1,18 @@
+{
+  "appium": {
+    "server": {
+      "address": "127.0.0.1",
+      "port": 4723,
+      "log_level": "info"
+    },
+    "drivers": {
+      "flutter": {
+        "version": "2.3.0"
+      },
+      "uiautomator2": {
+        "version": "2.41.0"
+      }
+    }
+  }
+}
+

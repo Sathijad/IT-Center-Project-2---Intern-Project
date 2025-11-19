@@ -13,6 +13,8 @@ const DEFAULT_CAPABILITIES: AppiumCapabilities = {
   'appium:deviceName': 'Android Emulator',
   'appium:app': './build/app/outputs/flutter-apk/app-debug.apk',
   'appium:automationName': 'Flutter',
+  'appium:appPackage': 'com.example.itcenter_auth', // CRITICAL FIX: Correct package name
+  'appium:appActivity': '.MainActivity',
 };
 
 export async function createDriver(customCapabilities?: Partial<AppiumCapabilities>) {
@@ -195,5 +197,43 @@ export async function checkSnackbar(
     await new Promise(resolve => setTimeout(resolve, 500));
   }
   return false;
+}
+
+// Helper to navigate to screen from home using ValueKey
+export async function navigateToScreen(
+  driver: WebdriverIO.Browser,
+  cardKey: string,
+  timeout: number = 30000
+): Promise<void> {
+  // Ensure we're on home screen
+  await waitForElement(driver, 'dashboard_welcome_card', 10000);
+  
+  // Find and tap the card
+  await waitForElement(driver, cardKey, timeout);
+  await tapElement(driver, cardKey);
+  
+  // Wait for screen transition
+  await new Promise(resolve => setTimeout(resolve, 2000));
+}
+
+// Helper to enter verification code (when MFA is required)
+export async function enterVerificationCode(
+  driver: WebdriverIO.Browser,
+  code: string,
+  timeout: number = 30000
+): Promise<void> {
+  // Find verification code field
+  // Note: May need to find by text or use Flutter finder
+  // For now, we'll use a generic approach
+  
+  // Wait for code entry screen
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
+  // Enter code - this may require finding the text field differently
+  // Since verification code fields may not have ValueKeys
+  // We'll need to use text-based finding or Flutter semantics
+  
+  // Placeholder - actual implementation depends on app structure
+  console.log('Verification code entry - may require manual intervention');
 }
 

@@ -6,6 +6,7 @@ import 'src/home_screen.dart';
 import 'src/login_screen.dart';
 
 void main() async {
+  enableFlutterDriverExtension();
   WidgetsFlutterBinding.ensureInitialized();
   await AuthService.instance.init(); // Amplify init
   runApp(const MyApp());

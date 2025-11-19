@@ -1,0 +1,31 @@
+{
+  "name": "appium-flutter-test",
+  "version": "1.0.0",
+  "description": "Appium Flutter tests for IT Center Mobile App Phase 2",
+  "main": "index.js",
+  "scripts": {
+    "test": "pytest tests/",
+    "test:leave": "pytest tests/test_leave_management.py -v",
+    "test:attendance": "pytest tests/test_attendance_management.py -v",
+    "test:phase2": "pytest tests/test_phase2_features.py -v",
+    "test:all": "pytest tests/ -v --html=reports/report.html --self-contained-html",
+    "appium": "appium"
+  },
+  "keywords": [
+    "appium",
+    "flutter",
+    "testing",
+    "mobile-automation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "appium": "^2.5.0",
+    "appium-flutter-driver": "^2.3.0",
+    "appium-uiautomator2-driver": "^2.41.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}
+
