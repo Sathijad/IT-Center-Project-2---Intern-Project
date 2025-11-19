@@ -124,13 +124,18 @@ const LeaveRequestPage: React.FC = () => {
 
       {isAdminView && (
         <div className="flex gap-4">
+          <label htmlFor="status-filter" className="sr-only">
+            Filter by Status
+          </label>
           <select
+            id="status-filter"
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value)
               setPage(1)
             }}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+            aria-label="Filter leave requests by status"
           >
             <option value="">All Statuses</option>
             <option value="PENDING">Pending</option>
