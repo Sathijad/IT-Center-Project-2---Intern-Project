@@ -25,6 +25,7 @@ dependencies:
   
   # UI
   flutter_svg: ^2.0.9
+  qr_flutter: ^4.1.0
   
   # Routing
   go_router: ^13.0.0

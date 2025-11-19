@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { type LeaveRequest } from '../lib/leaveApi'
-import { Clock, CheckCircle, XCircle, AlertCircle, CalendarCheck, CalendarX2 } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { getGraphAccessToken } from '../msGraphAuth'
 
 interface LeaveRequestTableProps {
   requests: LeaveRequest[]
@@ -13,6 +14,7 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({
   isAdmin,
   onSelect,
 }) => {
+  const [syncingId, setSyncingId] = useState<number | null>(null)
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'APPROVED':
@@ -43,6 +45,67 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({
     }
   }
 
+  const formatDateOnly = (value: string) => {
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) {
+      return value.split('T')[0] ?? value
+    }
+    return date.toISOString().split('T')[0]!
+  }
+
+  const addDays = (dateStr: string, days: number) => {
+    const date = new Date(dateStr)
+    date.setDate(date.getDate() + days)
+    return date.toISOString().split('T')[0]!
+  }
+
+  const handleAddToCalendar = async (request: LeaveRequest) => {
+    try {
+      setSyncingId(request.requestId)
+      const token = await getGraphAccessToken()
+      const startDate = formatDateOnly(request.startDate)
+      const endDateExclusive = addDays(formatDateOnly(request.endDate), 1)
+
+      const payload = {
+        subject: `Leave: ${request.policyName}`,
+        body: {
+          contentType: 'Text',
+          content: request.reason ?? '',
+        },
+        isAllDay: true,
+        start: {
+          date: startDate,
+        },
+        end: {
+          date: endDateExclusive,
+        },
+      }
+
+      const response = await fetch('https://graph.microsoft.com/v1.0/me/events', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Microsoft Graph calendar error:', errorText)
+        alert('Failed to add this leave to Outlook. Please try again.')
+        return
+      }
+
+      alert('Leave added to your Outlook calendar.')
+    } catch (error) {
+      console.error('Error creating Outlook event', error)
+      alert('Unable to add to Outlook calendar. See console for details.')
+    } finally {
+      setSyncingId(null)
+    }
+  }
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
@@ -65,9 +128,11 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Calendar
-            </th>
+            {!isAdmin && (
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Calendar
+              </th>
+            )}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Created
             </th>
@@ -127,27 +192,28 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({
                   {request.status}
                 </span>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm">
-                {request.graphEventId ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                    <CalendarCheck className="w-4 h-4" />
-                    Synced
-                  </span>
-                ) : request.status === 'APPROVED' ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700">
-                    <CalendarX2 className="w-4 h-4" />
-                    Pending sync
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500">
-                    <CalendarX2 className="w-4 h-4" />
-                    Not applicable
-                  </span>
-                )}
-              </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {new Date(request.createdAt).toLocaleDateString()}
               </td>
+              {!isAdmin && (
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  {request.status === 'APPROVED' ? (
+                    <button
+                      type="button"
+                      className="px-3 py-1 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void handleAddToCalendar(request)
+                      }}
+                      disabled={syncingId === request.requestId}
+                    >
+                      {syncingId === request.requestId ? 'Adding...' : 'Add to Outlook'}
+                    </button>
+                  ) : (
+                    <span className="text-gray-500">Not available</span>
+                  )}
+                </td>
+              )}
               {isAdmin && (
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   {request.status === 'PENDING' && (

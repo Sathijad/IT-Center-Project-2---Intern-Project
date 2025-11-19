@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:developer';
 import 'auth_service.dart';
 import 'register_sheet.dart';
 import 'reset_sheet.dart';
@@ -22,7 +24,12 @@ class _LoginScreenState extends State<LoginScreen> {
   String? err;
   bool _useHostedUI = false; // Toggle between direct and hosted UI
   bool _showCodeEntry = false; // Show MFA/verification code entry
+  bool _showTotpSetup = false; // Show TOTP setup with QR code
+  bool _showMfaSelection = false; // Show MFA method selection (SMS or TOTP)
   String? _codeDeliveryDestination; // Where the code was sent
+  String? _totpSecretKey; // TOTP secret for QR code generation
+  String? _totpQrCodeUrl; // QR code URL/URI
+  Map<String, dynamic>? _mfaSelectionAdditionalInfo; // Store additional info from MFA selection step
 
   @override
   void dispose() {
@@ -57,6 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
+      // Log the next step for debugging
+      log('Sign-in next step: ${result.nextStep}');
+
       // Check if MFA/verification code is needed
       if (result.nextStep == AuthSignInStep.confirmSignInWithSmsMfaCode ||
           result.nextStep == AuthSignInStep.confirmSignInWithTotpMfaCode ||
@@ -68,9 +78,29 @@ class _LoginScreenState extends State<LoginScreen> {
           _codeDeliveryDestination = result.codeDeliveryDestination;
           busy = false;
         });
-      } else {
+      } else if (result.nextStep == AuthSignInStep.continueSignInWithMfaSetupSelection) {
+        // MFA method selection required - show UI to select SMS or TOTP
+        log('MFA selection required. Additional info: ${result.additionalInfo}');
         setState(() {
-          err = 'Additional authentication step required';
+          _showMfaSelection = true;
+          _showCodeEntry = false;
+          _showTotpSetup = false;
+          _mfaSelectionAdditionalInfo = result.additionalInfo;
+          busy = false;
+        });
+      } else if (result.nextStep == AuthSignInStep.continueSignInWithTotpSetup) {
+        // TOTP setup required - need to setup TOTP and show QR code
+        setState(() {
+          _showCodeEntry = false;
+          _showMfaSelection = false;
+          busy = false;
+        });
+        // Call the TOTP setup method with additional info from sign-in result
+        await _handleTotpSetup(result.additionalInfo);
+      } else {
+        // Unknown step - show detailed error
+        setState(() {
+          err = 'Additional authentication step required: ${result.nextStep}';
           busy = false;
         });
       }
@@ -141,9 +171,116 @@ class _LoginScreenState extends State<LoginScreen> {
   void _goBackToLogin() {
     setState(() {
       _showCodeEntry = false;
+      _showTotpSetup = false;
+      _showMfaSelection = false;
       _codeController.clear();
+      _totpSecretKey = null;
+      _totpQrCodeUrl = null;
       err = null;
     });
+  }
+
+  /// Select TOTP as MFA method and continue sign-in
+  Future<void> _selectMfaMethod(bool useTotp) async {
+    setState(() { busy = true; err = null; });
+    try {
+      // For continueSignInWithMfaSetupSelection, we need to confirm sign-in with the MFA type
+      // TOTP is typically selected by continuing with TOTP setup
+      final mfaType = useTotp ? 'TOTP' : 'SMS';
+      
+      // When MFA selection is required, we confirm sign-in with the selected method
+      // Pass the additionalInfo from the sign-in result to see if it contains hints
+      final result = await AuthService.instance.selectMfaMethod(useTotp, additionalInfoFromSignIn: null);
+      
+      if (result.isComplete) {
+        // Sign-in complete (shouldn't happen immediately after selection)
+        return;
+      }
+      
+      // After selecting TOTP, we should get continueSignInWithTotpSetup
+      if (result.nextStep == AuthSignInStep.continueSignInWithTotpSetup) {
+        // Now proceed with TOTP setup
+        await _handleTotpSetup(result.additionalInfo);
+      } else if (result.nextStep == AuthSignInStep.confirmSignInWithSmsMfaCode) {
+        // SMS selected - show code entry
+        setState(() {
+          _showMfaSelection = false;
+          _showCodeEntry = true;
+          _codeDeliveryDestination = result.codeDeliveryDestination;
+          busy = false;
+        });
+      } else {
+        setState(() {
+          err = 'Unexpected step after MFA selection: ${result.nextStep}';
+          busy = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        err = 'Failed to select MFA method: ${e.toString()}';
+        busy = false;
+      });
+    }
+  }
+
+  Future<void> _handleTotpSetup(Map<String, dynamic>? additionalInfo) async {
+    setState(() { busy = true; err = null; });
+    try {
+      final setupResult = await AuthService.instance.setupTotp(additionalInfo: additionalInfo);
+      setState(() {
+        _totpSecretKey = setupResult.secretCode;
+        _totpQrCodeUrl = _generateTotpQrCode(_emailController.text.trim(), setupResult.secretCode);
+        _showTotpSetup = true;
+        busy = false;
+      });
+    } catch (e) {
+      setState(() {
+        err = 'Failed to setup TOTP: ${e.toString()}';
+        busy = false;
+      });
+    }
+  }
+
+  String _generateTotpQrCode(String email, String secret) {
+    // Format: otpauth://totp/Issuer:Email?secret=SECRET&issuer=Issuer
+    final issuer = 'IT Center';
+    final uri = Uri(
+      scheme: 'otpauth',
+      host: 'totp',
+      path: '$issuer:$email',
+      queryParameters: {
+        'secret': secret,
+        'issuer': issuer,
+      },
+    );
+    return uri.toString();
+  }
+
+  Future<void> _confirmTotpSetup() async {
+    if (_codeController.text.trim().isEmpty) {
+      setState(() => err = 'Please enter the verification code from your authenticator app');
+      return;
+    }
+
+    setState(() { busy = true; err = null; });
+    try {
+      final result = await AuthService.instance.confirmTotpSetup(_codeController.text.trim());
+      
+      if (result.isComplete) {
+        // TOTP setup and sign-in successful
+        return;
+      }
+      
+      setState(() {
+        err = 'Additional step required: ${result.nextStep}';
+        busy = false;
+      });
+    } catch (e) {
+      setState(() {
+        err = 'TOTP verification failed: ${e.toString()}';
+        busy = false;
+      });
+    }
   }
 
   Future<void> _doSignInHostedUI() async {
@@ -232,7 +369,317 @@ class _LoginScreenState extends State<LoginScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 32),
-                      if (_showCodeEntry) ...[
+                      if (_showMfaSelection) ...[
+                        // MFA Method Selection UI
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Icon(
+                              Icons.security,
+                              size: 48,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Select Authentication Method',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Choose your preferred two-factor authentication method',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            // TOTP Option
+                            Card(
+                              elevation: 2,
+                              child: InkWell(
+                                onTap: busy ? null : () => _selectMfaMethod(true),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.qr_code_scanner,
+                                        color: Theme.of(context).colorScheme.primary,
+                                        size: 32,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Authenticator App',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Use Google Authenticator or similar',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios,
+                                        color: Colors.grey[400],
+                                        size: 20,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            // SMS Option (if available)
+                            Card(
+                              elevation: 2,
+                              child: InkWell(
+                                onTap: busy ? null : () => _selectMfaMethod(false),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.sms,
+                                        color: Theme.of(context).colorScheme.secondary,
+                                        size: 32,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'SMS Text Message',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Receive codes via SMS',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios,
+                                        color: Colors.grey[400],
+                                        size: 20,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            if (err != null)
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                margin: const EdgeInsets.only(bottom: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.red[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.red[200]!),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        err!,
+                                        style: TextStyle(color: Colors.red[900], fontSize: 14),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            TextButton.icon(
+                              onPressed: busy ? null : _goBackToLogin,
+                              icon: const Icon(Icons.arrow_back),
+                              label: const Text('Back to login'),
+                            ),
+                          ],
+                        ),
+                      ] else if (_showTotpSetup) ...[
+                        // TOTP Setup UI with QR Code
+                        Form(
+                          key: _codeFormKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Icon(
+                                Icons.qr_code_scanner,
+                                size: 48,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Setup Two-Factor Authentication',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 24),
+                              // QR Code Display
+                              if (_totpQrCodeUrl != null)
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.grey[300]!),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      // QR Code Display using qr_flutter
+                                      QrImageView(
+                                        data: _totpQrCodeUrl!,
+                                        version: QrVersions.auto,
+                                        size: 200.0,
+                                        backgroundColor: Colors.white,
+                                        errorCorrectionLevel: QrErrorCorrectLevel.M,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Or enter this code manually:',
+                                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      SelectableText(
+                                        _totpSecretKey ?? '',
+                                        style: TextStyle(
+                                          fontFamily: 'monospace',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              const SizedBox(height: 24),
+                              TextFormField(
+                                controller: _codeController,
+                                keyboardType: TextInputType.number,
+                                textInputAction: TextInputAction.done,
+                                enabled: !busy,
+                                onFieldSubmitted: (_) => _confirmTotpSetup(),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 8,
+                                ),
+                                decoration: InputDecoration(
+                                  labelText: 'Verification Code',
+                                  hintText: '000000',
+                                  prefixIcon: const Icon(Icons.lock_outline),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  filled: true,
+                                  helperText: 'Enter the 6-digit code from your authenticator app',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Please enter the verification code';
+                                  }
+                                  if (value.trim().length < 6) {
+                                    return 'Code must be 6 digits';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 24),
+                              if (err != null)
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red[50],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.red[200]!),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          err!,
+                                          style: TextStyle(color: Colors.red[900], fontSize: 14),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              FilledButton.icon(
+                                onPressed: busy ? null : _confirmTotpSetup,
+                                icon: busy
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      )
+                                    : const Icon(Icons.check_circle_outline),
+                                label: Text(busy ? 'Verifying...' : 'Verify & Complete Setup'),
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: busy ? null : _goBackToLogin,
+                                icon: const Icon(Icons.arrow_back),
+                                label: const Text('Back to login'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else if (_showCodeEntry) ...[
                         // Code Entry Form
                         Form(
                           key: _codeFormKey,
@@ -460,7 +907,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ],
-                      if (!_showCodeEntry) ...[
+                      if (!_showCodeEntry && !_showTotpSetup && !_showMfaSelection) ...[
                         const SizedBox(height: 16),
                         Row(
                           children: [

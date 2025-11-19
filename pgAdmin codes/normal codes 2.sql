@@ -10,16 +10,6 @@ select * from flyway_schema_history;
 
 
 
-select * from attendance_logs;
-
-select * from leave_requests;
-
-select * from leave_audit;
-
-select * from leave_balances;
-
-select * from leave_policies;
-
 
 
 DELETE FROM leave_balances
@@ -43,4 +33,10 @@ CASCADE;
 SELECT schemaname, tablename
 FROM pg_catalog.pg_tables
 WHERE tablename = 'flyway_schema_history';
+
+
+
+
+
+
 

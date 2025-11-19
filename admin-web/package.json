@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@aws-amplify/auth": "^6.0.9",
+    "@azure/msal-browser": "^3.30.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-dialog": "^1.0.5",
