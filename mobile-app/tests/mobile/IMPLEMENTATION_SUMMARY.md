@@ -4,8 +4,8 @@
 
 ### 1. Flutter Widget Instrumentation
 Added `ValueKey` widgets to key UI elements for Appium testing:
-- **Login Screen**: `sign_in_button`
-- **Home Screen**: `dashboard_welcome_card`, `profile_action_card`, `roles_expansion_tile`
+- **Login Screen**: `email_field`, `password_field`, `sign_in_button`, `verification_code_field`, `verify_code_button`
+- **Home Screen**: `dashboard_welcome_card`, `profile_action_card`, `apply_leave_action_card`, `leave_balance_action_card`, `clock_inout_action_card`, `roles_expansion_tile`
 - **Profile Screen**: `display_name_field`, `profile_save_button`, `roles_card`, `role_chip_ADMIN`, `role_chip_EMPLOYEE`
 
 ### 2. Test Infrastructure
@@ -59,6 +59,13 @@ Provides reusable functions:
   - Troubleshooting
   - CI/CD integration examples
 
+### 6. Phase 2 Updates
+- Added **login-with-verification.spec.ts** plus Phase 2 suites `leave-management.spec.ts` and `attendance-management.spec.ts`.
+- Introduced `helpers/login-helper.ts` with `loginWithVerificationCode()` and `isLoggedIn()` to reuse the MFA-aware login flow.
+- Expanded ValueKeys on login/home/leave widgets to let Appium target the new flows.
+- Removed the legacy `appium-flutter-test/` folder (the WebdriverIO config is no longer required; everything runs via `tests/mobile`).
+- Updated docs with manual verification steps (90s wait window) so operators know when to enter the MFA code.
+
 ## NPM Scripts
 
 ```json
@@ -67,7 +74,11 @@ Provides reusable functions:
   "mobile:test": "mocha -r ts-node/register tests/mobile/**/*.spec.ts --timeout 120000",
   "mobile:test:login": "mocha -r ts-node/register tests/mobile/login.spec.ts --timeout 120000",
   "mobile:test:profile": "mocha -r ts-node/register tests/mobile/profile.spec.ts --timeout 120000",
-  "mobile:test:roles": "mocha -r ts-node/register tests/mobile/roles.read.spec.ts --timeout 120000"
+  "mobile:test:roles": "mocha -r ts-node/register tests/mobile/roles.read.spec.ts --timeout 120000",
+  "mobile:test:leave": "mocha -r ts-node/register tests/mobile/leave-management.spec.ts --timeout 120000",
+  "mobile:test:attendance": "mocha -r ts-node/register tests/mobile/attendance-management.spec.ts --timeout 120000",
+  "mobile:test:phase2": "mocha -r ts-node/register tests/mobile/leave-management.spec.ts tests/mobile/attendance-management.spec.ts --timeout 120000",
+  "mobile:test:verification": "mocha -r ts-node/register tests/mobile/login-with-verification.spec.ts --timeout 180000"
 }
 ```
 
@@ -91,13 +102,17 @@ mobile-app/
 ├── tsconfig.json                   # TypeScript config
 ├── tests/
 │   └── mobile/
-│       ├── README.md              # Comprehensive documentation
-│       ├── IMPLEMENTATION_SUMMARY.md  # This file
+│       ├── README.md                   # Comprehensive documentation
+│       ├── IMPLEMENTATION_SUMMARY.md   # This file
 │       ├── helpers/
-│       │   └── driver.ts          # WebDriver helper functions
-│       ├── login.spec.ts          # Login flow tests
-│       ├── profile.spec.ts        # Profile update tests
-│       └── roles.read.spec.ts     # Roles display tests
+│       │   ├── driver.ts               # WebDriver helper functions
+│       │   └── login-helper.ts         # MFA-aware login helper
+│       ├── login.spec.ts               # Login flow tests
+│       ├── login-with-verification.spec.ts # Direct login + manual MFA
+│       ├── profile.spec.ts             # Profile update tests
+│       ├── roles.read.spec.ts          # Roles display tests
+│       ├── leave-management.spec.ts    # Phase 2 leave navigation
+│       └── attendance-management.spec.ts # Phase 2 attendance navigation
 └── lib/
     └── src/
         ├── login_screen.dart       # (Modified: Added ValueKeys)
@@ -138,13 +153,15 @@ mobile-app/
 
 ## Notes
 
-- **Hosted UI Login**: The login flow uses Cognito Hosted UI (web-based), which may require context switching between native and webview. The test includes basic handling, but full automation may need additional work for webview interaction.
+- **Manual MFA handling**: `loginWithVerificationCode()` fills email/password and waits up to 90 seconds for you to enter the verification code inside the app. Watch the console for `VERIFICATION CODE REQUIRED`.
+
+- **Hosted UI**: The Hosted UI button still exists for interactive flows, but automated tests rely on direct email/password login plus MFA to avoid extra context switching.
 
 - **Text Input**: Flutter driver text input can be finicky. The helper functions include fallbacks, but you may need to adjust based on your Flutter app version.
 
 - **Snackbar Detection**: The snackbar check uses a generic approach. You may want to add ValueKeys to snackbars for more reliable detection.
 
-- **Test Timeouts**: Default timeout is 120 seconds. Adjust as needed for slower devices/emulators.
+- **Test Timeouts**: Default timeout is 120 seconds (login-with-verification uses 180 seconds). Adjust as needed for slower devices/emulators.
 
 ## Testing Checklist
 

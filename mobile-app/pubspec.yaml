@@ -10,6 +10,9 @@ dependencies:
   flutter:
     sdk: flutter
   
+  flutter_driver:
+    sdk: flutter
+  
   # AWS Amplify
   amplify_flutter: ^2.4.2
   amplify_auth_cognito: ^2.4.2

@@ -3,3 +3,32 @@
 **/allure-report/
 allure-results-aggregated/
 allure-report-aggregated/
+
+# Node modules
+node_modules/
+**/node_modules/
+
+# Build artifacts
+**/target/
+**/build/
+**/dist/
+**/coverage/
+
+# Logs
+**/logs/
+*.log
+
+# Maven
+.mvn/
+**/.mvn/
+mvnw
+mvnw.cmd
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -12,7 +12,7 @@
     "resolveJsonModule": true,
     "types": ["mocha", "chai"]
   },
-  "include": ["tests/**/*", "../appium-flutter-test/test/specs/roles.read.spec.ts", "../appium-flutter-test/test/specs/profile.spec.ts", "../appium-flutter-test/test/specs/login.spec.ts"],
+  "include": ["tests/**/*"],
   "exclude": ["node_modules", "dist"]
 }
 

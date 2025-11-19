@@ -1,4 +1,5 @@
 import { remote, RemoteOptions } from 'webdriverio';
+import { byValueKey } from 'appium-flutter-finder';
 
 export interface AppiumCapabilities {
   platformName: string;
@@ -13,9 +14,45 @@ const DEFAULT_CAPABILITIES: AppiumCapabilities = {
   'appium:deviceName': 'Android Emulator',
   'appium:app': './build/app/outputs/flutter-apk/app-debug.apk',
   'appium:automationName': 'Flutter',
-  'appium:appPackage': 'com.example.itcenter_auth', // CRITICAL FIX: Correct package name
+  'appium:appPackage': 'com.example.itcenter_auth',
   'appium:appActivity': '.MainActivity',
 };
+
+/**
+ * Wait for Flutter app to be ready (first frame rendered)
+ */
+export async function waitForFlutterReady(driver: WebdriverIO.Browser, timeout: number = 30000): Promise<void> {
+  const startTime = Date.now();
+  console.log('⏳ Waiting for Flutter app to be ready...');
+  
+  while (Date.now() - startTime < timeout) {
+    try {
+      // Try to wait for first frame
+      await driver.execute('flutter:waitForFirstFrame');
+      console.log('✅ Flutter app is ready (first frame rendered)');
+      // Give it a small additional delay to ensure everything is stable
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return;
+    } catch (e: any) {
+      const errorMsg = String(e?.message || e);
+      // If it's a "No root widget" error, app is still starting - wait and retry
+      if (errorMsg.includes('No root widget is attached') || 
+          errorMsg.includes('root widget') ||
+          errorMsg.includes('runApp')) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+      // Other errors - might be that command doesn't exist, fallback to delay
+      console.log('⚠️  waitForFirstFrame not available, using fallback delay...');
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      return;
+    }
+  }
+  
+  // If we get here, timeout occurred but we'll continue anyway
+  console.warn('⚠️  Flutter readiness check timed out, but continuing...');
+  await new Promise(resolve => setTimeout(resolve, 3000));
+}
 
 export async function createDriver(customCapabilities?: Partial<AppiumCapabilities>) {
   const capabilities = { ...DEFAULT_CAPABILITIES, ...customCapabilities };
@@ -30,36 +67,97 @@ export async function createDriver(customCapabilities?: Partial<AppiumCapabiliti
   };
 
   const driver = await remote(options);
+  
+  // Check Flutter driver connection
+  try {
+    await driver.execute('flutter:checkHealth');
+    console.log('✅ Flutter driver connected successfully');
+  } catch (e) {
+    console.warn('⚠️  Flutter driver health check failed, but continuing...', e);
+  }
+  
+  // Wait for Flutter app to be ready before returning
+  await waitForFlutterReady(driver);
+  
   return driver;
 }
 
-// Create a finder object for Flutter driver
+// Create a finder using appium-flutter-finder
 function createFinder(key: string) {
-  return { finderType: 'ValueKey', keyValue: key };
+  return byValueKey(key);
 }
 
 export async function findElementByKey(
   driver: WebdriverIO.Browser,
   key: string,
   timeout: number = 30000
-): Promise<WebdriverIO.Element> {
+): Promise<any> {
   const finder = createFinder(key);
-  // Use flutter:findBy command
-  const element = await driver.execute('flutter:findBy', finder);
-  return element as WebdriverIO.Element;
+  // Return the finder object for use with Flutter commands
+  return finder;
+}
+
+export async function waitForElement(
+  driver: WebdriverIO.Browser,
+  key: string,
+  timeout: number = 60000
+): Promise<any> {
+  const finder = createFinder(key);
+  const startTime = Date.now();
+  const pollInterval = 1000;
+  
+  while (Date.now() - startTime < timeout) {
+    try {
+      // Use flutter:waitFor command with the official finder
+      await driver.execute('flutter:waitFor', finder);
+      // If waitFor succeeds, element exists - return the finder for use with other commands
+      return finder;
+    } catch (e: any) {
+      const errorMsg = String(e?.message || e);
+      
+      // Handle "No root widget is attached" - Flutter app not ready yet
+      if (errorMsg.includes('No root widget is attached') || 
+          errorMsg.includes('root widget') ||
+          errorMsg.includes('runApp') ||
+          errorMsg.includes('No root widget')) {
+        // Flutter not ready yet - this is okay, just wait and retry
+        console.log(`⏳ Flutter app not ready yet, waiting... (looking for: ${key})`);
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        continue;
+      }
+      
+      // Handle timeout errors - element might not be found yet
+      if (errorMsg.includes('timeout') || 
+          errorMsg.includes('Timeout') ||
+          errorMsg.includes('not found') || 
+          errorMsg.includes('Element')) {
+        // Element not found yet, continue waiting
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        continue;
+      }
+      
+      // For other errors, log and retry (might be transient connection issues)
+      console.log(`⚠️  Error waiting for element "${key}": ${errorMsg.substring(0, 100)}`);
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+  }
+  
+  throw new Error(`Element with key "${key}" not found within ${timeout}ms`);
 }
 
 export async function tapElement(
   driver: WebdriverIO.Browser,
-  element: WebdriverIO.Element | string | { finderType: string; keyValue: string }
+  element: WebdriverIO.Element | string | any
 ): Promise<void> {
   let finder: any;
+  
   if (typeof element === 'string') {
     finder = createFinder(element);
-  } else if (element && typeof element === 'object' && 'finderType' in element) {
+  } else if (element && typeof element === 'object' && ('finderType' in element || 'serializedFinder' in element)) {
+    // It's already a finder object (from appium-flutter-finder or our createFinder)
     finder = element;
   } else {
-    // If it's an element, extract the finder or use click
+    // If it's a WebDriverIO element, try standard click
     try {
       await (element as WebdriverIO.Element).click();
       return;
@@ -68,19 +166,29 @@ export async function tapElement(
     }
   }
   
+  // Wait for element first
+  try {
+    await driver.execute('flutter:waitFor', finder);
+  } catch (e) {
+    throw new Error(`Element not found before tapping: ${e}`);
+  }
+  
   // Use flutter:tap command
   await driver.execute('flutter:tap', finder);
+  await new Promise(resolve => setTimeout(resolve, 500));
 }
 
 export async function enterText(
   driver: WebdriverIO.Browser,
-  element: WebdriverIO.Element | string | { finderType: string; keyValue: string },
+  element: WebdriverIO.Element | string | any,
   text: string
 ): Promise<void> {
   let finder: any;
+  
   if (typeof element === 'string') {
     finder = createFinder(element);
-  } else if (element && typeof element === 'object' && 'finderType' in element) {
+  } else if (element && typeof element === 'object' && ('finderType' in element || 'serializedFinder' in element)) {
+    // It's already a finder object
     finder = element;
   } else {
     // Try standard WebDriverIO text input
@@ -93,22 +201,32 @@ export async function enterText(
     }
   }
   
+  // Wait for element first
+  try {
+    await driver.execute('flutter:waitFor', finder);
+  } catch (e) {
+    throw new Error(`Element not found before entering text: ${e}`);
+  }
+  
   // Tap first to focus
   await driver.execute('flutter:tap', finder);
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // Use flutter:enterText command
+  // Use flutter:enterText command - format: { finder: {...}, text: "..." }
   await driver.execute('flutter:enterText', { finder, text });
+  await new Promise(resolve => setTimeout(resolve, 500));
 }
 
 export async function getText(
   driver: WebdriverIO.Browser,
-  element: WebdriverIO.Element | string | { finderType: string; keyValue: string }
+  element: WebdriverIO.Element | string | any
 ): Promise<string> {
   let finder: any;
+  
   if (typeof element === 'string') {
     finder = createFinder(element);
-  } else if (element && typeof element === 'object' && 'finderType' in element) {
+  } else if (element && typeof element === 'object' && ('finderType' in element || 'serializedFinder' in element)) {
+    // It's already a finder object
     finder = element;
   } else {
     // Try standard getText
@@ -119,32 +237,15 @@ export async function getText(
     }
   }
   
-  // Use flutter:getText command
-  return await driver.execute('flutter:getText', finder) as string;
-}
-
-export async function waitForElement(
-  driver: WebdriverIO.Browser,
-  key: string,
-  timeout: number = 30000
-): Promise<WebdriverIO.Element> {
-  const finder = createFinder(key);
-  const startTime = Date.now();
-  
-  while (Date.now() - startTime < timeout) {
-    try {
-      // Use flutter:waitFor command
-      await driver.execute('flutter:waitFor', { finder, timeout: timeout });
-      // After waiting, find the element
-      const element = await findElementByKey(driver, key, 5000);
-      return element;
-    } catch (e) {
-      // Continue waiting
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
+  // Wait for element first
+  try {
+    await driver.execute('flutter:waitFor', finder);
+  } catch (e) {
+    throw new Error(`Element not found before getting text: ${e}`);
   }
   
-  throw new Error(`Element with key "${key}" not found within ${timeout}ms`);
+  // Use flutter:getText command
+  return await driver.execute('flutter:getText', finder) as string;
 }
 
 export async function waitForElementText(
@@ -152,7 +253,7 @@ export async function waitForElementText(
   key: string,
   expectedText: string,
   timeout: number = 30000
-): Promise<WebdriverIO.Element> {
+): Promise<any> {
   const startTime = Date.now();
   while (Date.now() - startTime < timeout) {
     try {
@@ -236,4 +337,3 @@ export async function enterVerificationCode(
   // Placeholder - actual implementation depends on app structure
   console.log('Verification code entry - may require manual intervention');
 }
-

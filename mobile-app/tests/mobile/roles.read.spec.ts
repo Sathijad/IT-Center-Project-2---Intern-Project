@@ -3,24 +3,26 @@ import { expect } from 'chai';
 import {
   createDriver,
   waitForElement,
-  tapElement,
-  findElementByKey,
-  getText
+  tapElement
 } from './helpers/driver';
+import { loginWithVerificationCode, isLoggedIn } from './helpers/login-helper';
+
+const TEST_EMAIL = process.env.MOBILE_TEST_EMAIL || 'admin@test.com';
+const TEST_PASSWORD = process.env.MOBILE_TEST_PASSWORD || 'Admin@123';
 
 describe('Mobile Roles Read', () => {
   let driver: WebdriverIO.Browser;
 
   before(async function() {
-    this.timeout(120000);
+    this.timeout(240000);
     driver = await createDriver();
-    
-    // Ensure we're logged in and on home screen
-    try {
-      await waitForElement(driver, 'dashboard_welcome_card', 60000);
-    } catch (e) {
-      throw new Error('Cannot access dashboard - please ensure you are logged in');
+
+    if (!(await isLoggedIn(driver, 10000))) {
+      console.log('🔐 Logging in before roles tests...');
+      await loginWithVerificationCode(driver, TEST_EMAIL, TEST_PASSWORD, 90000);
     }
+
+    await waitForElement(driver, 'dashboard_welcome_card', 60000);
   });
 
   after(async function() {

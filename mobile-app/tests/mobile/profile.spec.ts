@@ -4,34 +4,32 @@ import {
   createDriver,
   waitForElement,
   tapElement,
-  findElementByKey,
   enterText,
-  getText,
   checkSnackbar
 } from './helpers/driver';
+import { loginWithVerificationCode, isLoggedIn } from './helpers/login-helper';
+
+const TEST_EMAIL = process.env.MOBILE_TEST_EMAIL || 'admin@test.com';
+const TEST_PASSWORD = process.env.MOBILE_TEST_PASSWORD || 'Admin@123';
 
 describe('Mobile Profile Flow', () => {
   let driver: WebdriverIO.Browser;
   const TEST_DISPLAY_NAME = 'Test User Updated';
 
   before(async function() {
-    this.timeout(120000);
+    this.timeout(240000);
     driver = await createDriver();
-    
-    // Navigate to profile screen - assumes we're logged in
-    // If not logged in, login tests should run first
-    try {
-      // Wait for dashboard
-      await waitForElement(driver, 'dashboard_welcome_card', 30000);
-      // Tap on profile card
-      await waitForElement(driver, 'profile_action_card', 10000);
-      await tapElement(driver, 'profile_action_card');
-      // Wait for profile screen to load
-      await waitForElement(driver, 'display_name_field', 10000);
-    } catch (e) {
-      console.log('Note: May need to log in first. Error:', e);
-      throw new Error('Cannot access profile - please ensure you are logged in');
+
+    const loggedIn = await isLoggedIn(driver, 10000);
+    if (!loggedIn) {
+      console.log('🔐 Logging in before profile tests...');
+      await loginWithVerificationCode(driver, TEST_EMAIL, TEST_PASSWORD, 90000);
     }
+
+    await waitForElement(driver, 'dashboard_welcome_card', 30000);
+    await waitForElement(driver, 'profile_action_card', 10000);
+    await tapElement(driver, 'profile_action_card');
+    await waitForElement(driver, 'display_name_field', 10000);
   });
 
   beforeEach(async function() {

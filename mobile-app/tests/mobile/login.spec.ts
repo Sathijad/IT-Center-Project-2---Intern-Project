@@ -1,12 +1,16 @@
 import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
-import { createDriver, waitForElement, tapElement, findElementByKey } from './helpers/driver';
+import { createDriver, waitForElement } from './helpers/driver';
+import { loginWithVerificationCode, isLoggedIn } from './helpers/login-helper';
+
+const TEST_EMAIL = process.env.MOBILE_TEST_EMAIL || 'admin@test.com';
+const TEST_PASSWORD = process.env.MOBILE_TEST_PASSWORD || 'Admin@123';
 
 describe('Mobile Login Flow', () => {
   let driver: WebdriverIO.Browser;
 
   before(async function() {
-    this.timeout(120000);
+    this.timeout(180000);
     driver = await createDriver();
   });
 
@@ -17,55 +21,35 @@ describe('Mobile Login Flow', () => {
   });
 
   it('should launch app and display login screen', async function() {
-    this.timeout(30000);
-    // Wait for the sign in button to appear
+    this.timeout(45000);
     const signInButton = await waitForElement(driver, 'sign_in_button', 30000);
     expect(signInButton).to.exist;
+
+    await waitForElement(driver, 'email_field', 10000);
+    await waitForElement(driver, 'password_field', 10000);
   });
 
-  it('should tap Sign In button', async function() {
-    this.timeout(30000);
-    await waitForElement(driver, 'sign_in_button', 30000);
-    await tapElement(driver, 'sign_in_button');
-    // After tapping, we expect either:
-    // 1. Hosted UI to open (in which case we'll be in a web context)
-    // 2. Or if there's an error, it will be displayed
-    // Since Hosted UI opens in a web view, we'll wait a moment
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  });
+  it('should sign in with verification code support', async function() {
+    this.timeout(180000);
 
-  it('should handle Hosted UI login flow', async function() {
-    this.timeout(60000);
-    // Note: Hosted UI (Cognito) uses a web browser for authentication
-    // In a real E2E scenario, you would need to:
-    // 1. Switch to webview context
-    // 2. Enter credentials in the web form
-    // 3. Switch back to native context
-    // 
-    // For this test, we'll verify we can proceed after login attempt
-    // This test assumes manual login in Hosted UI or using test credentials
-    
-    // After successful login, we should see the dashboard welcome card
-    // This may take some time due to redirects and token exchange
-    try {
-      const dashboardCard = await waitForElement(driver, 'dashboard_welcome_card', 60000);
-      expect(dashboardCard).to.exist;
-    } catch (e) {
-      // If login hasn't completed yet, that's okay for this basic test
-      // In production, you'd want to implement the full Hosted UI flow
-      console.log('Dashboard not yet visible - Hosted UI login may still be in progress');
+    if (await isLoggedIn(driver)) {
+      console.log('✅ Already logged in - skipping login helper');
+      return;
     }
+
+    console.log('🔐 Starting login helper flow (manual MFA supported)...');
+    await loginWithVerificationCode(driver, TEST_EMAIL, TEST_PASSWORD, 90000);
+    await waitForElement(driver, 'dashboard_welcome_card', 60000);
   });
 
-  it('should verify dashboard widget exists after login', async function() {
+  it('should show dashboard widgets after login', async function() {
     this.timeout(60000);
-    // Wait for the dashboard welcome card - this confirms we're logged in
     const dashboardCard = await waitForElement(driver, 'dashboard_welcome_card', 60000);
     expect(dashboardCard).to.exist;
-    
-    // Verify we can see profile action card
-    const profileCard = await waitForElement(driver, 'profile_action_card', 10000);
+
+    const profileCard = await waitForElement(driver, 'profile_action_card', 15000);
     expect(profileCard).to.exist;
   });
+
 });
 

@@ -10,9 +10,9 @@ import {
 } from './helpers/driver';
 import { loginWithVerificationCode, isLoggedIn } from './helpers/login-helper';
 
-// Test credentials
-const TEST_EMAIL = 'admin@test.com';
-const TEST_PASSWORD = 'Admin@123';
+// Test credentials - use environment variables or fallback to defaults
+const TEST_EMAIL = process.env.MOBILE_TEST_EMAIL || 'admin@test.com';
+const TEST_PASSWORD = process.env.MOBILE_TEST_PASSWORD || 'Admin@123';
 
 describe('Mobile Attendance Management - Phase 2', () => {
   let driver: WebdriverIO.Browser;

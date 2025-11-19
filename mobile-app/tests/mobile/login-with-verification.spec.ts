@@ -1,6 +1,7 @@
 import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
-import { createDriver, waitForElement, tapElement, enterText } from './helpers/driver';
+import { createDriver, waitForElement } from './helpers/driver';
+import { loginWithVerificationCode, isLoggedIn } from './helpers/login-helper';
 
 /**
  * Login test with verification code support
@@ -11,6 +12,9 @@ import { createDriver, waitForElement, tapElement, enterText } from './helpers/d
  * 3. Enter code in the app manually
  * 4. Test will continue automatically
  */
+const TEST_EMAIL = process.env.MOBILE_TEST_EMAIL || 'admin@test.com';
+const TEST_PASSWORD = process.env.MOBILE_TEST_PASSWORD || 'Admin@123';
+
 describe('Mobile Login with Verification - Phase 2', () => {
   let driver: WebdriverIO.Browser;
 
@@ -26,46 +30,18 @@ describe('Mobile Login with Verification - Phase 2', () => {
   });
 
   it('should login with email, password, and verification code', async function() {
-    this.timeout(180000); // 3 minutes total
-    
-    // Wait for login screen
-    await waitForElement(driver, 'sign_in_button', 30000);
-    
-    // Note: Email/password entry requires finding text fields
-    // Since Flutter ValueKeys might not be set for these fields,
-    // we'll use Flutter driver's finder or text-based finding
-    
-    // For now, we'll verify the login screen is visible
-    // Actual email/password entry can be done manually if needed
-    
-    // Tap Sign In button - this may trigger Hosted UI or direct login
-    await tapElement(driver, 'sign_in_button');
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Check if verification code screen appears
-    // If it does, we need to handle it
-    
-    // After verification (manual or automated), check for dashboard
-    try {
-      await waitForElement(driver, 'dashboard_welcome_card', 60000);
-      expect(true).to.be.true; // Login successful
-    } catch (e) {
-      // If dashboard not found, login may still be in progress
-      // Or verification code needs to be entered
-      console.log('⚠️  Login may require verification code - please enter manually in app');
-      console.log('   Waiting 90 seconds for manual verification...');
-      
-      // Wait for manual verification
-      await new Promise(resolve => setTimeout(resolve, 90000));
-      
-      // Check again for dashboard
-      try {
-        await waitForElement(driver, 'dashboard_welcome_card', 30000);
-        expect(true).to.be.true; // Login successful after verification
-      } catch (e2) {
-        throw new Error('Login failed - please check credentials and verification code');
-      }
+    this.timeout(240000); // 4 minutes total
+
+    if (await isLoggedIn(driver, 10000)) {
+      console.log('✅ Already logged in - skipping login helper');
+      await waitForElement(driver, 'dashboard_welcome_card', 30000);
+      return;
     }
+
+    await waitForElement(driver, 'sign_in_button', 30000);
+    await loginWithVerificationCode(driver, TEST_EMAIL, TEST_PASSWORD, 90000);
+    await waitForElement(driver, 'dashboard_welcome_card', 60000);
+    expect(await isLoggedIn(driver, 5000)).to.be.true;
   });
 });
 

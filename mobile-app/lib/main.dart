@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:flutter_driver/driver_extension.dart';
 import 'src/auth_service.dart';
 import 'src/api_client.dart';
 import 'src/home_screen.dart';

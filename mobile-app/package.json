@@ -11,9 +11,14 @@
     "mobile:test:leave": "mocha -r ts-node/register tests/mobile/leave-management.spec.ts --timeout 120000",
     "mobile:test:attendance": "mocha -r ts-node/register tests/mobile/attendance-management.spec.ts --timeout 120000",
     "mobile:test:phase2": "mocha -r ts-node/register tests/mobile/leave-management.spec.ts tests/mobile/attendance-management.spec.ts --timeout 120000",
-    "mobile:test:verification": "mocha -r ts-node/register tests/mobile/login-with-verification.spec.ts --timeout 180000"
+    "mobile:test:verification": "mocha -r ts-node/register tests/mobile/login-with-verification.spec.ts --timeout 180000",
+    "kill:appium": "powershell -ExecutionPolicy Bypass -File ./kill-appium-port.ps1",
+    "wdio:test": "npm run kill:appium && wdio run wdio.conf.js",
+    "wdio:test:login": "npm run kill:appium && wdio run wdio.conf.js --spec tests/mobile/login.spec.ts",
+    "wdio:test:phase2": "npm run kill:appium && wdio run wdio.conf.js --spec tests/mobile/leave-management.spec.ts tests/mobile/attendance-management.spec.ts"
   },
   "dependencies": {
+    "@wdio/appium-service": "^8.35.0",
     "@wdio/cli": "^8.35.0",
     "webdriverio": "^8.35.0"
   },
@@ -21,10 +26,14 @@
     "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.5",
+    "@wdio/local-runner": "^8.46.0",
+    "@wdio/mocha-framework": "^8.46.0",
+    "@wdio/spec-reporter": "^9.20.0",
     "app": "^0.1.0",
-    "appium": "^2.19.0",
-    "appium-flutter-driver": "^1.23.0",
-    "appium-uiautomator2-driver": "^2.29.8",
+    "appium": "^3.1.1",
+    "appium-flutter-driver": "^3.2.0",
+    "appium-flutter-finder": "^0.2.0",
+    "appium-uiautomator2-driver": "^6.2.1",
     "chai": "^4.3.10",
     "mocha": "^10.3.0",
     "ts-node": "^10.9.2",
