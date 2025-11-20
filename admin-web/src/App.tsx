@@ -12,6 +12,12 @@ import Profile from './pages/Profile'
 import LeaveRequestPage from './pages/LeaveRequestPage'
 import ApplyLeavePage from './pages/ApplyLeavePage'
 import AttendancePage from './pages/AttendancePage'
+import BookRoomPage from './pages/BookRoomPage'
+import MyBookingsPage from './pages/MyBookingsPage'
+import BookingRoomsPage from './pages/BookingRoomsPage'
+import BookingBlackoutsPage from './pages/BookingBlackoutsPage'
+import AdminBookingsPage from './pages/AdminBookingsPage'
+import BookingReportsPage from './pages/BookingReportsPage'
 import Layout from './components/Layout'
 
 const queryClient = new QueryClient({
@@ -92,6 +98,48 @@ function App() {
                   <LeaveRequestPage />
                 </ProtectedRoute>
               } />
+              <Route path="bookings/new" element={
+                <ProtectedRoute>
+                  <BookRoomPage />
+                </ProtectedRoute>
+              } />
+              <Route path="bookings/my" element={
+                <ProtectedRoute>
+                  <MyBookingsPage />
+                </ProtectedRoute>
+              } />
+              <Route
+                path="admin/booking/rooms"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <BookingRoomsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/booking/blackouts"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <BookingBlackoutsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/booking/bookings"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <AdminBookingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/booking/reports"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <BookingReportsPage />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
           </Routes>
         </AuthProvider>

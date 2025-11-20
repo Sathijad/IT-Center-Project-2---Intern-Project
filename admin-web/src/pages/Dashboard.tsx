@@ -2,7 +2,8 @@ import React from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useQuery } from '@tanstack/react-query'
 import api from '../lib/api'
-import { Users, FileText, Clock } from 'lucide-react'
+import { Users, FileText, Clock, Building2, Calendar } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth()
@@ -67,21 +68,42 @@ const Dashboard: React.FC = () => {
 
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <button className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 transition text-left">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Link to="/profile" className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 transition text-left">
             <h3 className="font-medium text-gray-900">View Profile</h3>
             <p className="text-sm text-gray-600 mt-1">Update your profile information</p>
-          </button>
+          </Link>
+          <Link to="/booking/book" className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 transition text-left">
+            <div className="flex items-center space-x-2 mb-2">
+              <Building2 className="w-5 h-5 text-blue-600" />
+              <h3 className="font-medium text-gray-900">Book a Room</h3>
+            </div>
+            <p className="text-sm text-gray-600 mt-1">Search and book meeting rooms</p>
+          </Link>
+          <Link to="/booking/my-bookings" className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 transition text-left">
+            <div className="flex items-center space-x-2 mb-2">
+              <Calendar className="w-5 h-5 text-green-600" />
+              <h3 className="font-medium text-gray-900">My Bookings</h3>
+            </div>
+            <p className="text-sm text-gray-600 mt-1">View your room bookings</p>
+          </Link>
           {user?.roles?.includes('ADMIN') && (
             <>
-              <button className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 transition text-left">
+              <Link to="/users" className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 transition text-left">
                 <h3 className="font-medium text-gray-900">Manage Users</h3>
                 <p className="text-sm text-gray-600 mt-1">Add, edit, or remove users</p>
-              </button>
-              <button className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 transition text-left">
+              </Link>
+              <Link to="/audit" className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 transition text-left">
                 <h3 className="font-medium text-gray-900">Audit Log</h3>
                 <p className="text-sm text-gray-600 mt-1">View system audit trail</p>
-              </button>
+              </Link>
+              <Link to="/admin/booking/rooms" className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 transition text-left">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Building2 className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-medium text-gray-900">Manage Rooms</h3>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">Configure rooms and amenities</p>
+              </Link>
             </>
           )}
         </div>

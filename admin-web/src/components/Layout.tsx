@@ -12,7 +12,10 @@ import {
   X,
   Calendar,
   Clock,
-  CalendarCheck
+  CalendarCheck,
+  Building2,
+  CalendarX,
+  BarChart3
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -34,9 +37,15 @@ const Layout: React.FC = () => {
       { name: 'Audit Log', href: '/audit', icon: FileText },
       { name: 'Leave Management', href: '/admin/leave', icon: CalendarCheck },
       { name: 'Attendance', href: '/admin/attendance', icon: Clock },
+      { name: 'Rooms', href: '/admin/booking/rooms', icon: Building2 },
+      { name: 'Blackouts', href: '/admin/booking/blackouts', icon: CalendarX },
+      { name: 'All Bookings', href: '/admin/booking/all', icon: Calendar },
+      { name: 'Booking Reports', href: '/admin/booking/reports', icon: BarChart3 },
     ] : []),
     { name: 'My Leave', href: '/leave/history', icon: Calendar },
     { name: 'Apply Leave', href: '/leave', icon: CalendarCheck },
+    { name: 'Book Room', href: '/booking/book', icon: Building2 },
+    { name: 'My Bookings', href: '/booking/my-bookings', icon: Calendar },
     { name: 'Profile', href: '/profile', icon: UserIcon },
   ]
 
@@ -72,13 +81,13 @@ const Layout: React.FC = () => {
       </header>
 
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 hidden lg:block">
+      <aside className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 hidden lg:block overflow-hidden">
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-gray-200 flex-shrink-0">
             <h1 className="text-xl font-bold text-gray-900">IT Center Admin</h1>
           </div>
           
-          <nav className="flex-1 p-6 space-y-2">
+          <nav className="flex-1 overflow-y-auto p-6 space-y-2">
             {navigation.map((item) => (
               <Link
                 key={item.name}
@@ -92,7 +101,7 @@ const Layout: React.FC = () => {
           </nav>
 
           {/* Sidebar footer - empty now, user info and logout moved to header */}
-          <div className="p-6 border-t border-gray-200">
+          <div className="p-6 border-t border-gray-200 flex-shrink-0">
             {user && (
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
