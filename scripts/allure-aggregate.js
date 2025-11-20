@@ -20,6 +20,10 @@ const projects = [
     resultsDir: path.join(ROOT_DIR, 'leave-attendance-backend', 'allure-results'),
   },
   {
+    name: 'Backend Performance (k6)',
+    resultsDir: path.join(ROOT_DIR, 'leave-attendance-backend', 'allure-results'),
+  },
+  {
     name: 'Frontend A11y (Jest)',
     resultsDir: path.join(ROOT_DIR, 'admin-web', 'allure-results'),
   },

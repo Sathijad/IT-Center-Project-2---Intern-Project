@@ -1,0 +1,6 @@
+# Exclude large test result JSON files (>100MB)
+*-comprehensive-*.json
+health-check-*.json
+comprehensive-smoke-result.json
+smoke-test-result.json
+

@@ -119,4 +119,4 @@ tests/              # Postman, k6 assets
 - [Serverless Runbook](../docs/PHASE2_SERVERLESS_RUNBOOK.md)
 - [OpenAPI Spec](../docs/openapi/leave-attendance.yaml)
 - [Postman Collection](tests/postman/leave-attendance.postman_collection.json)
-- [k6 Performance Script](tests/performance/attendance-load-test.js)
+- [k6 Performance Testing](tests/performance/README.md) - Comprehensive performance testing suite

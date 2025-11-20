@@ -1,0 +1,14 @@
+{
+  "name": "k6-performance-test-utils",
+  "version": "1.0.0",
+  "description": "Utility scripts for k6 performance testing",
+  "type": "module",
+  "main": "get-token.js",
+  "scripts": {
+    "get-token": "node get-token.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.928.0"
+  }
+}
+
