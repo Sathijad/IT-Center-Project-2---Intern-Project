@@ -1,116 +1,100 @@
-# Quick Start Guide - Phase 2
+# Quick Start Guide - Phase 3 Booking System
 
-## 🚀 One-Command Startup
+## 🚀 Fastest Way to Get Running
 
-```powershell
-.\start-phase2.ps1
-```
+### 1. Database (5 minutes)
 
-This will start:
-- ✅ PostgreSQL database
-- ✅ Phase 1 Auth Backend (port 8080)
-- ✅ Phase 2 Leave/Attendance Backend (port 3000)
-- ✅ React Admin Portal (port 5173)
+**Option A: Using Node.js (No psql needed!)**
 
----
-
-## 📋 Manual Startup Commands
-
-### 1. Start Database
-```powershell
-docker compose -f infra/docker-compose.yml up -d
-```
-
-### 2. Run Migrations
-```powershell
-cd auth-backend
-$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
-.\mvnw.cmd flyway:migrate
-cd ..
-```
-
-### 3. Start Phase 1 Auth Backend
-```powershell
-cd auth-backend
-.\start.ps1
-```
-
-### 4. Start Phase 2 Leave/Attendance Backend
-```powershell
-cd leave-attendance-backend
+```bash
+cd booking-backend
 npm install
-npm start
+
+# Create .env file with your database credentials
+# DB_HOST=your-rds-endpoint.rds.amazonaws.com
+# DB_PORT=5432
+# DB_USER=postgres
+# DB_PASSWORD=your-password
+# DB_NAME=itcenter_auth
+# DB_SSL=true
+
+# Run migration (includes seed)
+npm run migrate
 ```
 
-### 5. Start React Admin Portal
-```powershell
+**Option B: Using Database GUI (pgAdmin, DBeaver, etc.)**
+- Open the SQL files in your GUI tool and execute them
+
+**Option C: Using AWS RDS Query Editor**
+- Copy/paste SQL into AWS Console Query Editor
+
+### 2. Backend Deployment to AWS (10 minutes)
+
+**This creates Lambda functions and API Gateway (just like Phase 2)!**
+
+```bash
+cd booking-backend
+
+# Install (if not done)
+npm install
+
+# Edit config/env.dev.yml with your:
+# - Database credentials
+# - Cognito settings (same as Phase 2)
+# - VPC settings (same as Phase 2)
+
+# Deploy to AWS
+npm run deploy:dev
+
+# This will create:
+# ✅ Lambda functions (listRooms, createBooking, etc.)
+# ✅ API Gateway HTTP API
+# ✅ SQS queues
+# ✅ CloudWatch alarms
+
+# Copy the API Gateway URL from output (you'll need it for frontend)
+```
+
+### 3. Frontend (2 minutes)
+
+```bash
 cd admin-web
+
+# Install
 npm install
+
+# Create .env.local
+echo "VITE_BOOKING_API_BASE_URL=https://your-api-id.execute-api.ap-southeast-2.amazonaws.com" > .env.local
+
+# Run
 npm run dev
 ```
 
----
+### 4. Test (1 minute)
 
-## ⚙️ Configuration Required
+1. Open http://localhost:5173
+2. Login
+3. Go to `/booking/book`
+4. Create a test booking
 
-### 1. Create `.env` file in `leave-attendance-backend/`
-```env
-DB_HOST=itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com
-DB_PORT=5432
-DB_USER=postgres
-DB_PASS=password
-DB_NAME=itcenter-auth
-DB_SSL=true
-COGNITO_ISSUER_URI=https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_hTAYJId8y
-CORS_ORIGINS=http://localhost:5173
-GEO_VALIDATION_ENABLED=true
-OFFICE_LATITUDE=-37.8136
-OFFICE_LONGITUDE=144.9631
-GEOFENCE_RADIUS_METERS=1000
-NODE_ENV=development
-```
+## ✅ Done!
 
-### 2. Update React Admin Portal API URL
+Your booking system is now running!
 
-**Option A**: Update `admin-web/src/config/env.ts`
-```typescript
-API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
-LEAVE_API_BASE_URL: import.meta.env.VITE_LEAVE_API_BASE_URL || 'https://xfub6mzcqg.execute-api.ap-southeast-2.amazonaws.com'
-```
+## Common Issues
 
-**Option B**: Create `admin-web/.env.local`
-```env
-VITE_API_BASE_URL=http://localhost:8080
-VITE_LEAVE_API_BASE_URL=https://xfub6mzcqg.execute-api.ap-southeast-2.amazonaws.com
-```
+**"Cannot connect to database"**
+- Check VPC/subnet configuration in `env.dev.yml`
+- Verify security groups allow Lambda → RDS
 
-**Optional (local Phase 2 development)**: set `VITE_USE_LOCAL_PHASE2=true` to force the frontend to call the local SAM/json-server running on port 3000.
+**"401 Unauthorized"**
+- Check Cognito User Pool ID and Client ID
+- Verify token is valid and not expired
 
----
+**"CORS error"**
+- Add your frontend URL to `allowedOrigins` in `env.dev.yml`
+- Redeploy backend
 
-## ✅ Verify Services
+## Need More Details?
 
-```powershell
-# Check Phase 1 Auth Backend
-curl http://localhost:8080/healthz
-
-# Check Phase 2 Leave/Attendance Backend
-curl http://localhost:3000/healthz
-
-# Open Admin Portal
-start http://localhost:5173
-```
-
----
-
-## 📝 Notes
-
-- **Phase 1 Backend** (port 8080): Handles authentication only
-- **Phase 2 Backend** (port 3000): Handles leave & attendance APIs
-- **React Portal** (port 5173): Needs to point to Phase 2 backend for leave/attendance features
-- **Database**: Shared PostgreSQL database (Phase 1 & 2)
-
----
-
-See `PHASE2_SETUP_GUIDE.md` for detailed configuration.
-
+See `DEPLOYMENT_GUIDE.md` for comprehensive instructions.
