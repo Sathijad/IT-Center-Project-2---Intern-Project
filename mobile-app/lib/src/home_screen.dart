@@ -7,6 +7,8 @@ import 'screens/profile_screen.dart';
 import '../screens/ApplyLeaveScreen.dart';
 import '../screens/ClockInOutScreen.dart';
 import '../screens/LeaveBalanceScreen.dart';
+import '../screens/BookingSearchScreen.dart';
+import '../screens/MyBookingsScreen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -248,6 +250,49 @@ class _HomeScreenState extends State<HomeScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => const LeaveBalanceScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Third row: Book Room and My Bookings
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              key: const ValueKey('book_room_action_card'),
+                              icon: Icons.meeting_room,
+                              title: 'Book Room',
+                              subtitle: 'Search & book rooms',
+                              color: Colors.teal,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const BookingSearchScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              key: const ValueKey('my_bookings_action_card'),
+                              icon: Icons.calendar_today,
+                              title: 'My Bookings',
+                              subtitle: 'View your bookings',
+                              color: Colors.indigo,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const MyBookingsScreen(),
                                   ),
                                 );
                               },
