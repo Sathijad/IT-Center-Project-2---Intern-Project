@@ -1,0 +1,903 @@
+openapi: 3.0.3
+info:
+  title: IT Center Booking API
+  version: 3.0.0
+  description: |
+    Serverless room and resource booking endpoints running on API Gateway → Lambda → PostgreSQL.
+    Enables employees to search rooms, view availability, create/cancel bookings.
+    Admins can manage rooms, blackout windows, and view utilization reports.
+
+servers:
+  - url: https://{apiId}.execute-api.ap-southeast-2.amazonaws.com
+    description: AWS API Gateway invoke URL
+    variables:
+      apiId:
+        default: dev-placeholder
+
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      tags: [System]
+      operationId: healthz
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                  service:
+                    type: string
+                    example: booking-api
+
+  /api/v1/rooms:
+    get:
+      summary: List and search rooms
+      tags: [Rooms]
+      operationId: listRooms
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          description: Filter by date (ISO 8601)
+          schema:
+            type: string
+            format: date
+        - name: capacity
+          in: query
+          description: Minimum capacity
+          schema:
+            type: integer
+            minimum: 1
+        - name: amenities
+          in: query
+          description: Comma-separated list of amenities
+          schema:
+            type: string
+        - name: active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: location
+          in: query
+          description: Filter by location (partial match)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rooms retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rooms:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Room'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: Create a new room (ADMIN only)
+      tags: [Rooms]
+      operationId: createRoom
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - capacity
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  example: Conference Room A
+                capacity:
+                  type: integer
+                  minimum: 1
+                  example: 20
+                amenities:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Projector", "Whiteboard", "Video Conferencing"]
+                location:
+                  type: string
+                  nullable: true
+                  example: Floor 2
+                active:
+                  type: boolean
+                  default: true
+                owner_team_id:
+                  type: integer
+                  nullable: true
+      responses:
+        '201':
+          description: Room created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  room:
+                    $ref: '#/components/schemas/Room'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/rooms/{id}:
+    get:
+      summary: Get room details
+      tags: [Rooms]
+      operationId: getRoom
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Room details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  room:
+                    $ref: '#/components/schemas/Room'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update room (ADMIN only)
+      tags: [Rooms]
+      operationId: updateRoom
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                capacity:
+                  type: integer
+                  minimum: 1
+                amenities:
+                  type: array
+                  items:
+                    type: string
+                location:
+                  type: string
+                  nullable: true
+                active:
+                  type: boolean
+                owner_team_id:
+                  type: integer
+                  nullable: true
+      responses:
+        '200':
+          description: Room updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  room:
+                    $ref: '#/components/schemas/Room'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Deactivate room (ADMIN only)
+      tags: [Rooms]
+      operationId: deleteRoom
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Room deactivated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  room:
+                    $ref: '#/components/schemas/Room'
+                  message:
+                    type: string
+                    example: Room deactivated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/rooms/{id}/availability:
+    get:
+      summary: Get room availability timeline
+      tags: [Rooms]
+      operationId: getRoomAvailability
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: start
+          in: query
+          required: true
+          description: Start time (ISO 8601 datetime)
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          required: true
+          description: End time (ISO 8601 datetime)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Availability timeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/bookings:
+    get:
+      summary: List bookings
+      tags: [Bookings]
+      operationId: listBookings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          description: Filter by user ID (ADMIN only)
+          schema:
+            type: integer
+        - name: room_id
+          in: query
+          description: Filter by room ID
+          schema:
+            type: integer
+        - name: start_date
+          in: query
+          description: Filter by start date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: Filter by end date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, CONFIRMED, CANCELLED]
+      responses:
+        '200':
+          description: Bookings retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+    post:
+      summary: Create booking
+      tags: [Bookings]
+      operationId: createBooking
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          description: Idempotency key for safe retries
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  booking:
+                    $ref: '#/components/schemas/Booking'
+        '200':
+          description: Idempotent request - existing booking returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  booking:
+                    $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Booking conflict or blackout violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/bookings/{id}:
+    get:
+      summary: Get booking details
+      tags: [Bookings]
+      operationId: getBooking
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  booking:
+                    $ref: '#/components/schemas/Booking'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Cancel booking
+      tags: [Bookings]
+      operationId: cancelBooking
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  booking:
+                    $ref: '#/components/schemas/Booking'
+        '400':
+          description: Cannot cancel (e.g., already started)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/blackouts:
+    get:
+      summary: List blackout windows
+      tags: [Blackouts]
+      operationId: listBlackouts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: room_id
+          in: query
+          description: Filter by room ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Blackouts retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blackouts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BlackoutWindow'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: Create blackout window
+      tags: [Blackouts]
+      operationId: createBlackout
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBlackoutRequest'
+      responses:
+        '201':
+          description: Blackout created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blackout:
+                    $ref: '#/components/schemas/BlackoutWindow'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/blackouts/{id}:
+    patch:
+      summary: Update blackout window
+      tags: [Blackouts]
+      operationId: updateBlackout
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBlackoutRequest'
+      responses:
+        '200':
+          description: Blackout updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blackout:
+                    $ref: '#/components/schemas/BlackoutWindow'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete blackout window
+      tags: [Blackouts]
+      operationId: deleteBlackout
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Blackout deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/exports/bookings.ics:
+    get:
+      summary: Export bookings as ICS file
+      tags: [Exports]
+      operationId: exportBookingsICS
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: room_id
+          in: query
+          description: Filter by room ID
+          schema:
+            type: integer
+        - name: start
+          in: query
+          required: true
+          description: Start time (ISO 8601 datetime)
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          required: true
+          description: End time (ISO 8601 datetime)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: ICS file
+          content:
+            text/calendar:
+              schema:
+                type: string
+
+  /api/v1/integrations/msgraph/sync:
+    post:
+      summary: Enqueue MS Graph sync job
+      tags: [Integrations]
+      operationId: enqueueGraphSync
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                booking_id:
+                  type: integer
+                action:
+                  type: string
+                  enum: [create, update, delete, full_sync]
+      responses:
+        '202':
+          description: Sync job enqueued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  bookingId:
+                    type: integer
+                  action:
+                    type: string
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/jobs/{id}:
+    get:
+      summary: Get job status
+      tags: [Jobs]
+      operationId: getJobStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [pending, processing, completed, failed]
+                  message:
+                    type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Room:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        capacity:
+          type: integer
+        amenities:
+          type: array
+          items:
+            type: string
+        location:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+        ownerTeamId:
+          type: integer
+          nullable: true
+        externalCalendarId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+        roomId:
+          type: integer
+        userId:
+          type: integer
+        startTs:
+          type: string
+          format: date-time
+        endTs:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, CANCELLED]
+        title:
+          type: string
+          nullable: true
+        attendees:
+          type: array
+          items:
+            type: string
+        idempotencyKey:
+          type: string
+          nullable: true
+        externalEventId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BlackoutWindow:
+      type: object
+      properties:
+        id:
+          type: integer
+        roomId:
+          type: integer
+        startTs:
+          type: string
+          format: date-time
+        endTs:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          nullable: true
+        createdBy:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateBookingRequest:
+      type: object
+      required:
+        - room_id
+        - start_ts
+        - end_ts
+      properties:
+        room_id:
+          type: integer
+        start_ts:
+          type: string
+          format: date-time
+        end_ts:
+          type: string
+          format: date-time
+        title:
+          type: string
+        attendees:
+          type: array
+          items:
+            type: string
+
+    CreateBlackoutRequest:
+      type: object
+      required:
+        - room_id
+        - start_ts
+        - end_ts
+      properties:
+        room_id:
+          type: integer
+        start_ts:
+          type: string
+          format: date-time
+        end_ts:
+          type: string
+          format: date-time
+        reason:
+          type: string
+
+    UpdateBlackoutRequest:
+      type: object
+      properties:
+        start_ts:
+          type: string
+          format: date-time
+        end_ts:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          nullable: true
+
+    AvailabilityResponse:
+      type: object
+      properties:
+        roomId:
+          type: integer
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        bookings:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              start:
+                type: string
+                format: date-time
+              end:
+                type: string
+                format: date-time
+              title:
+                type: string
+                nullable: true
+        blackouts:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              start:
+                type: string
+                format: date-time
+              end:
+                type: string
+                format: date-time
+              reason:
+                type: string
+                nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+        requestId:
+          type: string
+
+  responses:
+    Unauthenticated:
+      description: Unauthorized - missing or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    BadRequest:
+      description: Bad request - validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+

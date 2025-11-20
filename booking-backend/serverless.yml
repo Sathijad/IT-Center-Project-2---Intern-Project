@@ -1,0 +1,370 @@
+service: booking-api
+frameworkVersion: '3'
+
+plugins:
+  - serverless-plugin-tracing
+  - serverless-prune-plugin
+  - serverless-esbuild
+
+custom:
+  stage: ${opt:stage, 'dev'}
+  env: ${file(./config/env.${self:custom.stage}.yml)}
+  prune:
+    automatic: true
+    number: 3
+  esbuild:
+    bundle: true
+    minify: true
+    platform: node
+    target: node18
+    sourcemap: false
+    exclude: []
+    keepOutputDirectory: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${opt:region, 'ap-southeast-2'}
+  stage: ${self:custom.stage}
+  logRetentionInDays: 30
+  versionFunctions: true
+  architecture: arm64
+  lambdaHashingVersion: 20201221
+  timeout: 30
+  memorySize: 512
+  environment:
+    NODE_OPTIONS: '--enable-source-maps'
+    NODE_ENV: ${self:provider.stage}
+    TZ: 'UTC'
+    DB_HOST: ${self:custom.env.database.host}
+    DB_PORT: ${self:custom.env.database.port, 5432}
+    DB_USER: ${self:custom.env.database.user}
+    DB_PASS: ${self:custom.env.database.password}
+    DB_NAME: ${self:custom.env.database.name}
+    DB_SSL: '${self:custom.env.database.ssl, true}'
+    DB_POOL_MAX: ${self:custom.env.database.poolMax, 10}
+    COGNITO_REGION: ${self:custom.env.cognito.region}
+    COGNITO_USER_POOL_ID: ${self:custom.env.cognito.userPoolId}
+    COGNITO_CLIENT_ID: ${self:custom.env.cognito.clientId}
+    CALENDAR_SYNC_ENABLED: '${self:custom.env.featureFlags.calendarSyncEnabled, false}'
+    ICS_EXPORT_ENABLED: '${self:custom.env.featureFlags.icsExportEnabled, true}'
+    PUSH_ENABLED: '${self:custom.env.featureFlags.pushEnabled, false}'
+    GRAPH_TENANT: ${self:custom.env.graph.tenant}
+    GRAPH_CLIENT_ID: ${self:custom.env.graph.clientId}
+    GRAPH_CLIENT_SECRET: ${self:custom.env.graph.clientSecret}
+    GRAPH_SCOPE: ${self:custom.env.graph.scope}
+    ALLOWED_ORIGINS:
+      Fn::Join:
+        - ','
+        - ${self:custom.env.allowedOrigins}
+    BOOKING_SYNC_QUEUE_URL: { 'Fn::GetAtt': [BookingSyncQueue, QueueUrl] }
+    BOOKING_SYNC_QUEUE_ARN: { 'Fn::GetAtt': [BookingSyncQueue, Arn] }
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+  tracing:
+    lambda: true
+    apiGateway: true
+  apiGateway:
+    minimumCompressionSize: 1024
+    shouldStartNameWithService: true
+  httpApi:
+    metrics: true
+    authorizers:
+      cognitoJwtAuthorizer:
+        identitySource: $request.header.Authorization
+        issuerUrl: https://cognito-idp.${self:provider.region}.amazonaws.com/${self:custom.env.cognito.userPoolId}
+        audience:
+          - ${self:custom.env.cognito.clientId}
+    cors:
+      allowedOrigins: ${self:custom.env.allowedOrigins}
+      allowedHeaders:
+        - Authorization
+        - Content-Type
+        - Idempotency-Key
+        - X-Amz-Date
+        - X-Api-Key
+        - X-Amz-Security-Token
+      allowedMethods:
+        - OPTIONS
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+      allowCredentials: true
+  vpc:
+    subnetIds: ${self:custom.env.vpc.subnetIds}
+    securityGroupIds: ${self:custom.env.vpc.securityGroupIds}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:SendMessageBatch
+            - sqs:GetQueueUrl
+          Resource: { 'Fn::GetAtt': [BookingSyncQueue, Arn] }
+        - Effect: Allow
+          Action:
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+            - sqs:ChangeMessageVisibility
+          Resource: { 'Fn::GetAtt': [BookingSyncQueue, Arn] }
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: arn:aws:logs:${self:provider.region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-*
+        - Effect: Allow
+          Action:
+            - xray:PutTraceSegments
+            - xray:PutTelemetryRecords
+          Resource: '*'
+
+package:
+  individually: true
+  excludeDevDependencies: true
+  patterns:
+    - '!tests/**'
+    - '!docs/**'
+    - '!**/*.md'
+    - '!migrations/**'
+
+functions:
+  roomsList:
+    handler: src/handlers/rooms/listRooms.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /api/v1/rooms
+          authorizer: cognitoJwtAuthorizer
+
+  roomsGet:
+    handler: src/handlers/rooms/getRoom.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /api/v1/rooms/{id}
+          authorizer: cognitoJwtAuthorizer
+
+  roomsGetAvailability:
+    handler: src/handlers/rooms/getAvailability.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /api/v1/rooms/{id}/availability
+          authorizer: cognitoJwtAuthorizer
+
+  roomsCreate:
+    handler: src/handlers/rooms/createRoom.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /api/v1/rooms
+          authorizer: cognitoJwtAuthorizer
+
+  roomsUpdate:
+    handler: src/handlers/rooms/updateRoom.handler
+    events:
+      - httpApi:
+          method: PATCH
+          path: /api/v1/rooms/{id}
+          authorizer: cognitoJwtAuthorizer
+
+  roomsDelete:
+    handler: src/handlers/rooms/deleteRoom.handler
+    events:
+      - httpApi:
+          method: DELETE
+          path: /api/v1/rooms/{id}
+          authorizer: cognitoJwtAuthorizer
+
+  bookingsCreate:
+    handler: src/handlers/bookings/createBooking.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /api/v1/bookings
+          authorizer: cognitoJwtAuthorizer
+
+  bookingsGet:
+    handler: src/handlers/bookings/getBooking.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /api/v1/bookings/{id}
+          authorizer: cognitoJwtAuthorizer
+
+  bookingsList:
+    handler: src/handlers/bookings/listBookings.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /api/v1/bookings
+          authorizer: cognitoJwtAuthorizer
+
+  bookingsCancel:
+    handler: src/handlers/bookings/cancelBooking.handler
+    events:
+      - httpApi:
+          method: DELETE
+          path: /api/v1/bookings/{id}
+          authorizer: cognitoJwtAuthorizer
+
+  blackoutsCreate:
+    handler: src/handlers/blackouts/createBlackout.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /api/v1/blackouts
+          authorizer: cognitoJwtAuthorizer
+
+  blackoutsList:
+    handler: src/handlers/blackouts/listBlackouts.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /api/v1/blackouts
+          authorizer: cognitoJwtAuthorizer
+
+  blackoutsUpdate:
+    handler: src/handlers/blackouts/updateBlackout.handler
+    events:
+      - httpApi:
+          method: PATCH
+          path: /api/v1/blackouts/{id}
+          authorizer: cognitoJwtAuthorizer
+
+  blackoutsDelete:
+    handler: src/handlers/blackouts/deleteBlackout.handler
+    events:
+      - httpApi:
+          method: DELETE
+          path: /api/v1/blackouts/{id}
+          authorizer: cognitoJwtAuthorizer
+
+  exportsIcs:
+    handler: src/handlers/exports/icsExport.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /api/v1/exports/bookings.ics
+          authorizer: cognitoJwtAuthorizer
+
+  integrationsMsGraphSync:
+    handler: src/handlers/integrations/msgraphSyncEnqueue.handler
+    timeout: 10
+    events:
+      - httpApi:
+          method: POST
+          path: /api/v1/integrations/msgraph/sync
+          authorizer: cognitoJwtAuthorizer
+
+  jobsGetStatus:
+    handler: src/handlers/jobs/getJobStatus.handler
+    timeout: 5
+    events:
+      - httpApi:
+          method: GET
+          path: /api/v1/jobs/{id}
+          authorizer: cognitoJwtAuthorizer
+
+  healthz:
+    handler: src/handlers/healthz.handler
+    timeout: 5
+    memorySize: 256
+    events:
+      - httpApi:
+          method: GET
+          path: /healthz
+
+  bookingSyncWorker:
+    handler: src/handlers/integrations/msgraphSyncWorker.handler
+    timeout: 60
+    maximumRetryAttempts: 2
+    events:
+      - sqs:
+          arn: { 'Fn::GetAtt': [BookingSyncQueue, Arn] }
+          batchSize: 5
+
+resources:
+  Resources:
+    BookingSyncDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-booking-sync-dlq
+        MessageRetentionPeriod: 1209600 # 14 days
+
+    BookingSyncQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-booking-sync
+        VisibilityTimeout: ${self:custom.env.bookingSync.visibilityTimeout, 60}
+        RedrivePolicy:
+          deadLetterTargetArn: { 'Fn::GetAtt': [BookingSyncDLQ, Arn] }
+          maxReceiveCount: ${self:custom.env.bookingSync.maxReceiveCount, 3}
+
+    ApiErrorRateAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-error-rate
+        Namespace: AWS/ApiGateway
+        MetricName: 5XXError
+        Dimensions:
+          - Name: ApiName
+            Value: ${self:service}-${self:provider.stage}
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 5
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        TreatMissingData: notBreaching
+
+    ApiLatencyAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-latency
+        Namespace: AWS/ApiGateway
+        MetricName: Latency
+        Dimensions:
+          - Name: ApiName
+            Value: ${self:service}-${self:provider.stage}
+        Statistic: Average
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 300
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        TreatMissingData: notBreaching
+
+    BookingSyncDLQAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-booking-sync-dlq-depth
+        Namespace: AWS/SQS
+        MetricName: ApproximateNumberOfMessagesVisible
+        Dimensions:
+          - Name: QueueName
+            Value: { 'Fn::GetAtt': [BookingSyncDLQ, QueueName] }
+        Statistic: Average
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 1
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        TreatMissingData: notBreaching
+
+  Outputs:
+    HttpApiInvokeUrl:
+      Description: Invoke URL for the HTTP API
+      Value:
+        Fn::Join:
+          - ''
+          - - https://
+            - { Ref: HttpApi }
+            - .execute-api.
+            - ${self:provider.region}
+            - .amazonaws.com
+    BookingSyncQueueArn:
+      Description: ARN of the booking sync SQS queue
+      Value: { 'Fn::GetAtt': [BookingSyncQueue, Arn] }
+
