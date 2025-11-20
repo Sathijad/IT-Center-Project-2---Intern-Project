@@ -103,6 +103,10 @@ export const authenticateRequest = async (event: APIGatewayProxyEventV2): Promis
   const payload = getClaims(event);
   logger.debug('JWT claims received', { sub: payload.sub });
 
+  // Extract the JWT token from the Authorization header for auth service calls
+  const authHeader = event.headers.authorization || event.headers.Authorization;
+  const authToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
+
   const emailClaim =
     typeof payload.email === 'string'
       ? payload.email
@@ -159,6 +163,7 @@ export const authenticateRequest = async (event: APIGatewayProxyEventV2): Promis
     email: emailClaim,
     displayName,
     teamId: teamIdFromClaims ?? undefined,
+    authToken, // Pass the token so auth service can authenticate
   });
 
   const resolvedTeamId = userRecord.teamId ?? teamIdFromClaims ?? null;

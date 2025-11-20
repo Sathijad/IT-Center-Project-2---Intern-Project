@@ -48,6 +48,9 @@ provider:
     PHASE1_DATASOURCE_URL: 'jdbc:postgresql://${self:custom.env.phase1Database.host}:${self:custom.env.phase1Database.port}/${self:custom.env.phase1Database.name}'
     PHASE1_DATASOURCE_USERNAME: ${self:custom.env.phase1Database.user}
     PHASE1_DATASOURCE_PASSWORD: ${self:custom.env.phase1Database.password}
+    # Auth service URL for fetching user details from auth-backend
+    AUTH_SERVICE_URL: ${self:custom.env.authService.url}
+    AUTH_SERVICE_TIMEOUT_MS: ${self:custom.env.authService.timeout, 5000}
     COGNITO_REGION: ${self:custom.env.cognito.region}
     COGNITO_USER_POOL_ID: ${self:custom.env.cognito.userPoolId}
     COGNITO_CLIENT_ID: ${self:custom.env.cognito.clientId}

@@ -1,6 +1,7 @@
 import { query } from '../common/db';
 import { Phase1UserRepository } from './phase1UserRepository';
 import { logger } from '../common/logger';
+import { getAuthService } from '../services/authService';
 
 interface UserRow {
   user_id: number;
@@ -54,12 +55,14 @@ export class UserRepository {
    * Upsert user from JWT claims.
    * IMPORTANT: First checks Phase 1 database - user MUST exist in Phase 1 first.
    * If user doesn't exist in Phase 1, logs warning and creates placeholder in Phase 2.
+   * If email/displayName is missing, fetches from auth-backend app_users table.
    */
   async upsertFromClaims(params: {
     cognitoSub: string;
     email?: string | null;
     displayName?: string | null;
     teamId?: number | null;
+    authToken?: string; // Optional: JWT token for calling auth service
   }): Promise<UserRecord> {
     // First, check if user exists in Phase 1 database (source of truth)
     const phase1User = await this.phase1UserRepository.findByCognitoSub(params.cognitoSub);
@@ -95,12 +98,40 @@ export class UserRepository {
 
       return mapUser(result.rows[0]);
     } else {
+      // User doesn't exist in Phase 1 - try to fetch from auth-backend app_users table
+      let email = params.email;
+      let displayName = params.displayName;
+
+      // If email or displayName is missing, try to fetch from auth-backend
+      if (!email || !displayName) {
+        try {
+          const authService = getAuthService();
+          const authUser = await authService.getUserByCognitoSub(params.cognitoSub, params.authToken);
+          
+          if (authUser) {
+            email = email || authUser.email;
+            displayName = displayName || authUser.displayName;
+            logger.info('Fetched user details from auth-backend app_users table', {
+              cognitoSub: params.cognitoSub,
+              email,
+              displayName,
+            });
+          }
+        } catch (error) {
+          logger.error('Failed to fetch user from auth-backend, continuing with available data', undefined, {
+            err: error,
+            cognitoSub: params.cognitoSub,
+          });
+          // Continue with whatever data we have - don't fail the upsert
+        }
+      }
+
       // User doesn't exist in Phase 1 - this is a problem!
       logger.warn(
         'User not found in Phase 1 database. User should be created in Phase 1 first via web app login.',
         {
           cognitoSub: params.cognitoSub,
-          email: params.email,
+          email: email || params.email,
         },
       );
 
@@ -118,7 +149,7 @@ export class UserRepository {
           updated_at = CURRENT_TIMESTAMP
         RETURNING user_id, cognito_sub, email, display_name, team_id
         `,
-        [params.cognitoSub, params.email ?? null, params.displayName ?? null, params.teamId ?? null],
+        [params.cognitoSub, email ?? null, displayName ?? null, params.teamId ?? null],
       );
 
       logger.warn('Created user in Phase 2 without Phase 1 record. This should be investigated.', {

@@ -127,6 +127,27 @@ public class UserService {
         return mapToSummaryResponse(user);
     }
     
+    /**
+     * Get user profile by cognito_sub for internal service-to-service calls
+     * Used by leave-attendance-backend to fetch user details
+     */
+    public UserProfileResponse getUserByCognitoSub(String cognitoSub) {
+        log.debug("Fetching user by cognito_sub: {}", cognitoSub);
+        AppUser user = userRepository.findByCognitoSub(cognitoSub)
+            .orElseThrow(() -> {
+                log.warn("User not found with cognito_sub: {}", cognitoSub);
+                return new RuntimeException("User not found with cognito_sub: " + cognitoSub);
+            });
+        
+        if (Boolean.FALSE.equals(user.getIsActive())) {
+            log.warn("User is not active with cognito_sub: {}", cognitoSub);
+            throw new RuntimeException("User is not active");
+        }
+        
+        log.debug("Found user: id={}, email={}, displayName={}", user.getId(), user.getEmail(), user.getDisplayName());
+        return mapToProfileResponse(user);
+    }
+    
     @Transactional
     public UserSummaryResponse updateUserRoles(Long userId, UpdateRolesRequest request) {
         log.info("Updating roles for user ID: {}, requested roles: {}", userId, request.getRoles());

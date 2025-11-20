@@ -79,5 +79,15 @@ public class UserController {
         adminUserService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+    
+    /**
+     * Internal endpoint for service-to-service calls
+     * Allows leave-attendance-backend to fetch user details by cognito_sub
+     */
+    @GetMapping("/internal/users/by-cognito-sub/{cognitoSub}")
+    public ResponseEntity<UserProfileResponse> getUserByCognitoSub(@PathVariable String cognitoSub) {
+        UserProfileResponse response = userService.getUserByCognitoSub(cognitoSub);
+        return ResponseEntity.ok(response);
+    }
 }
 
