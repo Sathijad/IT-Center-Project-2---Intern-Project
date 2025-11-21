@@ -79,7 +79,7 @@ Reference: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.ht
       SET ${n.join(", ")}, updated_at = CURRENT_TIMESTAMP
       WHERE id = $${o}
       RETURNING id, name, capacity, amenities, location, active, owner_team_id, external_calendar_id, created_at, updated_at
-      `,s);if(i.rowCount===0)throw new an("Room not found",{roomId:e});return jf(i.rows[0])}};var bi=t=>({id:t.id,roomId:t.room_id,userId:t.user_id,startTs:t.start_ts,endTs:t.end_ts,status:t.status,title:t.title,attendees:Array.isArray(t.attendees)?t.attendees:typeof t.attendees=="string"?JSON.parse(t.attendees):[],idempotencyKey:t.idempotency_key,externalEventId:t.external_event_id,createdAt:t.created_at,updatedAt:t.updated_at}),Vf=class{async findById(e){let r=await Ct(`
+      `,s);if(i.rowCount===0)throw new an("Room not found",{roomId:e});return jf(i.rows[0])}};var bi=t=>({id:typeof t.id=="number"?t.id:Number(t.id),roomId:typeof t.room_id=="number"?t.room_id:Number(t.room_id),userId:typeof t.user_id=="number"?t.user_id:Number(t.user_id),startTs:t.start_ts,endTs:t.end_ts,status:t.status,title:t.title,attendees:Array.isArray(t.attendees)?t.attendees:typeof t.attendees=="string"?JSON.parse(t.attendees):[],idempotencyKey:t.idempotency_key,externalEventId:t.external_event_id,createdAt:t.created_at,updatedAt:t.updated_at}),Vf=class{async findById(e){let r=await Ct(`
       SELECT id, room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id, created_at, updated_at
       FROM bookings
       WHERE id = $1
@@ -88,12 +88,12 @@ Reference: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.ht
       FROM bookings
       WHERE idempotency_key = $1 AND user_id = $2
       LIMIT 1
-      `,[e,r]);return n.rowCount===0?null:bi(n.rows[0])}async checkConflicts(e,r,n,s,o){let i=["room_id = $1","status = $2","start_ts < $4 AND end_ts > $3"],a=[r,"CONFIRMED",n,s];return o&&(i.push("id != $5"),a.push(o)),(await e.query(`
+      `,[e,r]);return n.rowCount===0?null:bi(n.rows[0])}async checkConflicts(e,r,n,s,o){let i=["room_id = $1::bigint","status = $2::varchar","start_ts < $4::timestamptz AND end_ts > $3::timestamptz"],a=[r,"CONFIRMED",n.toISOString(),s.toISOString()];return o&&(i.push("id != $5::bigint"),a.push(o)),(await e.query(`
       SELECT id, room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id, created_at, updated_at
       FROM bookings
       WHERE ${i.join(" AND ")}
       FOR UPDATE
-      `,a)).rows.map(bi)}async search(e={}){let r=[],n=[],s=1;e.userId!==void 0&&(r.push(`user_id = $${s}`),n.push(e.userId),s++),e.roomId!==void 0&&(r.push(`room_id = $${s}`),n.push(e.roomId),s++),e.status&&(r.push(`status = $${s}`),n.push(e.status),s++),e.startDate&&(r.push(`start_ts >= $${s}::timestamptz`),n.push(e.startDate),s++),e.endDate&&(r.push(`end_ts <= $${s}::timestamptz`),n.push(e.endDate),s++);let o=r.length>0?`WHERE ${r.join(" AND ")}`:"";return(await Ct(`
+      `,a)).rows.map(bi)}async search(e={}){let r=[],n=[],s=1;e.userId!==void 0&&(r.push(`user_id = $${s}::bigint`),n.push(e.userId),s++),e.roomId!==void 0&&(r.push(`room_id = $${s}::bigint`),n.push(e.roomId),s++),e.status&&(r.push(`status = $${s}::varchar`),n.push(e.status),s++),e.startDate&&(r.push(`start_ts >= $${s}::timestamptz`),n.push(e.startDate),s++),e.endDate&&(r.push(`end_ts <= $${s}::timestamptz`),n.push(e.endDate),s++);let o=r.length>0?`WHERE ${r.join(" AND ")}`:"";return(await Ct(`
       SELECT id, room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id, created_at, updated_at
       FROM bookings
       ${o}
@@ -101,16 +101,16 @@ Reference: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.ht
       `,n)).rows.map(bi)}async getAvailability(e,r,n){return(await Ct(`
       SELECT start_ts, end_ts
       FROM bookings
-      WHERE room_id = $1
-        AND status = 'CONFIRMED'
-        AND start_ts < $3
-        AND end_ts > $2
+      WHERE room_id = $1::bigint
+        AND status = 'CONFIRMED'::varchar
+        AND start_ts < $3::timestamptz
+        AND end_ts > $2::timestamptz
       ORDER BY start_ts ASC
-      `,[e,r,n])).rows.map(o=>({start:o.start_ts,end:o.end_ts,available:!1}))}async create(e){return tk(async r=>{let n=await this.checkConflicts(r,e.roomId,e.startTs,e.endTs);if(n.length>0)throw new At("BOOKING_CONFLICT","Booking conflicts with existing booking",409,{conflicts:n.map(o=>({id:o.id,start:o.startTs,end:o.endTs}))});let s=await r.query(`
+      `,[e,r.toISOString(),n.toISOString()])).rows.map(o=>({start:o.start_ts,end:o.end_ts,available:!1}))}async create(e){return tk(async r=>{let n=await this.checkConflicts(r,e.roomId,e.startTs,e.endTs);if(n.length>0)throw new At("BOOKING_CONFLICT","Booking conflicts with existing booking",409,{conflicts:n.map(a=>({id:typeof a.id=="number"?a.id:Number(a.id),start:a.startTs,end:a.endTs}))});if(!(e.startTs instanceof Date)||isNaN(e.startTs.getTime()))throw new Error(`Invalid startTs: ${e.startTs}`);if(!(e.endTs instanceof Date)||isNaN(e.endTs.getTime()))throw new Error(`Invalid endTs: ${e.endTs}`);let s=typeof e.userId=="number"?e.userId:Number(e.userId);if(isNaN(s)||!Number.isFinite(s)||s<=0)throw new Error(`Invalid userId: ${e.userId}`);let o=typeof e.roomId=="number"?e.roomId:Number(e.roomId);if(isNaN(o)||!Number.isFinite(o)||o<=0)throw new Error(`Invalid roomId: ${e.roomId}`);let i=await r.query(`
         INSERT INTO bookings (room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9)
+        VALUES ($1::bigint, $2::bigint, $3::timestamptz, $4::timestamptz, $5::varchar, $6::varchar, $7::jsonb, $8::varchar, $9::varchar)
         RETURNING id, room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id, created_at, updated_at
-        `,[e.roomId,e.userId,e.startTs,e.endTs,e.status||"CONFIRMED",e.title||null,JSON.stringify(e.attendees||[]),e.idempotencyKey||null,e.externalEventId||null]);return bi(s.rows[0])})}async update(e,r){let n=[],s=[],o=1;if(r.status!==void 0&&(n.push(`status = $${o}`),s.push(r.status),o++),r.title!==void 0&&(n.push(`title = $${o}`),s.push(r.title),o++),r.attendees!==void 0&&(n.push(`attendees = $${o}::jsonb`),s.push(JSON.stringify(r.attendees)),o++),r.externalEventId!==void 0&&(n.push(`external_event_id = $${o}`),s.push(r.externalEventId),o++),n.length===0)return this.findByIdOrThrow(e);s.push(e);let i=await Ct(`
+        `,[o,s,e.startTs.toISOString(),e.endTs.toISOString(),e.status||"CONFIRMED",e.title||null,JSON.stringify(e.attendees||[]),e.idempotencyKey||null,e.externalEventId||null]);return bi(i.rows[0])})}async update(e,r){let n=[],s=[],o=1;if(r.status!==void 0&&(n.push(`status = $${o}`),s.push(r.status),o++),r.title!==void 0&&(n.push(`title = $${o}`),s.push(r.title),o++),r.attendees!==void 0&&(n.push(`attendees = $${o}::jsonb`),s.push(JSON.stringify(r.attendees)),o++),r.externalEventId!==void 0&&(n.push(`external_event_id = $${o}`),s.push(r.externalEventId),o++),n.length===0)return this.findByIdOrThrow(e);s.push(e);let i=await Ct(`
       UPDATE bookings
       SET ${n.join(", ")}, updated_at = CURRENT_TIMESTAMP
       WHERE id = $${o}

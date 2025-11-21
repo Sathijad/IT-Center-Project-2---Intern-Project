@@ -11,14 +11,15 @@ const AdminBookingsPage: React.FC = () => {
     end_date: '',
   })
 
-  const { data: bookingsData, isLoading: bookingsLoading } = useQuery({
+  const { data: bookingsData, isLoading: bookingsLoading, error: bookingsError } = useQuery({
     queryKey: ['bookings', 'admin', filters],
     queryFn: () => listBookings({
       room_id: filters.room_id ? Number(filters.room_id) : undefined,
       status: filters.status as 'PENDING' | 'CONFIRMED' | 'CANCELLED' | undefined,
-      start_date: filters.start_date || undefined,
-      end_date: filters.end_date || undefined,
+      start_date: filters.start_date ? `${filters.start_date}T00:00:00Z` : undefined,
+      end_date: filters.end_date ? `${filters.end_date}T23:59:59Z` : undefined,
     }),
+    retry: 1,
   })
 
   const { data: roomsData } = useQuery({
@@ -48,6 +49,22 @@ const AdminBookingsPage: React.FC = () => {
     return (
       <div className="max-w-6xl mx-auto">
         <div className="text-center py-12 text-gray-500">Loading bookings...</div>
+      </div>
+    )
+  }
+
+  if (bookingsError) {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-2">
+          <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-red-800">Failed to load bookings</p>
+            <p className="text-sm text-red-600 mt-1">
+              {bookingsError instanceof Error ? bookingsError.message : 'Please try again later'}
+            </p>
+          </div>
+        </div>
       </div>
     )
   }

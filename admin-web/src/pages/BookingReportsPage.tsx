@@ -9,16 +9,17 @@ const BookingReportsPage: React.FC = () => {
     end: new Date().toISOString().split('T')[0], // Today
   })
 
-  const { data: bookingsData, isLoading } = useQuery({
+  const { data: bookingsData, isLoading, error: bookingsError } = useQuery({
     queryKey: ['bookings', 'reports', dateRange],
     queryFn: () => listBookings({
       start_date: dateRange.start,
       end_date: dateRange.end,
       status: 'CONFIRMED',
     }),
+    retry: 1,
   })
 
-  const { data: roomsData } = useQuery({
+  const { data: roomsData, error: roomsError } = useQuery({
     queryKey: ['rooms'],
     queryFn: () => getRooms({ active: true }),
   })
@@ -67,6 +68,22 @@ const BookingReportsPage: React.FC = () => {
     return (
       <div className="max-w-6xl mx-auto">
         <div className="text-center py-12 text-gray-500">Loading reports...</div>
+      </div>
+    )
+  }
+
+  if (bookingsError || roomsError) {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-2">
+          <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-red-800">Failed to load booking reports</p>
+            <p className="text-sm text-red-600 mt-1">
+              {bookingsError instanceof Error ? bookingsError.message : roomsError instanceof Error ? roomsError.message : 'Please try again later'}
+            </p>
+          </div>
+        </div>
       </div>
     )
   }

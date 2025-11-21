@@ -95,9 +95,7 @@ export class BlackoutService {
     if (roomId) {
       return this.blackoutRepository.findByRoom(roomId);
     }
-    // If no roomId, we'd need a method to get all blackouts
-    // For now, return empty array
-    return [];
+    return this.blackoutRepository.findAll();
   }
 }
 

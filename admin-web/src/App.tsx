@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
@@ -140,6 +140,10 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* Legacy paths redirects */}
+              <Route path="admin/booking/all" element={<Navigate to="/admin/booking/bookings" replace />} />
+              <Route path="booking/book" element={<Navigate to="/bookings/new" replace />} />
+              <Route path="booking/my-bookings" element={<Navigate to="/bookings/my" replace />} />
             </Route>
           </Routes>
         </AuthProvider>

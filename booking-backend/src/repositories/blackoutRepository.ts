@@ -22,12 +22,14 @@ interface BlackoutRow {
 }
 
 const mapBlackout = (row: BlackoutRow): BlackoutWindow => ({
-  id: row.id,
-  roomId: row.room_id,
+  id: typeof row.id === 'number' ? row.id : Number(row.id),
+  roomId: typeof row.room_id === 'number' ? row.room_id : Number(row.room_id),
   startTs: row.start_ts,
   endTs: row.end_ts,
   reason: row.reason,
-  createdBy: row.created_by,
+  createdBy: row.created_by !== null && row.created_by !== undefined 
+    ? (typeof row.created_by === 'number' ? row.created_by : Number(row.created_by))
+    : null,
   createdAt: row.created_at,
 });
 
@@ -58,19 +60,19 @@ export class BlackoutRepository {
   }
 
   async findByRoom(roomId: number, startTs?: Date, endTs?: Date): Promise<BlackoutWindow[]> {
-    const conditions: string[] = ['room_id = $1'];
+    const conditions: string[] = ['room_id = $1::bigint'];
     const params: unknown[] = [roomId];
     let paramIndex = 2;
 
     if (startTs) {
       conditions.push(`end_ts > $${paramIndex}::timestamptz`);
-      params.push(startTs);
+      params.push(startTs.toISOString());
       paramIndex++;
     }
 
     if (endTs) {
       conditions.push(`start_ts < $${paramIndex}::timestamptz`);
-      params.push(endTs);
+      params.push(endTs.toISOString());
       paramIndex++;
     }
 
@@ -87,15 +89,27 @@ export class BlackoutRepository {
     return result.rows.map(mapBlackout);
   }
 
+  async findAll(): Promise<BlackoutWindow[]> {
+    const result = await query<BlackoutRow>(
+      `
+      SELECT id, room_id, start_ts, end_ts, reason, created_by, created_at
+      FROM blackout_windows
+      ORDER BY start_ts DESC
+      `,
+    );
+
+    return result.rows.map(mapBlackout);
+  }
+
   async checkOverlap(roomId: number, startTs: Date, endTs: Date, excludeId?: number): Promise<BlackoutWindow[]> {
     const conditions: string[] = [
-      'room_id = $1',
-      'start_ts < $4 AND end_ts > $3', // Overlap condition
+      'room_id = $1::bigint',
+      'start_ts < $3::timestamptz AND end_ts > $2::timestamptz', // Overlap condition - fixed parameter order
     ];
-    const params: unknown[] = [roomId, startTs, endTs];
+    const params: unknown[] = [roomId, startTs.toISOString(), endTs.toISOString()];
 
     if (excludeId) {
-      conditions.push('id != $5');
+      conditions.push('id != $4::bigint');
       params.push(excludeId);
     }
 
@@ -118,18 +132,38 @@ export class BlackoutRepository {
     reason?: string | null;
     createdBy?: number | null;
   }): Promise<BlackoutWindow> {
+    // Ensure Date objects are valid before converting to ISO strings
+    if (!(blackout.startTs instanceof Date) || isNaN(blackout.startTs.getTime())) {
+      throw new Error(`Invalid startTs: ${blackout.startTs}`);
+    }
+    if (!(blackout.endTs instanceof Date) || isNaN(blackout.endTs.getTime())) {
+      throw new Error(`Invalid endTs: ${blackout.endTs}`);
+    }
+    // Convert roomId to number if needed (database might return string)
+    const roomId = typeof blackout.roomId === 'number' ? blackout.roomId : Number(blackout.roomId);
+    if (isNaN(roomId) || !Number.isFinite(roomId) || roomId <= 0) {
+      throw new Error(`Invalid roomId: ${blackout.roomId}`);
+    }
+    // Convert createdBy to number if needed
+    const createdBy = blackout.createdBy !== null && blackout.createdBy !== undefined
+      ? (typeof blackout.createdBy === 'number' ? blackout.createdBy : Number(blackout.createdBy))
+      : null;
+    if (createdBy !== null && (isNaN(createdBy) || !Number.isFinite(createdBy) || createdBy <= 0)) {
+      throw new Error(`Invalid createdBy: ${blackout.createdBy}`);
+    }
+
     const result = await query<BlackoutRow>(
       `
       INSERT INTO blackout_windows (room_id, start_ts, end_ts, reason, created_by)
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1::bigint, $2::timestamptz, $3::timestamptz, $4::text, $5::bigint)
       RETURNING id, room_id, start_ts, end_ts, reason, created_by, created_at
       `,
       [
-        blackout.roomId,
-        blackout.startTs,
-        blackout.endTs,
+        roomId,
+        blackout.startTs.toISOString(),
+        blackout.endTs.toISOString(),
         blackout.reason || null,
-        blackout.createdBy || null,
+        createdBy,
       ],
     );
 
@@ -147,18 +181,18 @@ export class BlackoutRepository {
 
     if (updates.startTs !== undefined) {
       fields.push(`start_ts = $${paramIndex}::timestamptz`);
-      params.push(updates.startTs);
+      params.push(updates.startTs.toISOString());
       paramIndex++;
     }
 
     if (updates.endTs !== undefined) {
       fields.push(`end_ts = $${paramIndex}::timestamptz`);
-      params.push(updates.endTs);
+      params.push(updates.endTs.toISOString());
       paramIndex++;
     }
 
     if (updates.reason !== undefined) {
-      fields.push(`reason = $${paramIndex}`);
+      fields.push(`reason = $${paramIndex}::text`);
       params.push(updates.reason);
       paramIndex++;
     }
@@ -172,7 +206,7 @@ export class BlackoutRepository {
       `
       UPDATE blackout_windows
       SET ${fields.join(', ')}
-      WHERE id = $${paramIndex}
+      WHERE id = $${paramIndex}::bigint
       RETURNING id, room_id, start_ts, end_ts, reason, created_by, created_at
       `,
       params,

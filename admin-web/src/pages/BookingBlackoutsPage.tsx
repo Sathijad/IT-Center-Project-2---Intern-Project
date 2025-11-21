@@ -23,14 +23,16 @@ const BookingBlackoutsPage: React.FC = () => {
   const [editingBlackout, setEditingBlackout] = useState<BlackoutWindow | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
 
-  const { data: blackoutsData, isLoading: blackoutsLoading } = useQuery({
+  const { data: blackoutsData, isLoading: blackoutsLoading, error: blackoutsError } = useQuery({
     queryKey: ['blackouts'],
     queryFn: () => listBlackouts(),
+    retry: 1,
   })
 
-  const { data: roomsData } = useQuery({
+  const { data: roomsData, error: roomsError } = useQuery({
     queryKey: ['rooms'],
     queryFn: () => getRooms({ active: true }),
+    retry: 1,
   })
 
   const blackouts = blackoutsData?.blackouts || []
@@ -71,10 +73,25 @@ const BookingBlackoutsPage: React.FC = () => {
   })
 
   const onSubmit = (data: BlackoutForm) => {
+    const startISO = new Date(data.start_ts).toISOString()
+    const endISO = new Date(data.end_ts).toISOString()
+
     if (editingBlackout) {
-      updateMutation.mutate({ id: editingBlackout.id, data })
+      updateMutation.mutate({
+        id: editingBlackout.id,
+        data: {
+          room_id: data.room_id,
+          start_ts: startISO,
+          end_ts: endISO,
+          reason: data.reason,
+        },
+      })
     } else {
-      createMutation.mutate(data)
+      createMutation.mutate({
+        ...data,
+        start_ts: startISO,
+        end_ts: endISO,
+      })
     }
   }
 
@@ -112,6 +129,26 @@ const BookingBlackoutsPage: React.FC = () => {
     return (
       <div className="max-w-6xl mx-auto">
         <div className="text-center py-12 text-gray-500">Loading blackouts...</div>
+      </div>
+    )
+  }
+
+  if (blackoutsError || roomsError) {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-2">
+          <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-red-800">Failed to load blackout windows</p>
+            <p className="text-sm text-red-600 mt-1">
+              {blackoutsError instanceof Error
+                ? blackoutsError.message
+                : roomsError instanceof Error
+                  ? roomsError.message
+                  : 'Please try again later'}
+            </p>
+          </div>
+        </div>
       </div>
     )
   }

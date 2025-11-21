@@ -22,6 +22,14 @@ bookingApi.interceptors.request.use((config) => {
 bookingApi.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error('Booking API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+    })
+    
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token')
       localStorage.removeItem('id_token')
@@ -186,6 +194,21 @@ export async function getBooking(id: number): Promise<{ booking: Booking }> {
   return response.data
 }
 
+const normalizeDateParam = (value?: string, endOfDay = false): string | undefined => {
+  if (!value) {
+    return undefined
+  }
+
+  const hasTime = value.includes('T')
+
+  if (!hasTime) {
+    return `${value}T${endOfDay ? '23:59:59' : '00:00:00'}Z`
+  }
+
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toISOString()
+}
+
 export async function listBookings(params?: {
   user_id?: number
   room_id?: number
@@ -196,8 +219,10 @@ export async function listBookings(params?: {
   const queryParams: Record<string, string> = {}
   if (params?.user_id) queryParams.user_id = String(params.user_id)
   if (params?.room_id) queryParams.room_id = String(params.room_id)
-  if (params?.start_date) queryParams.start_date = params.start_date
-  if (params?.end_date) queryParams.end_date = params.end_date
+  const normalizedStart = normalizeDateParam(params?.start_date)
+  const normalizedEnd = normalizeDateParam(params?.end_date, true)
+  if (normalizedStart) queryParams.start_date = normalizedStart
+  if (normalizedEnd) queryParams.end_date = normalizedEnd
   if (params?.status) queryParams.status = params.status
 
   const response = await bookingApi.get('/api/v1/bookings', { params: queryParams })

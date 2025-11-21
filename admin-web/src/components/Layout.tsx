@@ -39,13 +39,13 @@ const Layout: React.FC = () => {
       { name: 'Attendance', href: '/admin/attendance', icon: Clock },
       { name: 'Rooms', href: '/admin/booking/rooms', icon: Building2 },
       { name: 'Blackouts', href: '/admin/booking/blackouts', icon: CalendarX },
-      { name: 'All Bookings', href: '/admin/booking/all', icon: Calendar },
+      { name: 'All Bookings', href: '/admin/booking/bookings', icon: Calendar },
       { name: 'Booking Reports', href: '/admin/booking/reports', icon: BarChart3 },
     ] : []),
     { name: 'My Leave', href: '/leave/history', icon: Calendar },
     { name: 'Apply Leave', href: '/leave', icon: CalendarCheck },
-    { name: 'Book Room', href: '/booking/book', icon: Building2 },
-    { name: 'My Bookings', href: '/booking/my-bookings', icon: Calendar },
+    { name: 'Book Room', href: '/bookings/new', icon: Building2 },
+    { name: 'My Bookings', href: '/bookings/my', icon: Calendar },
     { name: 'Profile', href: '/profile', icon: UserIcon },
   ]
 

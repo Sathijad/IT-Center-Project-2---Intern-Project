@@ -10,6 +10,7 @@ const MyBookingsPage: React.FC = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['bookings', 'my'],
     queryFn: () => listBookings(),
+    retry: 1,
   })
 
   const cancelMutation = useMutation({

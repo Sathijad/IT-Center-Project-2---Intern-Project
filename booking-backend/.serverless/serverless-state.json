@@ -505,7 +505,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/roomsList.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/roomsList.zip"
               },
               "Handler": "src/handlers/rooms/listRooms.handler",
               "Runtime": "nodejs18.x",
@@ -578,7 +578,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/roomsGet.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/roomsGet.zip"
               },
               "Handler": "src/handlers/rooms/getRoom.handler",
               "Runtime": "nodejs18.x",
@@ -651,7 +651,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/roomsGetAvailability.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/roomsGetAvailability.zip"
               },
               "Handler": "src/handlers/rooms/getAvailability.handler",
               "Runtime": "nodejs18.x",
@@ -724,7 +724,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/roomsCreate.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/roomsCreate.zip"
               },
               "Handler": "src/handlers/rooms/createRoom.handler",
               "Runtime": "nodejs18.x",
@@ -797,7 +797,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/roomsUpdate.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/roomsUpdate.zip"
               },
               "Handler": "src/handlers/rooms/updateRoom.handler",
               "Runtime": "nodejs18.x",
@@ -870,7 +870,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/roomsDelete.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/roomsDelete.zip"
               },
               "Handler": "src/handlers/rooms/deleteRoom.handler",
               "Runtime": "nodejs18.x",
@@ -943,7 +943,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/bookingsCreate.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/bookingsCreate.zip"
               },
               "Handler": "src/handlers/bookings/createBooking.handler",
               "Runtime": "nodejs18.x",
@@ -1016,7 +1016,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/bookingsGet.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/bookingsGet.zip"
               },
               "Handler": "src/handlers/bookings/getBooking.handler",
               "Runtime": "nodejs18.x",
@@ -1089,7 +1089,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/bookingsList.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/bookingsList.zip"
               },
               "Handler": "src/handlers/bookings/listBookings.handler",
               "Runtime": "nodejs18.x",
@@ -1162,7 +1162,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/bookingsCancel.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/bookingsCancel.zip"
               },
               "Handler": "src/handlers/bookings/cancelBooking.handler",
               "Runtime": "nodejs18.x",
@@ -1235,7 +1235,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/blackoutsCreate.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/blackoutsCreate.zip"
               },
               "Handler": "src/handlers/blackouts/createBlackout.handler",
               "Runtime": "nodejs18.x",
@@ -1308,7 +1308,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/blackoutsList.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/blackoutsList.zip"
               },
               "Handler": "src/handlers/blackouts/listBlackouts.handler",
               "Runtime": "nodejs18.x",
@@ -1381,7 +1381,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/blackoutsUpdate.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/blackoutsUpdate.zip"
               },
               "Handler": "src/handlers/blackouts/updateBlackout.handler",
               "Runtime": "nodejs18.x",
@@ -1454,7 +1454,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/blackoutsDelete.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/blackoutsDelete.zip"
               },
               "Handler": "src/handlers/blackouts/deleteBlackout.handler",
               "Runtime": "nodejs18.x",
@@ -1527,7 +1527,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/exportsIcs.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/exportsIcs.zip"
               },
               "Handler": "src/handlers/exports/icsExport.handler",
               "Runtime": "nodejs18.x",
@@ -1600,7 +1600,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/integrationsMsGraphSync.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/integrationsMsGraphSync.zip"
               },
               "Handler": "src/handlers/integrations/msgraphSyncEnqueue.handler",
               "Runtime": "nodejs18.x",
@@ -1673,7 +1673,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/jobsGetStatus.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/jobsGetStatus.zip"
               },
               "Handler": "src/handlers/jobs/getJobStatus.handler",
               "Runtime": "nodejs18.x",
@@ -1746,7 +1746,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/healthz.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/healthz.zip"
               },
               "Handler": "src/handlers/healthz.handler",
               "Runtime": "nodejs18.x",
@@ -1819,7 +1819,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z/bookingSyncWorker.zip"
+                "S3Key": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z/bookingSyncWorker.zip"
               },
               "Handler": "src/handlers/integrations/msgraphSyncWorker.handler",
               "Runtime": "nodejs18.x",
@@ -1885,16 +1885,6 @@
               "BookingSyncWorkerLogGroup"
             ]
           },
-          "RoomsListLambdaVersioncQeKwsq8ISSkWdeZZXA0PPH3iwQMk1YtoynfOWFmSnI": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "RoomsListLambdaFunction"
-              },
-              "CodeSha256": "IUHSa0KxspgedoGhs72eT3rFnyiJuT1oWmDCGh5ZJos="
-            }
-          },
           "RoomsGetLambdaVersion5NQvYoiEll7TmunFkXlC5Geanf5ybGypFxAUfoomeI": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
@@ -1905,14 +1895,14 @@
               "CodeSha256": "Jah1Xm/ttK0e0fnyp/Pf0L+SO20ympCN4nArZZm60ro="
             }
           },
-          "RoomsGetAvailabilityLambdaVersionreLV3w7gaeflGbB6l0OUoxQMEI1PkxBgHyZHv2RnKo": {
+          "RoomsListLambdaVersioncQeKwsq8ISSkWdeZZXA0PPH3iwQMk1YtoynfOWFmSnI": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
-                "Ref": "RoomsGetAvailabilityLambdaFunction"
+                "Ref": "RoomsListLambdaFunction"
               },
-              "CodeSha256": "Yzy965+pT6dlod2YxMkvptbRcT10v9oQQ3f0Ose44oo="
+              "CodeSha256": "IUHSa0KxspgedoGhs72eT3rFnyiJuT1oWmDCGh5ZJos="
             }
           },
           "RoomsCreateLambdaVersionjB8hPzbbTsTlRIBALhbmBDxgIWVJNF2wJbrXyQQQ": {
@@ -1925,6 +1915,16 @@
               "CodeSha256": "Q64jHeQr2MsBX5dUJA4DcSy7W/mLtvRfLvNFlvArK+Y="
             }
           },
+          "RoomsGetAvailabilityLambdaVersionkpa2Z6tFhEssPrG6Cx8I8ETXtuTf1eBRZDzJDUIncnA": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "RoomsGetAvailabilityLambdaFunction"
+              },
+              "CodeSha256": "p88cn9mCPCEN1gc/Sm5XqHKY18frK9x6DPX0px57nHo="
+            }
+          },
           "RoomsUpdateLambdaVersionRnzcIlmjAVXqUYbZXViU1lRcEcCKzsR4MHXaoa30": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
@@ -1935,124 +1935,104 @@
               "CodeSha256": "LSvvWbMcgodysTOk3aJTRaZFaf1+/BQb9ZZt1Zt8bV0="
             }
           },
-          "RoomsDeleteLambdaVersionfzbOMrkz0kIomGo0JjqRvH5UbdSqABMhscgK8O7yhA": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "RoomsDeleteLambdaFunction"
-              },
-              "CodeSha256": "SWL6lqW94kGrW0mnjc1XxivcoJ8IaNxqpE8ygcwXQJk="
-            }
-          },
-          "BookingsCreateLambdaVersion4xXAyZ6IkRFf1rpjum3eh39sseGj5KGrqy8u4eMo": {
+          "BookingsCreateLambdaVersionYGDqXTFNP3ciY8JGV7OC5NKoNAwPOVq9uC5dbYpqA": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "BookingsCreateLambdaFunction"
               },
-              "CodeSha256": "YYrJcAx3O0rZzML5kQn6iE4Ch5VcT5n87sU7ZHsJl6I="
+              "CodeSha256": "eJ0BzezrI81+t3GsA4fYSBcNXX+31+JKGRnaWEC3Ga0="
             }
           },
-          "BookingsGetLambdaVersionxWqARSCy4OMBL06FWEANMvypiE6JdXm0ao6hph01bs": {
+          "RoomsDeleteLambdaVersionY5I4PmI0hsxTQjVnqWx4GOvGaVjnifaOUOgdK0vsk": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "RoomsDeleteLambdaFunction"
+              },
+              "CodeSha256": "81mnl79i1+z5yQMyzWLU2cyIvM82tFZefxkWwIjdxDM="
+            }
+          },
+          "BookingsGetLambdaVersionUNE7Wgh890eHXJ9LlHHduXFdXIGyoFspWCT7pHFnU": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "BookingsGetLambdaFunction"
               },
-              "CodeSha256": "i0JsyRfZZZV15I88LUaFnpWfJRWyIIrPv4rWS8E+LAc="
+              "CodeSha256": "XJQYNXyoebPH5D0qyuCa0o0ea7Av71sq7WDXT3i4X18="
             }
           },
-          "BookingsListLambdaVersionu4jzs4i9ZPb3EDFFYPbA5kinEnwJmqpSxOfGJeQAUs": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "BookingsListLambdaFunction"
-              },
-              "CodeSha256": "/8lepnaan/ca4RKcAy8qcWHZX4M3N3P5QiGkER1CEm4="
-            }
-          },
-          "BookingsCancelLambdaVersionkZlRQ6UDWv3MaGswGlTbjMnhvKbxTdUX7EsjMe51VfE": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "BookingsCancelLambdaFunction"
-              },
-              "CodeSha256": "AODpICXyXSzQBinU6QELc3FpYivV+kOpzCkkOLN4ksw="
-            }
-          },
-          "BlackoutsCreateLambdaVersionslis9RdP98mJJZhenq2vuBl0RFfjBHs9DYWOXyqsexU": {
+          "BlackoutsCreateLambdaVersion1USLz4nnrk20gLTqiYdCylIEhbD9MGMvcjDyCITN0M": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "BlackoutsCreateLambdaFunction"
               },
-              "CodeSha256": "JE4yPMBBiVe5vQJKqcy3UxuKpCew6IAd8YoPAYxNcew="
+              "CodeSha256": "R4XN7m2CMMBQv0ACkg1Jy8UTwAyM2NfTY4YYPnw0bTg="
             }
           },
-          "BlackoutsListLambdaVersion23hnBiBMZlQFsrfyOXlwdUN8VKfWuhowlu3WMd14": {
+          "BookingsCancelLambdaVersionDYiLuDmeEaUjgzV6byKlS8aDRlVMMmaVT8K5E7MUQ": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "BookingsCancelLambdaFunction"
+              },
+              "CodeSha256": "6DuzrvBYev5C0b+HnyiAwcKi5MHZ5bcOpd/I9NGbaV4="
+            }
+          },
+          "BookingsListLambdaVersionBVuHYu3opa0qSv1MV9v0dLaWhUqDIHcpkUpWns8": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "BookingsListLambdaFunction"
+              },
+              "CodeSha256": "TxxPf2y+Z6INrIqaP5gpl3ZENfvppqF9TGd7UoOh/WA="
+            }
+          },
+          "BlackoutsListLambdaVersionqV9nZm6DOBVi9CUt8enTZxMND6Wl9TJ4z14GFQEQUQ": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "BlackoutsListLambdaFunction"
               },
-              "CodeSha256": "1j0UodYZsAxNp3ZGuUm2094seOZnmcu8tmf0BQIQznY="
+              "CodeSha256": "rbPB/DdCfxIKCYUqvfnGbB+dhK/CtW5OqrQkWJzu9Tk="
             }
           },
-          "BlackoutsUpdateLambdaVersionMIoPQ5nWk5DDRzA15HYygoljOxtdGTMczvW4gNhEUA": {
+          "BlackoutsUpdateLambdaVersionm3TVASQAGEj8kPKjEbbKFuIolaUEGsUzQGweISFB1c": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "BlackoutsUpdateLambdaFunction"
               },
-              "CodeSha256": "rieSzdMi1HbnMrg/O0TGUFBAJOmO1AHcsxZ98i+fBFY="
+              "CodeSha256": "Q8ZgfU0iI7SfcjrbCv+LqMfRN0YKc9m7diIIGwI23JY="
             }
           },
-          "BlackoutsDeleteLambdaVersionSEnq21kO6ErXo9n2V9LxQYpvEHsTAoL1Kuc0T50QI": {
+          "BlackoutsDeleteLambdaVersionybUiIo4kvEjkh6dsKFlMYc9qb1x3cXNvuBOomsU6k4": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "BlackoutsDeleteLambdaFunction"
               },
-              "CodeSha256": "VBU2xH5rcwCCR8FCvLLDhDG4d2q5fsCc9lAM1WnrJC8="
+              "CodeSha256": "Wo2B6+niae9ue2C5DEyfQsRgOyR5GYr1G0hWZMizMaA="
             }
           },
-          "ExportsIcsLambdaVersione05KSCKkyWUEaKFKoVRgiO2aJpffpKqXCFtsczzqKg": {
+          "ExportsIcsLambdaVersiong3Wrqq6h5TbBCdVU7nS4pnU94kGoFvNRyYey1ZM3sg": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ExportsIcsLambdaFunction"
               },
-              "CodeSha256": "Zvz6c3yqIwM6wseLD5x5etn923JX7Un/3SXIYjSnF7U="
-            }
-          },
-          "IntegrationsMsGraphSyncLambdaVersionVRBmo4mf9rWqAndtJsfBAX8IJ7LDsQpUFSoOAvWTWk": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "IntegrationsMsGraphSyncLambdaFunction"
-              },
-              "CodeSha256": "hmMDiCnfZlkis5nbt5hEuLbQo062O0DEAX6Mfj9ndeQ="
-            }
-          },
-          "JobsGetStatusLambdaVersionz3Rt5C1lb16UQGDO9OVk4nKHRBnw6N48mPrwphcMQ": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "JobsGetStatusLambdaFunction"
-              },
-              "CodeSha256": "yVhdwGqUTEm4DROqD8uOqzZppWeFb3HSNw+q8UWmc1g="
+              "CodeSha256": "ODvNh4ia/80lf0huSVpsPuhJDypZU8/xSI3OWshcFrM="
             }
           },
           "HealthzLambdaVersionVorGVHRJp75SK9SdY2cReyyyzQSEv0yxZXeFqwZc30": {
@@ -2065,14 +2045,24 @@
               "CodeSha256": "DKC0u0A9fFefnWG+hggsUz8yu6IdqYdZy/oAW6olnW4="
             }
           },
-          "BookingSyncWorkerLambdaVersionUi33yuIqrfGHQ3X5PM9MEZqragFG7s4wZMkAEAtiXg": {
+          "JobsGetStatusLambdaVersionz3Rt5C1lb16UQGDO9OVk4nKHRBnw6N48mPrwphcMQ": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "JobsGetStatusLambdaFunction"
+              },
+              "CodeSha256": "yVhdwGqUTEm4DROqD8uOqzZppWeFb3HSNw+q8UWmc1g="
+            }
+          },
+          "BookingSyncWorkerLambdaVersionX4oOzEfSIs1H94gGqsUsyfU9RKaT1Ijs9R5UYOk4": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "BookingSyncWorkerLambdaFunction"
               },
-              "CodeSha256": "65DJIIE4fcK9kgWeRkrqWtTjfNNbvK+g8rMCT1BmlA8="
+              "CodeSha256": "+8qfrWgme+9GTxBimaMv4l34ddbI+eEtoecCXWni2Ak="
             }
           },
           "BookingSyncWorkerLambdaEvConf": {
@@ -2084,6 +2074,16 @@
               "DestinationConfig": {},
               "Qualifier": "$LATEST",
               "MaximumRetryAttempts": 2
+            }
+          },
+          "IntegrationsMsGraphSyncLambdaVersionAu4gbVkjLCseI57gIBE8mzwMXaAQAZroFREzUpiA": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "IntegrationsMsGraphSyncLambdaFunction"
+              },
+              "CodeSha256": "PCx4+mw5nX/qTHDQBO2SgpPWy+9Nb7gqgmV2YBLUrtw="
             }
           },
           "BookingSyncWorkerEventSourceMappingSQSBookingSyncQueue": {
@@ -3632,15 +3632,6 @@
               "Name": "sls-booking-api-dev-ServerlessDeploymentBucketName"
             }
           },
-          "RoomsListLambdaFunctionQualifiedArn": {
-            "Description": "Current Lambda function version",
-            "Value": {
-              "Ref": "RoomsListLambdaVersioncQeKwsq8ISSkWdeZZXA0PPH3iwQMk1YtoynfOWFmSnI"
-            },
-            "Export": {
-              "Name": "sls-booking-api-dev-RoomsListLambdaFunctionQualifiedArn"
-            }
-          },
           "RoomsGetLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
@@ -3650,13 +3641,13 @@
               "Name": "sls-booking-api-dev-RoomsGetLambdaFunctionQualifiedArn"
             }
           },
-          "RoomsGetAvailabilityLambdaFunctionQualifiedArn": {
+          "RoomsListLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "RoomsGetAvailabilityLambdaVersionreLV3w7gaeflGbB6l0OUoxQMEI1PkxBgHyZHv2RnKo"
+              "Ref": "RoomsListLambdaVersioncQeKwsq8ISSkWdeZZXA0PPH3iwQMk1YtoynfOWFmSnI"
             },
             "Export": {
-              "Name": "sls-booking-api-dev-RoomsGetAvailabilityLambdaFunctionQualifiedArn"
+              "Name": "sls-booking-api-dev-RoomsListLambdaFunctionQualifiedArn"
             }
           },
           "RoomsCreateLambdaFunctionQualifiedArn": {
@@ -3668,6 +3659,15 @@
               "Name": "sls-booking-api-dev-RoomsCreateLambdaFunctionQualifiedArn"
             }
           },
+          "RoomsGetAvailabilityLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "RoomsGetAvailabilityLambdaVersionkpa2Z6tFhEssPrG6Cx8I8ETXtuTf1eBRZDzJDUIncnA"
+            },
+            "Export": {
+              "Name": "sls-booking-api-dev-RoomsGetAvailabilityLambdaFunctionQualifiedArn"
+            }
+          },
           "RoomsUpdateLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
@@ -3677,64 +3677,64 @@
               "Name": "sls-booking-api-dev-RoomsUpdateLambdaFunctionQualifiedArn"
             }
           },
-          "RoomsDeleteLambdaFunctionQualifiedArn": {
-            "Description": "Current Lambda function version",
-            "Value": {
-              "Ref": "RoomsDeleteLambdaVersionfzbOMrkz0kIomGo0JjqRvH5UbdSqABMhscgK8O7yhA"
-            },
-            "Export": {
-              "Name": "sls-booking-api-dev-RoomsDeleteLambdaFunctionQualifiedArn"
-            }
-          },
           "BookingsCreateLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "BookingsCreateLambdaVersion4xXAyZ6IkRFf1rpjum3eh39sseGj5KGrqy8u4eMo"
+              "Ref": "BookingsCreateLambdaVersionYGDqXTFNP3ciY8JGV7OC5NKoNAwPOVq9uC5dbYpqA"
             },
             "Export": {
               "Name": "sls-booking-api-dev-BookingsCreateLambdaFunctionQualifiedArn"
             }
           },
+          "RoomsDeleteLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "RoomsDeleteLambdaVersionY5I4PmI0hsxTQjVnqWx4GOvGaVjnifaOUOgdK0vsk"
+            },
+            "Export": {
+              "Name": "sls-booking-api-dev-RoomsDeleteLambdaFunctionQualifiedArn"
+            }
+          },
           "BookingsGetLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "BookingsGetLambdaVersionxWqARSCy4OMBL06FWEANMvypiE6JdXm0ao6hph01bs"
+              "Ref": "BookingsGetLambdaVersionUNE7Wgh890eHXJ9LlHHduXFdXIGyoFspWCT7pHFnU"
             },
             "Export": {
               "Name": "sls-booking-api-dev-BookingsGetLambdaFunctionQualifiedArn"
             }
           },
-          "BookingsListLambdaFunctionQualifiedArn": {
-            "Description": "Current Lambda function version",
-            "Value": {
-              "Ref": "BookingsListLambdaVersionu4jzs4i9ZPb3EDFFYPbA5kinEnwJmqpSxOfGJeQAUs"
-            },
-            "Export": {
-              "Name": "sls-booking-api-dev-BookingsListLambdaFunctionQualifiedArn"
-            }
-          },
-          "BookingsCancelLambdaFunctionQualifiedArn": {
-            "Description": "Current Lambda function version",
-            "Value": {
-              "Ref": "BookingsCancelLambdaVersionkZlRQ6UDWv3MaGswGlTbjMnhvKbxTdUX7EsjMe51VfE"
-            },
-            "Export": {
-              "Name": "sls-booking-api-dev-BookingsCancelLambdaFunctionQualifiedArn"
-            }
-          },
           "BlackoutsCreateLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "BlackoutsCreateLambdaVersionslis9RdP98mJJZhenq2vuBl0RFfjBHs9DYWOXyqsexU"
+              "Ref": "BlackoutsCreateLambdaVersion1USLz4nnrk20gLTqiYdCylIEhbD9MGMvcjDyCITN0M"
             },
             "Export": {
               "Name": "sls-booking-api-dev-BlackoutsCreateLambdaFunctionQualifiedArn"
             }
           },
+          "BookingsCancelLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "BookingsCancelLambdaVersionDYiLuDmeEaUjgzV6byKlS8aDRlVMMmaVT8K5E7MUQ"
+            },
+            "Export": {
+              "Name": "sls-booking-api-dev-BookingsCancelLambdaFunctionQualifiedArn"
+            }
+          },
+          "BookingsListLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "BookingsListLambdaVersionBVuHYu3opa0qSv1MV9v0dLaWhUqDIHcpkUpWns8"
+            },
+            "Export": {
+              "Name": "sls-booking-api-dev-BookingsListLambdaFunctionQualifiedArn"
+            }
+          },
           "BlackoutsListLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "BlackoutsListLambdaVersion23hnBiBMZlQFsrfyOXlwdUN8VKfWuhowlu3WMd14"
+              "Ref": "BlackoutsListLambdaVersionqV9nZm6DOBVi9CUt8enTZxMND6Wl9TJ4z14GFQEQUQ"
             },
             "Export": {
               "Name": "sls-booking-api-dev-BlackoutsListLambdaFunctionQualifiedArn"
@@ -3743,7 +3743,7 @@
           "BlackoutsUpdateLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "BlackoutsUpdateLambdaVersionMIoPQ5nWk5DDRzA15HYygoljOxtdGTMczvW4gNhEUA"
+              "Ref": "BlackoutsUpdateLambdaVersionm3TVASQAGEj8kPKjEbbKFuIolaUEGsUzQGweISFB1c"
             },
             "Export": {
               "Name": "sls-booking-api-dev-BlackoutsUpdateLambdaFunctionQualifiedArn"
@@ -3752,7 +3752,7 @@
           "BlackoutsDeleteLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "BlackoutsDeleteLambdaVersionSEnq21kO6ErXo9n2V9LxQYpvEHsTAoL1Kuc0T50QI"
+              "Ref": "BlackoutsDeleteLambdaVersionybUiIo4kvEjkh6dsKFlMYc9qb1x3cXNvuBOomsU6k4"
             },
             "Export": {
               "Name": "sls-booking-api-dev-BlackoutsDeleteLambdaFunctionQualifiedArn"
@@ -3761,28 +3761,10 @@
           "ExportsIcsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ExportsIcsLambdaVersione05KSCKkyWUEaKFKoVRgiO2aJpffpKqXCFtsczzqKg"
+              "Ref": "ExportsIcsLambdaVersiong3Wrqq6h5TbBCdVU7nS4pnU94kGoFvNRyYey1ZM3sg"
             },
             "Export": {
               "Name": "sls-booking-api-dev-ExportsIcsLambdaFunctionQualifiedArn"
-            }
-          },
-          "IntegrationsMsGraphSyncLambdaFunctionQualifiedArn": {
-            "Description": "Current Lambda function version",
-            "Value": {
-              "Ref": "IntegrationsMsGraphSyncLambdaVersionVRBmo4mf9rWqAndtJsfBAX8IJ7LDsQpUFSoOAvWTWk"
-            },
-            "Export": {
-              "Name": "sls-booking-api-dev-IntegrationsMsGraphSyncLambdaFunctionQualifiedArn"
-            }
-          },
-          "JobsGetStatusLambdaFunctionQualifiedArn": {
-            "Description": "Current Lambda function version",
-            "Value": {
-              "Ref": "JobsGetStatusLambdaVersionz3Rt5C1lb16UQGDO9OVk4nKHRBnw6N48mPrwphcMQ"
-            },
-            "Export": {
-              "Name": "sls-booking-api-dev-JobsGetStatusLambdaFunctionQualifiedArn"
             }
           },
           "HealthzLambdaFunctionQualifiedArn": {
@@ -3794,13 +3776,31 @@
               "Name": "sls-booking-api-dev-HealthzLambdaFunctionQualifiedArn"
             }
           },
+          "JobsGetStatusLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "JobsGetStatusLambdaVersionz3Rt5C1lb16UQGDO9OVk4nKHRBnw6N48mPrwphcMQ"
+            },
+            "Export": {
+              "Name": "sls-booking-api-dev-JobsGetStatusLambdaFunctionQualifiedArn"
+            }
+          },
           "BookingSyncWorkerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "BookingSyncWorkerLambdaVersionUi33yuIqrfGHQ3X5PM9MEZqragFG7s4wZMkAEAtiXg"
+              "Ref": "BookingSyncWorkerLambdaVersionX4oOzEfSIs1H94gGqsUsyfU9RKaT1Ijs9R5UYOk4"
             },
             "Export": {
               "Name": "sls-booking-api-dev-BookingSyncWorkerLambdaFunctionQualifiedArn"
+            }
+          },
+          "IntegrationsMsGraphSyncLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "IntegrationsMsGraphSyncLambdaVersionAu4gbVkjLCseI57gIBE8mzwMXaAQAZroFREzUpiA"
+            },
+            "Export": {
+              "Name": "sls-booking-api-dev-IntegrationsMsGraphSyncLambdaFunctionQualifiedArn"
             }
           },
           "HttpApiId": {
@@ -4083,7 +4083,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "RoomsGetAvailabilityLambdaVersionreLV3w7gaeflGbB6l0OUoxQMEI1PkxBgHyZHv2RnKo"
+        "versionLogicalId": "RoomsGetAvailabilityLambdaVersionkpa2Z6tFhEssPrG6Cx8I8ETXtuTf1eBRZDzJDUIncnA"
       },
       "roomsCreate": {
         "handler": "src/handlers/rooms/createRoom.handler",
@@ -4152,7 +4152,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "RoomsDeleteLambdaVersionfzbOMrkz0kIomGo0JjqRvH5UbdSqABMhscgK8O7yhA"
+        "versionLogicalId": "RoomsDeleteLambdaVersionY5I4PmI0hsxTQjVnqWx4GOvGaVjnifaOUOgdK0vsk"
       },
       "bookingsCreate": {
         "handler": "src/handlers/bookings/createBooking.handler",
@@ -4175,7 +4175,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "BookingsCreateLambdaVersion4xXAyZ6IkRFf1rpjum3eh39sseGj5KGrqy8u4eMo"
+        "versionLogicalId": "BookingsCreateLambdaVersionYGDqXTFNP3ciY8JGV7OC5NKoNAwPOVq9uC5dbYpqA"
       },
       "bookingsGet": {
         "handler": "src/handlers/bookings/getBooking.handler",
@@ -4198,7 +4198,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "BookingsGetLambdaVersionxWqARSCy4OMBL06FWEANMvypiE6JdXm0ao6hph01bs"
+        "versionLogicalId": "BookingsGetLambdaVersionUNE7Wgh890eHXJ9LlHHduXFdXIGyoFspWCT7pHFnU"
       },
       "bookingsList": {
         "handler": "src/handlers/bookings/listBookings.handler",
@@ -4221,7 +4221,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "BookingsListLambdaVersionu4jzs4i9ZPb3EDFFYPbA5kinEnwJmqpSxOfGJeQAUs"
+        "versionLogicalId": "BookingsListLambdaVersionBVuHYu3opa0qSv1MV9v0dLaWhUqDIHcpkUpWns8"
       },
       "bookingsCancel": {
         "handler": "src/handlers/bookings/cancelBooking.handler",
@@ -4244,7 +4244,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "BookingsCancelLambdaVersionkZlRQ6UDWv3MaGswGlTbjMnhvKbxTdUX7EsjMe51VfE"
+        "versionLogicalId": "BookingsCancelLambdaVersionDYiLuDmeEaUjgzV6byKlS8aDRlVMMmaVT8K5E7MUQ"
       },
       "blackoutsCreate": {
         "handler": "src/handlers/blackouts/createBlackout.handler",
@@ -4267,7 +4267,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "BlackoutsCreateLambdaVersionslis9RdP98mJJZhenq2vuBl0RFfjBHs9DYWOXyqsexU"
+        "versionLogicalId": "BlackoutsCreateLambdaVersion1USLz4nnrk20gLTqiYdCylIEhbD9MGMvcjDyCITN0M"
       },
       "blackoutsList": {
         "handler": "src/handlers/blackouts/listBlackouts.handler",
@@ -4290,7 +4290,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "BlackoutsListLambdaVersion23hnBiBMZlQFsrfyOXlwdUN8VKfWuhowlu3WMd14"
+        "versionLogicalId": "BlackoutsListLambdaVersionqV9nZm6DOBVi9CUt8enTZxMND6Wl9TJ4z14GFQEQUQ"
       },
       "blackoutsUpdate": {
         "handler": "src/handlers/blackouts/updateBlackout.handler",
@@ -4313,7 +4313,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "BlackoutsUpdateLambdaVersionMIoPQ5nWk5DDRzA15HYygoljOxtdGTMczvW4gNhEUA"
+        "versionLogicalId": "BlackoutsUpdateLambdaVersionm3TVASQAGEj8kPKjEbbKFuIolaUEGsUzQGweISFB1c"
       },
       "blackoutsDelete": {
         "handler": "src/handlers/blackouts/deleteBlackout.handler",
@@ -4336,7 +4336,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "BlackoutsDeleteLambdaVersionSEnq21kO6ErXo9n2V9LxQYpvEHsTAoL1Kuc0T50QI"
+        "versionLogicalId": "BlackoutsDeleteLambdaVersionybUiIo4kvEjkh6dsKFlMYc9qb1x3cXNvuBOomsU6k4"
       },
       "exportsIcs": {
         "handler": "src/handlers/exports/icsExport.handler",
@@ -4359,7 +4359,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "ExportsIcsLambdaVersione05KSCKkyWUEaKFKoVRgiO2aJpffpKqXCFtsczzqKg"
+        "versionLogicalId": "ExportsIcsLambdaVersiong3Wrqq6h5TbBCdVU7nS4pnU94kGoFvNRyYey1ZM3sg"
       },
       "integrationsMsGraphSync": {
         "handler": "src/handlers/integrations/msgraphSyncEnqueue.handler",
@@ -4382,7 +4382,7 @@
         "memory": 512,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "IntegrationsMsGraphSyncLambdaVersionVRBmo4mf9rWqAndtJsfBAX8IJ7LDsQpUFSoOAvWTWk"
+        "versionLogicalId": "IntegrationsMsGraphSyncLambdaVersionAu4gbVkjLCseI57gIBE8mzwMXaAQAZroFREzUpiA"
       },
       "jobsGetStatus": {
         "handler": "src/handlers/jobs/getJobStatus.handler",
@@ -4451,7 +4451,7 @@
         "memory": 512,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "BookingSyncWorkerLambdaVersionUi33yuIqrfGHQ3X5PM9MEZqragFG7s4wZMkAEAtiXg"
+        "versionLogicalId": "BookingSyncWorkerLambdaVersionX4oOzEfSIs1H94gGqsUsyfU9RKaT1Ijs9R5UYOk4"
       }
     },
     "resources": {
@@ -4611,7 +4611,7 @@
   },
   "package": {
     "individually": true,
-    "artifactDirectoryName": "serverless/booking-api/dev/1763616482799-2025-11-20T05:28:02.799Z",
+    "artifactDirectoryName": "serverless/booking-api/dev/1763711302197-2025-11-21T07:48:22.197Z",
     "artifact": ""
   }
 }

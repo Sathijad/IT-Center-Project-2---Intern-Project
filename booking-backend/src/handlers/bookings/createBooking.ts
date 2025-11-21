@@ -25,12 +25,27 @@ export const handler = createHandler(async ({ event, user, context }) => {
   // Get idempotency key from header
   const idempotencyKey = event.headers?.['idempotency-key'] || event.headers?.['Idempotency-Key'] || undefined;
 
+  // Convert to Date objects and validate
   const startTs = new Date(body.start_ts);
   const endTs = new Date(body.end_ts);
 
+  // Validate Date objects are valid
+  if (isNaN(startTs.getTime())) {
+    throw new Error(`Invalid start_ts: ${body.start_ts}`);
+  }
+  if (isNaN(endTs.getTime())) {
+    throw new Error(`Invalid end_ts: ${body.end_ts}`);
+  }
+
+  // Ensure userId is a valid number (convert if string)
+  const userId = typeof user.userId === 'number' ? user.userId : Number(user.userId);
+  if (isNaN(userId) || !Number.isFinite(userId) || userId <= 0) {
+    throw new Error(`Invalid userId: ${user.userId}`);
+  }
+
   const result = await service.createBooking({
     roomId: body.room_id,
-    userId: user.userId,
+    userId: userId,
     startTs,
     endTs,
     title: body.title || null,

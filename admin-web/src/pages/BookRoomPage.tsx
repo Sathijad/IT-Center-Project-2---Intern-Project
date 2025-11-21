@@ -45,33 +45,43 @@ const BookRoomPage: React.FC = () => {
   const roomId = watch('room_id')
 
   // Fetch rooms
-  const { data: roomsData, isLoading: roomsLoading } = useQuery({
+  const { data: roomsData, isLoading: roomsLoading, error: roomsError } = useQuery({
     queryKey: ['rooms', searchFilters],
     queryFn: () => getRooms({
       capacity: searchFilters.capacity ? Number(searchFilters.capacity) : undefined,
       location: searchFilters.location || undefined,
       active: true,
     }),
+    retry: 1,
   })
 
   const rooms = roomsData?.rooms || []
 
   // Fetch availability when room and time are selected
-  const { data: availability, isLoading: availabilityLoading } = useQuery({
+  const { data: availability, isLoading: availabilityLoading, error: availabilityError } = useQuery({
     queryKey: ['room-availability', roomId, startTs, endTs],
     queryFn: () => {
       if (!roomId || !startTs || !endTs) return null
-      return getRoomAvailability(roomId, startTs, endTs)
+      // Convert datetime-local format to ISO string
+      const startISO = new Date(startTs).toISOString()
+      const endISO = new Date(endTs).toISOString()
+      return getRoomAvailability(roomId, startISO, endISO)
     },
     enabled: !!roomId && !!startTs && !!endTs,
+    retry: 1,
   })
 
   const createMutation = useMutation({
     mutationFn: (data: BookingForm) => {
       const idempotencyKey = `booking-${data.room_id}-${data.start_ts}-${Date.now()}`
+      // Convert datetime-local format to ISO string
+      const startISO = new Date(data.start_ts).toISOString()
+      const endISO = new Date(data.end_ts).toISOString()
       return createBooking(
         {
           ...data,
+          start_ts: startISO,
+          end_ts: endISO,
           attendees: data.attendees ? data.attendees.split(',').map(a => a.trim()).filter(Boolean) : [],
         },
         idempotencyKey
@@ -136,6 +146,16 @@ const BookRoomPage: React.FC = () => {
 
           {roomsLoading ? (
             <div className="text-center py-8 text-gray-500">Loading rooms...</div>
+          ) : roomsError ? (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-red-800">Failed to load rooms</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {roomsError instanceof Error ? roomsError.message : 'Please try again later'}
+                </p>
+              </div>
+            </div>
           ) : rooms.length === 0 ? (
             <div className="text-center py-8 text-gray-500">No rooms found</div>
           ) : (
@@ -244,6 +264,18 @@ const BookRoomPage: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {availabilityError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-red-800">Failed to load availability</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {availabilityError instanceof Error ? availabilityError.message : 'Please try again later'}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {availability && (
               <div className="bg-gray-50 rounded-lg p-4">

@@ -34,9 +34,9 @@ interface BookingRow {
 }
 
 const mapBooking = (row: BookingRow): Booking => ({
-  id: row.id,
-  roomId: row.room_id,
-  userId: row.user_id,
+  id: typeof row.id === 'number' ? row.id : Number(row.id),
+  roomId: typeof row.room_id === 'number' ? row.room_id : Number(row.room_id),
+  userId: typeof row.user_id === 'number' ? row.user_id : Number(row.user_id),
   startTs: row.start_ts,
   endTs: row.end_ts,
   status: row.status as BookingStatus,
@@ -112,14 +112,14 @@ export class BookingRepository {
     excludeBookingId?: number,
   ): Promise<Booking[]> {
     const conditions: string[] = [
-      'room_id = $1',
-      'status = $2',
-      'start_ts < $4 AND end_ts > $3', // Overlap condition
+      'room_id = $1::bigint',
+      'status = $2::varchar',
+      'start_ts < $4::timestamptz AND end_ts > $3::timestamptz', // Overlap condition
     ];
-    const params: unknown[] = [roomId, 'CONFIRMED', startTs, endTs];
+    const params: unknown[] = [roomId, 'CONFIRMED', startTs.toISOString(), endTs.toISOString()];
 
     if (excludeBookingId) {
-      conditions.push('id != $5');
+      conditions.push('id != $5::bigint');
       params.push(excludeBookingId);
     }
 
@@ -142,31 +142,33 @@ export class BookingRepository {
     let paramIndex = 1;
 
     if (filters.userId !== undefined) {
-      conditions.push(`user_id = $${paramIndex}`);
+      conditions.push(`user_id = $${paramIndex}::bigint`);
       params.push(filters.userId);
       paramIndex++;
     }
 
     if (filters.roomId !== undefined) {
-      conditions.push(`room_id = $${paramIndex}`);
+      conditions.push(`room_id = $${paramIndex}::bigint`);
       params.push(filters.roomId);
       paramIndex++;
     }
 
     if (filters.status) {
-      conditions.push(`status = $${paramIndex}`);
+      conditions.push(`status = $${paramIndex}::varchar`);
       params.push(filters.status);
       paramIndex++;
     }
 
     if (filters.startDate) {
       conditions.push(`start_ts >= $${paramIndex}::timestamptz`);
+      // filters.startDate is already a string from query params
       params.push(filters.startDate);
       paramIndex++;
     }
 
     if (filters.endDate) {
       conditions.push(`end_ts <= $${paramIndex}::timestamptz`);
+      // filters.endDate is already a string from query params
       params.push(filters.endDate);
       paramIndex++;
     }
@@ -197,13 +199,13 @@ export class BookingRepository {
       `
       SELECT start_ts, end_ts
       FROM bookings
-      WHERE room_id = $1
-        AND status = 'CONFIRMED'
-        AND start_ts < $3
-        AND end_ts > $2
+      WHERE room_id = $1::bigint
+        AND status = 'CONFIRMED'::varchar
+        AND start_ts < $3::timestamptz
+        AND end_ts > $2::timestamptz
       ORDER BY start_ts ASC
       `,
-      [roomId, startTs, endTs],
+      [roomId, startTs.toISOString(), endTs.toISOString()],
     );
 
     // For now, return the booked slots
@@ -235,21 +237,45 @@ export class BookingRepository {
           'BOOKING_CONFLICT',
           'Booking conflicts with existing booking',
           409,
-          { conflicts: conflicts.map((c) => ({ id: c.id, start: c.startTs, end: c.endTs })) },
+          { 
+            conflicts: conflicts.map((c) => ({ 
+              id: typeof c.id === 'number' ? c.id : Number(c.id), 
+              start: c.startTs, 
+              end: c.endTs 
+            })) 
+          },
         );
+      }
+
+      // Ensure Date objects are valid before converting to ISO strings
+      if (!(booking.startTs instanceof Date) || isNaN(booking.startTs.getTime())) {
+        throw new Error(`Invalid startTs: ${booking.startTs}`);
+      }
+      if (!(booking.endTs instanceof Date) || isNaN(booking.endTs.getTime())) {
+        throw new Error(`Invalid endTs: ${booking.endTs}`);
+      }
+      // Convert userId to number if needed (database might return string)
+      const userId = typeof booking.userId === 'number' ? booking.userId : Number(booking.userId);
+      if (isNaN(userId) || !Number.isFinite(userId) || userId <= 0) {
+        throw new Error(`Invalid userId: ${booking.userId}`);
+      }
+      // Convert roomId to number if needed
+      const roomId = typeof booking.roomId === 'number' ? booking.roomId : Number(booking.roomId);
+      if (isNaN(roomId) || !Number.isFinite(roomId) || roomId <= 0) {
+        throw new Error(`Invalid roomId: ${booking.roomId}`);
       }
 
       const result = await client.query<BookingRow>(
         `
         INSERT INTO bookings (room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9)
+        VALUES ($1::bigint, $2::bigint, $3::timestamptz, $4::timestamptz, $5::varchar, $6::varchar, $7::jsonb, $8::varchar, $9::varchar)
         RETURNING id, room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id, created_at, updated_at
         `,
         [
-          booking.roomId,
-          booking.userId,
-          booking.startTs,
-          booking.endTs,
+          roomId,
+          userId,
+          booking.startTs.toISOString(),
+          booking.endTs.toISOString(),
           booking.status || 'CONFIRMED',
           booking.title || null,
           JSON.stringify(booking.attendees || []),
