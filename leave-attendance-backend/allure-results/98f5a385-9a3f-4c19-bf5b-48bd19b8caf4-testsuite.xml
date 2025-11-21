@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns2:test-suite xmlns:ns2="urn:model.allure.qatools.yandex.ru" start="1763583128603" stop="1763583159334" version="1.0">
+  <name>k6 Performance Test</name>
+  <title>k6 Performance Test - health-check-1763583048698.json</title>
+  <test-cases>
+    <test-case start="1763583128603" stop="1763583159334" status="passed" duration="30730">
+      <name>Performance Test Execution</name>
+      <title>k6 Performance Test Results</title>
+      <description>
+        <![CDATA[
+        <h3>Test Summary</h3>
+        <ul>
+          <li><strong>Total Requests:</strong> 136</li>
+          <li><strong>Passed:</strong> 136</li>
+          <li><strong>Failed:</strong> 0</li>
+          <li><strong>Error Rate:</strong> 0.00%</li>
+          <li><strong>Duration:</strong> 30.73s</li>
+        </ul>
+        
+        <h3>Response Time Metrics</h3>
+        <ul>
+          
+          <li><strong>Average:</strong> 113.01ms</li>
+          <li><strong>Min:</strong> 3.52ms</li>
+          <li><strong>Max:</strong> 1981.63ms</li>
+          <li><strong>p90:</strong> 202.48ms</li>
+          <li><strong>p95:</strong> 485.40ms</li>
+          <li><strong>p99:</strong> 0.00ms</li>
+          
+        </ul>
+        
+        <h3>Thresholds</h3>
+        <ul>
+          
+        </ul>
+        ]]>
+      </description>
+      
+      <labels>
+        <label name="framework" value="k6"/>
+        <label name="language" value="javascript"/>
+        <label name="testType" value="performance"/>
+        <label name="suite" value="Performance Tests"/>
+        <label name="testClass" value="k6"/>
+      </labels>
+    </test-case>
+  </test-cases>
+</ns2:test-suite>

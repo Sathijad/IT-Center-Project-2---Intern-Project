@@ -27,19 +27,37 @@ async function runMigration() {
     await client.connect();
     console.log('Connected successfully!');
 
-    // Read migration file
-    const migrationPath = path.join(__dirname, '../migrations/20250120_phase3_booking.sql');
-    console.log(`Reading migration file: ${migrationPath}`);
-    
-    if (!fs.existsSync(migrationPath)) {
-      throw new Error(`Migration file not found: ${migrationPath}`);
+    const migrations = [
+      {
+        name: 'Phase 1 base tables (app_users, roles, user_roles, login_audit)',
+        filename: '../migrations/ensure_app_users_table.sql',
+        optional: true,
+      },
+      {
+        name: 'Phase 3 booking schema',
+        filename: '../migrations/20250120_phase3_booking.sql',
+        optional: false,
+      },
+    ];
+
+    for (const migration of migrations) {
+      const migrationPath = path.join(__dirname, migration.filename);
+      console.log(`\nReading migration: ${migration.name}`);
+      console.log(`Path: ${migrationPath}`);
+
+      if (!fs.existsSync(migrationPath)) {
+        if (migration.optional) {
+          console.log(`⚠️  Optional migration not found, skipping: ${migrationPath}`);
+          continue;
+        }
+        throw new Error(`Migration file not found: ${migrationPath}`);
+      }
+
+      const sql = fs.readFileSync(migrationPath, 'utf8');
+      console.log(`Executing migration "${migration.name}"...`);
+      await client.query(sql);
+      console.log(`✅ "${migration.name}" completed successfully!`);
     }
-
-    const sql = fs.readFileSync(migrationPath, 'utf8');
-    console.log('Executing migration...');
-
-    await client.query(sql);
-    console.log('✅ Migration completed successfully!');
 
     // Optionally run seed data
     const seedPath = path.join(__dirname, '../migrations/seed/rooms_seed.sql');
@@ -51,7 +69,7 @@ async function runMigration() {
     }
 
     // Verify tables
-    console.log('\nVerifying tables...');
+    console.log('\nVerifying booking tables...');
     const result = await client.query(`
       SELECT table_name 
       FROM information_schema.tables 
@@ -66,9 +84,29 @@ async function runMigration() {
     });
 
     if (result.rows.length === 4) {
-      console.log('\n✅ All tables created successfully!');
+      console.log('\n✅ Booking tables created successfully!');
     } else {
       console.log(`\n⚠️  Expected 4 tables, found ${result.rows.length}`);
+    }
+
+    console.log('\nVerifying shared Phase 1 tables...');
+    const phase1Result = await client.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name IN ('app_users', 'roles', 'user_roles', 'login_audit')
+      ORDER BY table_name;
+    `);
+
+    phase1Result.rows.forEach(row => {
+      console.log(`  ✓ ${row.table_name}`);
+    });
+
+    if (phase1Result.rows.length === 4) {
+      console.log('\n✅ Shared Phase 1 tables available!');
+    } else {
+      console.log(`\n⚠️  Phase 1 tables missing: expected 4, found ${phase1Result.rows.length}`);
+      console.log('   Run auth-backend against the shared DB or execute ensure_app_users_table.sql manually.');
     }
 
   } catch (error) {

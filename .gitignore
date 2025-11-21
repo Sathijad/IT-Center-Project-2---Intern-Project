@@ -50,6 +50,9 @@ docker-compose.override.yml
 test-results/
 coverage/
 
+# Performance test results (can be large)
+**/tests/performance/*.json
+
 # Network captures (exclude .gitkeep)
 captures/*.pcapng
 captures/*.pcap

@@ -11,18 +11,14 @@ select * from flyway_schema_history;
 
 
 
+select * from blackout_windows;
 
-DELETE FROM leave_balances
-WHERE id = 9;
+select * from booking_audit;
 
+select * from bookings;
 
-DROP TABLE IF EXISTS
-    attendance_logs,
-    leave_requests,
-    leave_audit,
-    leave_balances,
-    leave_policies
-CASCADE;
+select * from rooms;
+
 
 
 
@@ -33,10 +29,4 @@ CASCADE;
 SELECT schemaname, tablename
 FROM pg_catalog.pg_tables
 WHERE tablename = 'flyway_schema_history';
-
-
-
-
-
-
 

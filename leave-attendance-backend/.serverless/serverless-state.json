@@ -26,9 +26,12 @@
         "DB_NAME": "itcenter_auth",
         "DB_SSL": "true",
         "DB_POOL_MAX": "10",
+        "DB_CONNECT_TIMEOUT_MS": "25000",
         "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
         "PHASE1_DATASOURCE_USERNAME": "postgres",
         "PHASE1_DATASOURCE_PASSWORD": "password",
+        "AUTH_SERVICE_URL": "http://localhost:8080",
+        "AUTH_SERVICE_TIMEOUT_MS": "5000",
         "COGNITO_REGION": "ap-southeast-2",
         "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
         "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -448,7 +451,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z/leaveGetBalance.zip"
+                "S3Key": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z/leaveGetBalance.zip"
               },
               "Handler": "src/handlers/leave/getBalance.handler",
               "Runtime": "nodejs18.x",
@@ -473,9 +476,12 @@
                   "DB_NAME": "itcenter_auth",
                   "DB_SSL": "true",
                   "DB_POOL_MAX": "10",
+                  "DB_CONNECT_TIMEOUT_MS": "25000",
                   "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
                   "PHASE1_DATASOURCE_USERNAME": "postgres",
                   "PHASE1_DATASOURCE_PASSWORD": "password",
+                  "AUTH_SERVICE_URL": "http://localhost:8080",
+                  "AUTH_SERVICE_TIMEOUT_MS": "5000",
                   "COGNITO_REGION": "ap-southeast-2",
                   "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
                   "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -523,7 +529,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z/leaveListRequests.zip"
+                "S3Key": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z/leaveListRequests.zip"
               },
               "Handler": "src/handlers/leave/listRequests.handler",
               "Runtime": "nodejs18.x",
@@ -548,9 +554,12 @@
                   "DB_NAME": "itcenter_auth",
                   "DB_SSL": "true",
                   "DB_POOL_MAX": "10",
+                  "DB_CONNECT_TIMEOUT_MS": "25000",
                   "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
                   "PHASE1_DATASOURCE_USERNAME": "postgres",
                   "PHASE1_DATASOURCE_PASSWORD": "password",
+                  "AUTH_SERVICE_URL": "http://localhost:8080",
+                  "AUTH_SERVICE_TIMEOUT_MS": "5000",
                   "COGNITO_REGION": "ap-southeast-2",
                   "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
                   "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -598,7 +607,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z/leaveCreateRequest.zip"
+                "S3Key": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z/leaveCreateRequest.zip"
               },
               "Handler": "src/handlers/leave/createRequest.handler",
               "Runtime": "nodejs18.x",
@@ -623,9 +632,12 @@
                   "DB_NAME": "itcenter_auth",
                   "DB_SSL": "true",
                   "DB_POOL_MAX": "10",
+                  "DB_CONNECT_TIMEOUT_MS": "25000",
                   "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
                   "PHASE1_DATASOURCE_USERNAME": "postgres",
                   "PHASE1_DATASOURCE_PASSWORD": "password",
+                  "AUTH_SERVICE_URL": "http://localhost:8080",
+                  "AUTH_SERVICE_TIMEOUT_MS": "5000",
                   "COGNITO_REGION": "ap-southeast-2",
                   "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
                   "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -673,7 +685,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z/leaveUpdateRequest.zip"
+                "S3Key": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z/leaveUpdateRequest.zip"
               },
               "Handler": "src/handlers/leave/updateRequest.handler",
               "Runtime": "nodejs18.x",
@@ -698,9 +710,12 @@
                   "DB_NAME": "itcenter_auth",
                   "DB_SSL": "true",
                   "DB_POOL_MAX": "10",
+                  "DB_CONNECT_TIMEOUT_MS": "25000",
                   "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
                   "PHASE1_DATASOURCE_USERNAME": "postgres",
                   "PHASE1_DATASOURCE_PASSWORD": "password",
+                  "AUTH_SERVICE_URL": "http://localhost:8080",
+                  "AUTH_SERVICE_TIMEOUT_MS": "5000",
                   "COGNITO_REGION": "ap-southeast-2",
                   "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
                   "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -748,7 +763,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z/attendanceGetLogs.zip"
+                "S3Key": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z/attendanceGetLogs.zip"
               },
               "Handler": "src/handlers/attendance/getLogs.handler",
               "Runtime": "nodejs18.x",
@@ -773,9 +788,12 @@
                   "DB_NAME": "itcenter_auth",
                   "DB_SSL": "true",
                   "DB_POOL_MAX": "10",
+                  "DB_CONNECT_TIMEOUT_MS": "25000",
                   "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
                   "PHASE1_DATASOURCE_USERNAME": "postgres",
                   "PHASE1_DATASOURCE_PASSWORD": "password",
+                  "AUTH_SERVICE_URL": "http://localhost:8080",
+                  "AUTH_SERVICE_TIMEOUT_MS": "5000",
                   "COGNITO_REGION": "ap-southeast-2",
                   "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
                   "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -823,7 +841,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z/attendanceClockIn.zip"
+                "S3Key": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z/attendanceClockIn.zip"
               },
               "Handler": "src/handlers/attendance/clockIn.handler",
               "Runtime": "nodejs18.x",
@@ -848,9 +866,12 @@
                   "DB_NAME": "itcenter_auth",
                   "DB_SSL": "true",
                   "DB_POOL_MAX": "10",
+                  "DB_CONNECT_TIMEOUT_MS": "25000",
                   "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
                   "PHASE1_DATASOURCE_USERNAME": "postgres",
                   "PHASE1_DATASOURCE_PASSWORD": "password",
+                  "AUTH_SERVICE_URL": "http://localhost:8080",
+                  "AUTH_SERVICE_TIMEOUT_MS": "5000",
                   "COGNITO_REGION": "ap-southeast-2",
                   "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
                   "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -898,7 +919,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z/attendanceClockOut.zip"
+                "S3Key": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z/attendanceClockOut.zip"
               },
               "Handler": "src/handlers/attendance/clockOut.handler",
               "Runtime": "nodejs18.x",
@@ -923,9 +944,12 @@
                   "DB_NAME": "itcenter_auth",
                   "DB_SSL": "true",
                   "DB_POOL_MAX": "10",
+                  "DB_CONNECT_TIMEOUT_MS": "25000",
                   "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
                   "PHASE1_DATASOURCE_USERNAME": "postgres",
                   "PHASE1_DATASOURCE_PASSWORD": "password",
+                  "AUTH_SERVICE_URL": "http://localhost:8080",
+                  "AUTH_SERVICE_TIMEOUT_MS": "5000",
                   "COGNITO_REGION": "ap-southeast-2",
                   "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
                   "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -973,7 +997,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z/integrationsMsGraphSync.zip"
+                "S3Key": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z/integrationsMsGraphSync.zip"
               },
               "Handler": "src/handlers/integrations/msgraphSyncEnqueue.handler",
               "Runtime": "nodejs18.x",
@@ -998,9 +1022,12 @@
                   "DB_NAME": "itcenter_auth",
                   "DB_SSL": "true",
                   "DB_POOL_MAX": "10",
+                  "DB_CONNECT_TIMEOUT_MS": "25000",
                   "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
                   "PHASE1_DATASOURCE_USERNAME": "postgres",
                   "PHASE1_DATASOURCE_PASSWORD": "password",
+                  "AUTH_SERVICE_URL": "http://localhost:8080",
+                  "AUTH_SERVICE_TIMEOUT_MS": "5000",
                   "COGNITO_REGION": "ap-southeast-2",
                   "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
                   "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -1048,7 +1075,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z/reportsLeaveSummary.zip"
+                "S3Key": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z/reportsLeaveSummary.zip"
               },
               "Handler": "src/handlers/reports/leaveSummary.handler",
               "Runtime": "nodejs18.x",
@@ -1073,9 +1100,12 @@
                   "DB_NAME": "itcenter_auth",
                   "DB_SSL": "true",
                   "DB_POOL_MAX": "10",
+                  "DB_CONNECT_TIMEOUT_MS": "25000",
                   "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
                   "PHASE1_DATASOURCE_USERNAME": "postgres",
                   "PHASE1_DATASOURCE_PASSWORD": "password",
+                  "AUTH_SERVICE_URL": "http://localhost:8080",
+                  "AUTH_SERVICE_TIMEOUT_MS": "5000",
                   "COGNITO_REGION": "ap-southeast-2",
                   "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
                   "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -1123,7 +1153,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z/healthz.zip"
+                "S3Key": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z/healthz.zip"
               },
               "Handler": "src/handlers/healthz.handler",
               "Runtime": "nodejs18.x",
@@ -1148,9 +1178,12 @@
                   "DB_NAME": "itcenter_auth",
                   "DB_SSL": "true",
                   "DB_POOL_MAX": "10",
+                  "DB_CONNECT_TIMEOUT_MS": "25000",
                   "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
                   "PHASE1_DATASOURCE_USERNAME": "postgres",
                   "PHASE1_DATASOURCE_PASSWORD": "password",
+                  "AUTH_SERVICE_URL": "http://localhost:8080",
+                  "AUTH_SERVICE_TIMEOUT_MS": "5000",
                   "COGNITO_REGION": "ap-southeast-2",
                   "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
                   "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -1198,7 +1231,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z/msGraphSyncWorker.zip"
+                "S3Key": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z/msGraphSyncWorker.zip"
               },
               "Handler": "src/handlers/integrations/msgraphSyncWorker.handler",
               "Runtime": "nodejs18.x",
@@ -1223,9 +1256,12 @@
                   "DB_NAME": "itcenter_auth",
                   "DB_SSL": "true",
                   "DB_POOL_MAX": "10",
+                  "DB_CONNECT_TIMEOUT_MS": "25000",
                   "PHASE1_DATASOURCE_URL": "jdbc:postgresql://itcenter-auth.cfeacycaqhdx.ap-southeast-2.rds.amazonaws.com:5432/itcenter_auth",
                   "PHASE1_DATASOURCE_USERNAME": "postgres",
                   "PHASE1_DATASOURCE_PASSWORD": "password",
+                  "AUTH_SERVICE_URL": "http://localhost:8080",
+                  "AUTH_SERVICE_TIMEOUT_MS": "5000",
                   "COGNITO_REGION": "ap-southeast-2",
                   "COGNITO_USER_POOL_ID": "ap-southeast-2_hTAYJId8y",
                   "COGNITO_CLIENT_ID": "3rdnl5ind8guti89jrbob85r4i",
@@ -1266,114 +1302,114 @@
               "MsGraphSyncWorkerLogGroup"
             ]
           },
-          "AttendanceGetLogsLambdaVersionskagRATiCdESSFSvYfIPYNLUVScLNjq9bzbnT4SfF3o": {
+          "AttendanceGetLogsLambdaVersionvrgoEeemVb6xLuXeXDzBRvmJ3yF9sfqUNRp7sKUNcI": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "AttendanceGetLogsLambdaFunction"
               },
-              "CodeSha256": "xuae8qCwcGgT839424Ex5cws96yJ8Sjh/T5Q8lkliFM="
+              "CodeSha256": "VYIBMgcJ4US6KqdGzgSfoFYZ/E4gnYWdq/Pi4E9Tk3I="
             }
           },
-          "AttendanceClockInLambdaVersionPahiGmD982fKrPGsLBtFxcHprMGwX3gR2Haj8TiFpZk": {
+          "AttendanceClockInLambdaVersionwAa5svqhc2cihWBdRSRcyX3RVJsH5SuyegDx8hGrM": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "AttendanceClockInLambdaFunction"
               },
-              "CodeSha256": "JFo8pMY8TxaxW7CfjND/Auqqcy12tuV0bUIXaK12lAA="
+              "CodeSha256": "ZWER4Isu7M4dpDzBBy/qMon3wW7sSk3EOoO56ZmX4j8="
             }
           },
-          "AttendanceClockOutLambdaVersionPWpWv3EkvD3FzCNrGtGYMkmBUZj0IafbCNAYMrHg": {
+          "AttendanceClockOutLambdaVersionrTOKH1pdGqtYYqyr2VMbQljkxqqjGjdl9nmxKIM03s": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "AttendanceClockOutLambdaFunction"
               },
-              "CodeSha256": "oeVeI0BolGJmDaS3e6RyRazhWkstvBLkJwmdJNgCb+c="
+              "CodeSha256": "u2JZ6uY4qGHbeSXeoWFehrl06Gh3zstUDu4opCdNIVc="
             }
           },
-          "HealthzLambdaVersiontYy5Prdp2tKpvlNRtCTmuxqcMxJ3eZCo4Vtwlfeyqo": {
+          "HealthzLambdaVersionJBNJVob2J5enPsIj2GrGCayWQS2UvE0gmwuQrogBXw": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "HealthzLambdaFunction"
               },
-              "CodeSha256": "f2iHOgnu/xbgfUvsbiFdGQIHdivBsHUIlAdAzm/pPmk="
+              "CodeSha256": "qsh5eHotXCAZNd1Ss6p0Fxe6effUva4PqzryeYtDNeY="
             }
           },
-          "ReportsLeaveSummaryLambdaVersionGnjA5BswEmNnTpR8KALEpGyeng0TggT77eRS64KU": {
+          "ReportsLeaveSummaryLambdaVersionRYsCCHPEINDpL9xLepLj1B7YmdpTHH9q2mm33Da0lz4": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ReportsLeaveSummaryLambdaFunction"
               },
-              "CodeSha256": "pGeiebfnXHzvuKYeco7d4XlSSO49ot38gmHp2y7T+OQ="
+              "CodeSha256": "X5YSbQ4gHVOzGjl5fDJnmZ8G1oRyHP5L/NqqH96GBQo="
             }
           },
-          "LeaveGetBalanceLambdaVersionne8hqDTbuKUyJ9sBzmQKiEAjA5J55n808dmqWA4sBo": {
+          "LeaveGetBalanceLambdaVersionNGB4BUPg65aV6oJdmWxGj0xaik7jgfASlsgSKnvcs": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "LeaveGetBalanceLambdaFunction"
               },
-              "CodeSha256": "5sFF5sl3eFTQQZuPyN5U8pJ7us6HXO/XUqfeR8ucb+c="
+              "CodeSha256": "oUZIMJCMYoDYjzrTMeQZAz7rRDiZ/PIvNbiFQayeZTs="
             }
           },
-          "LeaveListRequestsLambdaVersionKO96Tz0sKkRmBESs1i3TyxgU5drpX8UNRPTUPkOM": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "LeaveListRequestsLambdaFunction"
-              },
-              "CodeSha256": "5slMeY+T2ajoSvY66SLdmn04hLuWirYVl+aOYzmm9r0="
-            }
-          },
-          "LeaveCreateRequestLambdaVersione8mfLAtzLJCHITcn67MRwH94fYsgVp3rT0h5vmd6t7A": {
+          "LeaveCreateRequestLambdaVersionBsybYUVQMMV20QtWLP7wOaLlCRoVC8WCJZtGn8Mk": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "LeaveCreateRequestLambdaFunction"
               },
-              "CodeSha256": "WPQcwWA3TSE2Z3dQBxDGzQcpYCTo0Uhs71nyBaLy5T8="
+              "CodeSha256": "6xEVL5B3YdqMxIpygFmmUKvGMcTgS61jolsIwOW/rak="
             }
           },
-          "LeaveUpdateRequestLambdaVersionQtnUpdQrVGaQHjdC01tGhDBqFJkdFuuzx8hDsofOjc": {
+          "LeaveListRequestsLambdaVersionQZDrxtf3grQp6dqjg3espVc5ZPuKEkjZgZnndPjs": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "LeaveListRequestsLambdaFunction"
+              },
+              "CodeSha256": "iFUx36tpASYRK+SDSMIwF67twN7vofpXZKzGvGmg4K4="
+            }
+          },
+          "LeaveUpdateRequestLambdaVersionsgbHpSe8Mn7nNp8klfSKyKFhOlpR80Nrk9TBHujZk": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "LeaveUpdateRequestLambdaFunction"
               },
-              "CodeSha256": "xwSD9LJdEsgngGQgJ6Z1FDbBXHKpkQLwZJaorEw/FpA="
+              "CodeSha256": "kmvgx9baOFW7i6IFBH8KRJ12lkuDgXhrudhJIn3JSYw="
             }
           },
-          "IntegrationsMsGraphSyncLambdaVersionL53TBfAdbb2yj3L57OmPPIzQ67mBeIDOn8fhphQoxo": {
+          "IntegrationsMsGraphSyncLambdaVersionLY9a2zpEuIVjYduJ8PGP603cx7GcEuRi2I5LllUsbFo": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "IntegrationsMsGraphSyncLambdaFunction"
               },
-              "CodeSha256": "X4iQoVJVA28RqBBEub/waZ7MiIgsvUUCA960Dctf7wg="
+              "CodeSha256": "unffrFvBw5HParVDFY96YqUyXBjd1u3caisGtsCv85A="
             }
           },
-          "MsGraphSyncWorkerLambdaVersionia7NQ0hMZv4E3Aaumhzjk3RFcZE8ETwnAnH24f6T9o": {
+          "MsGraphSyncWorkerLambdaVersion0YlO8xKGVObkzUQMKiVAdoA3EFenzchsm2Tc9KxilA": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "MsGraphSyncWorkerLambdaFunction"
               },
-              "CodeSha256": "9cG1ABFw0z3635qKLzZLfUtXZ65A6APIJtUZX6NjhnM="
+              "CodeSha256": "dWgXjXYqAvqXRUst6U2XTp9lcHNjhs6l6LUIAeA30uw="
             }
           },
           "MsGraphSyncWorkerLambdaEvConf": {
@@ -2328,7 +2364,7 @@
           "AttendanceGetLogsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "AttendanceGetLogsLambdaVersionskagRATiCdESSFSvYfIPYNLUVScLNjq9bzbnT4SfF3o"
+              "Ref": "AttendanceGetLogsLambdaVersionvrgoEeemVb6xLuXeXDzBRvmJ3yF9sfqUNRp7sKUNcI"
             },
             "Export": {
               "Name": "sls-leave-attendance-api-dev-AttendanceGetLogsLambdaFunctionQualifiedArn"
@@ -2337,7 +2373,7 @@
           "AttendanceClockInLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "AttendanceClockInLambdaVersionPahiGmD982fKrPGsLBtFxcHprMGwX3gR2Haj8TiFpZk"
+              "Ref": "AttendanceClockInLambdaVersionwAa5svqhc2cihWBdRSRcyX3RVJsH5SuyegDx8hGrM"
             },
             "Export": {
               "Name": "sls-leave-attendance-api-dev-AttendanceClockInLambdaFunctionQualifiedArn"
@@ -2346,7 +2382,7 @@
           "AttendanceClockOutLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "AttendanceClockOutLambdaVersionPWpWv3EkvD3FzCNrGtGYMkmBUZj0IafbCNAYMrHg"
+              "Ref": "AttendanceClockOutLambdaVersionrTOKH1pdGqtYYqyr2VMbQljkxqqjGjdl9nmxKIM03s"
             },
             "Export": {
               "Name": "sls-leave-attendance-api-dev-AttendanceClockOutLambdaFunctionQualifiedArn"
@@ -2355,7 +2391,7 @@
           "HealthzLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "HealthzLambdaVersiontYy5Prdp2tKpvlNRtCTmuxqcMxJ3eZCo4Vtwlfeyqo"
+              "Ref": "HealthzLambdaVersionJBNJVob2J5enPsIj2GrGCayWQS2UvE0gmwuQrogBXw"
             },
             "Export": {
               "Name": "sls-leave-attendance-api-dev-HealthzLambdaFunctionQualifiedArn"
@@ -2364,7 +2400,7 @@
           "ReportsLeaveSummaryLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ReportsLeaveSummaryLambdaVersionGnjA5BswEmNnTpR8KALEpGyeng0TggT77eRS64KU"
+              "Ref": "ReportsLeaveSummaryLambdaVersionRYsCCHPEINDpL9xLepLj1B7YmdpTHH9q2mm33Da0lz4"
             },
             "Export": {
               "Name": "sls-leave-attendance-api-dev-ReportsLeaveSummaryLambdaFunctionQualifiedArn"
@@ -2373,34 +2409,34 @@
           "LeaveGetBalanceLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "LeaveGetBalanceLambdaVersionne8hqDTbuKUyJ9sBzmQKiEAjA5J55n808dmqWA4sBo"
+              "Ref": "LeaveGetBalanceLambdaVersionNGB4BUPg65aV6oJdmWxGj0xaik7jgfASlsgSKnvcs"
             },
             "Export": {
               "Name": "sls-leave-attendance-api-dev-LeaveGetBalanceLambdaFunctionQualifiedArn"
             }
           },
-          "LeaveListRequestsLambdaFunctionQualifiedArn": {
-            "Description": "Current Lambda function version",
-            "Value": {
-              "Ref": "LeaveListRequestsLambdaVersionKO96Tz0sKkRmBESs1i3TyxgU5drpX8UNRPTUPkOM"
-            },
-            "Export": {
-              "Name": "sls-leave-attendance-api-dev-LeaveListRequestsLambdaFunctionQualifiedArn"
-            }
-          },
           "LeaveCreateRequestLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "LeaveCreateRequestLambdaVersione8mfLAtzLJCHITcn67MRwH94fYsgVp3rT0h5vmd6t7A"
+              "Ref": "LeaveCreateRequestLambdaVersionBsybYUVQMMV20QtWLP7wOaLlCRoVC8WCJZtGn8Mk"
             },
             "Export": {
               "Name": "sls-leave-attendance-api-dev-LeaveCreateRequestLambdaFunctionQualifiedArn"
             }
           },
+          "LeaveListRequestsLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "LeaveListRequestsLambdaVersionQZDrxtf3grQp6dqjg3espVc5ZPuKEkjZgZnndPjs"
+            },
+            "Export": {
+              "Name": "sls-leave-attendance-api-dev-LeaveListRequestsLambdaFunctionQualifiedArn"
+            }
+          },
           "LeaveUpdateRequestLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "LeaveUpdateRequestLambdaVersionQtnUpdQrVGaQHjdC01tGhDBqFJkdFuuzx8hDsofOjc"
+              "Ref": "LeaveUpdateRequestLambdaVersionsgbHpSe8Mn7nNp8klfSKyKFhOlpR80Nrk9TBHujZk"
             },
             "Export": {
               "Name": "sls-leave-attendance-api-dev-LeaveUpdateRequestLambdaFunctionQualifiedArn"
@@ -2409,7 +2445,7 @@
           "IntegrationsMsGraphSyncLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "IntegrationsMsGraphSyncLambdaVersionL53TBfAdbb2yj3L57OmPPIzQ67mBeIDOn8fhphQoxo"
+              "Ref": "IntegrationsMsGraphSyncLambdaVersionLY9a2zpEuIVjYduJ8PGP603cx7GcEuRi2I5LllUsbFo"
             },
             "Export": {
               "Name": "sls-leave-attendance-api-dev-IntegrationsMsGraphSyncLambdaFunctionQualifiedArn"
@@ -2418,7 +2454,7 @@
           "MsGraphSyncWorkerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "MsGraphSyncWorkerLambdaVersionia7NQ0hMZv4E3Aaumhzjk3RFcZE8ETwnAnH24f6T9o"
+              "Ref": "MsGraphSyncWorkerLambdaVersion0YlO8xKGVObkzUQMKiVAdoA3EFenzchsm2Tc9KxilA"
             },
             "Export": {
               "Name": "sls-leave-attendance-api-dev-MsGraphSyncWorkerLambdaFunctionQualifiedArn"
@@ -2608,6 +2644,10 @@
           "userPoolId": "ap-southeast-2_hTAYJId8y",
           "clientId": "3rdnl5ind8guti89jrbob85r4i"
         },
+        "authService": {
+          "url": "http://localhost:8080",
+          "timeout": 5000
+        },
         "graph": {
           "tenant": "c7886144-869f-423d-a018-9158602dc467",
           "clientId": "8aaa8c52-d330-4d68-ac01-8c47651450ed",
@@ -2673,7 +2713,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "LeaveGetBalanceLambdaVersionne8hqDTbuKUyJ9sBzmQKiEAjA5J55n808dmqWA4sBo"
+        "versionLogicalId": "LeaveGetBalanceLambdaVersionNGB4BUPg65aV6oJdmWxGj0xaik7jgfASlsgSKnvcs"
       },
       "leaveListRequests": {
         "handler": "src/handlers/leave/listRequests.handler",
@@ -2696,7 +2736,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "LeaveListRequestsLambdaVersionKO96Tz0sKkRmBESs1i3TyxgU5drpX8UNRPTUPkOM"
+        "versionLogicalId": "LeaveListRequestsLambdaVersionQZDrxtf3grQp6dqjg3espVc5ZPuKEkjZgZnndPjs"
       },
       "leaveCreateRequest": {
         "handler": "src/handlers/leave/createRequest.handler",
@@ -2719,7 +2759,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "LeaveCreateRequestLambdaVersione8mfLAtzLJCHITcn67MRwH94fYsgVp3rT0h5vmd6t7A"
+        "versionLogicalId": "LeaveCreateRequestLambdaVersionBsybYUVQMMV20QtWLP7wOaLlCRoVC8WCJZtGn8Mk"
       },
       "leaveUpdateRequest": {
         "handler": "src/handlers/leave/updateRequest.handler",
@@ -2742,7 +2782,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "LeaveUpdateRequestLambdaVersionQtnUpdQrVGaQHjdC01tGhDBqFJkdFuuzx8hDsofOjc"
+        "versionLogicalId": "LeaveUpdateRequestLambdaVersionsgbHpSe8Mn7nNp8klfSKyKFhOlpR80Nrk9TBHujZk"
       },
       "attendanceGetLogs": {
         "handler": "src/handlers/attendance/getLogs.handler",
@@ -2765,7 +2805,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "AttendanceGetLogsLambdaVersionskagRATiCdESSFSvYfIPYNLUVScLNjq9bzbnT4SfF3o"
+        "versionLogicalId": "AttendanceGetLogsLambdaVersionvrgoEeemVb6xLuXeXDzBRvmJ3yF9sfqUNRp7sKUNcI"
       },
       "attendanceClockIn": {
         "handler": "src/handlers/attendance/clockIn.handler",
@@ -2789,7 +2829,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "AttendanceClockInLambdaVersionPahiGmD982fKrPGsLBtFxcHprMGwX3gR2Haj8TiFpZk"
+        "versionLogicalId": "AttendanceClockInLambdaVersionwAa5svqhc2cihWBdRSRcyX3RVJsH5SuyegDx8hGrM"
       },
       "attendanceClockOut": {
         "handler": "src/handlers/attendance/clockOut.handler",
@@ -2813,7 +2853,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "AttendanceClockOutLambdaVersionPWpWv3EkvD3FzCNrGtGYMkmBUZj0IafbCNAYMrHg"
+        "versionLogicalId": "AttendanceClockOutLambdaVersionrTOKH1pdGqtYYqyr2VMbQljkxqqjGjdl9nmxKIM03s"
       },
       "integrationsMsGraphSync": {
         "handler": "src/handlers/integrations/msgraphSyncEnqueue.handler",
@@ -2836,7 +2876,7 @@
         "memory": 512,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "IntegrationsMsGraphSyncLambdaVersionL53TBfAdbb2yj3L57OmPPIzQ67mBeIDOn8fhphQoxo"
+        "versionLogicalId": "IntegrationsMsGraphSyncLambdaVersionLY9a2zpEuIVjYduJ8PGP603cx7GcEuRi2I5LllUsbFo"
       },
       "reportsLeaveSummary": {
         "handler": "src/handlers/reports/leaveSummary.handler",
@@ -2859,7 +2899,7 @@
         "memory": 512,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "ReportsLeaveSummaryLambdaVersionGnjA5BswEmNnTpR8KALEpGyeng0TggT77eRS64KU"
+        "versionLogicalId": "ReportsLeaveSummaryLambdaVersionRYsCCHPEINDpL9xLepLj1B7YmdpTHH9q2mm33Da0lz4"
       },
       "healthz": {
         "handler": "src/handlers/healthz.handler",
@@ -2882,7 +2922,7 @@
         "memory": 256,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "HealthzLambdaVersiontYy5Prdp2tKpvlNRtCTmuxqcMxJ3eZCo4Vtwlfeyqo"
+        "versionLogicalId": "HealthzLambdaVersionJBNJVob2J5enPsIj2GrGCayWQS2UvE0gmwuQrogBXw"
       },
       "msGraphSyncWorker": {
         "handler": "src/handlers/integrations/msgraphSyncWorker.handler",
@@ -2905,7 +2945,7 @@
         "timeout": 30,
         "runtime": "nodejs18.x",
         "vpc": {},
-        "versionLogicalId": "MsGraphSyncWorkerLambdaVersionia7NQ0hMZv4E3Aaumhzjk3RFcZE8ETwnAnH24f6T9o"
+        "versionLogicalId": "MsGraphSyncWorkerLambdaVersion0YlO8xKGVObkzUQMKiVAdoA3EFenzchsm2Tc9KxilA"
       }
     },
     "resources": {
@@ -3064,7 +3104,7 @@
   },
   "package": {
     "individually": true,
-    "artifactDirectoryName": "serverless/leave-attendance-api/dev/1763532544603-2025-11-19T06:09:04.603Z",
+    "artifactDirectoryName": "serverless/leave-attendance-api/dev/1763700082185-2025-11-21T04:41:22.185Z",
     "artifact": ""
   }
 }

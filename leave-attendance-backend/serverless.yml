@@ -44,6 +44,7 @@ provider:
     DB_NAME: ${self:custom.env.database.name}
     DB_SSL: '${self:custom.env.database.ssl, true}'
     DB_POOL_MAX: ${self:custom.env.database.poolMax, 10}
+    DB_CONNECT_TIMEOUT_MS: '25000'  # 25 seconds - less than Lambda 30s timeout
     # Phase 1 database connection (for checking app_users table)
     PHASE1_DATASOURCE_URL: 'jdbc:postgresql://${self:custom.env.phase1Database.host}:${self:custom.env.phase1Database.port}/${self:custom.env.phase1Database.name}'
     PHASE1_DATASOURCE_USERNAME: ${self:custom.env.phase1Database.user}

@@ -51,6 +51,7 @@ export class AttendanceRepository {
 
     let baseQuery = `
       FROM attendance_logs al
+      LEFT JOIN app_users au ON al.user_id = au.id
       WHERE 1=1
     `;
 
@@ -73,15 +74,15 @@ export class AttendanceRepository {
       SELECT
         al.log_id,
         al.user_id,
-        al.user_name,
-        al.user_email,
-        al.user_team_id,
+        COALESCE(au.display_name, '') AS user_name,
+        COALESCE(au.email, '') AS user_email,
+        NULL AS user_team_id,
         al.clock_in,
         al.clock_out,
         al.duration_minutes,
-        al.latitude,
-        al.longitude,
-        al.source,
+        NULL AS latitude,
+        NULL AS longitude,
+        NULL AS source,
         al.created_at
       ${baseQuery}
       ORDER BY al.${field} ${direction}
@@ -104,21 +105,22 @@ export class AttendanceRepository {
     const result = await query<AttendanceRow>(
       `
       SELECT
-        log_id,
-        user_id,
-        user_name,
-        user_email,
-        user_team_id,
-        clock_in,
-        clock_out,
-        duration_minutes,
-        latitude,
-        longitude,
-        source,
-        created_at
-      FROM attendance_logs
-      WHERE user_id = $1 AND clock_out IS NULL
-      ORDER BY clock_in DESC
+        al.log_id,
+        al.user_id,
+        COALESCE(au.display_name, '') AS user_name,
+        COALESCE(au.email, '') AS user_email,
+        NULL AS user_team_id,
+        al.clock_in,
+        al.clock_out,
+        al.duration_minutes,
+        NULL AS latitude,
+        NULL AS longitude,
+        NULL AS source,
+        al.created_at
+      FROM attendance_logs al
+      LEFT JOIN app_users au ON al.user_id = au.id
+      WHERE al.user_id = $1 AND al.clock_out IS NULL
+      ORDER BY al.clock_in DESC
       LIMIT 1
       `,
       [userId],
@@ -143,32 +145,40 @@ export class AttendanceRepository {
   }): Promise<AttendanceLog> {
     const result = await query<AttendanceRow>(
       `
-      INSERT INTO attendance_logs (user_id, user_name, user_email, user_team_id, clock_in, latitude, longitude, source)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO attendance_logs (user_id, clock_in)
+      VALUES ($1, $2)
       RETURNING
         log_id,
         user_id,
-        user_name,
-        user_email,
-        user_team_id,
         clock_in,
         clock_out,
         duration_minutes,
-        latitude,
-        longitude,
-        source,
         created_at
       `,
-      [
-        params.userId,
-        params.userName ?? null,
-        params.userEmail ?? null,
-        params.userTeamId,
-        params.clockIn,
-        params.latitude ?? null,
-        params.longitude ?? null,
-        params.source ?? null,
-      ],
+      [params.userId, params.clockIn],
+    );
+
+    // Fetch with user details via JOIN
+    const fullResult = await query<AttendanceRow>(
+      `
+      SELECT
+        al.log_id,
+        al.user_id,
+        COALESCE(au.display_name, '') AS user_name,
+        COALESCE(au.email, '') AS user_email,
+        NULL AS user_team_id,
+        al.clock_in,
+        al.clock_out,
+        al.duration_minutes,
+        NULL AS latitude,
+        NULL AS longitude,
+        NULL AS source,
+        al.created_at
+      FROM attendance_logs al
+      LEFT JOIN app_users au ON al.user_id = au.id
+      WHERE al.log_id = $1
+      `,
+      [result.rows[0].log_id],
     );
 
     return mapAttendanceLog(result.rows[0]);
@@ -180,28 +190,37 @@ export class AttendanceRepository {
     clockOut: string;
     durationMinutes: number;
   }): Promise<AttendanceLog> {
-    const result = await query<AttendanceRow>(
+    await query(
       `
       UPDATE attendance_logs
       SET clock_out = $1,
-          duration_minutes = $2,
-          updated_at = CURRENT_TIMESTAMP
+          duration_minutes = $2
       WHERE log_id = $3 AND user_id = $4
-      RETURNING
-        log_id,
-        user_id,
-        user_name,
-        user_email,
-        user_team_id,
-        clock_in,
-        clock_out,
-        duration_minutes,
-        latitude,
-        longitude,
-        source,
-        created_at
       `,
       [params.clockOut, params.durationMinutes, params.logId, params.userId],
+    );
+
+    // Fetch with user details via JOIN
+    const result = await query<AttendanceRow>(
+      `
+      SELECT
+        al.log_id,
+        al.user_id,
+        COALESCE(au.display_name, '') AS user_name,
+        COALESCE(au.email, '') AS user_email,
+        NULL AS user_team_id,
+        al.clock_in,
+        al.clock_out,
+        al.duration_minutes,
+        NULL AS latitude,
+        NULL AS longitude,
+        NULL AS source,
+        al.created_at
+      FROM attendance_logs al
+      LEFT JOIN app_users au ON al.user_id = au.id
+      WHERE al.log_id = $1
+      `,
+      [params.logId],
     );
 
     if (result.rowCount === 0) {
@@ -219,23 +238,24 @@ export class AttendanceRepository {
       const openLog = await client.query<AttendanceRow>(
         `
         SELECT
-          log_id,
-          user_id,
-          user_name,
-          user_email,
-          user_team_id,
-          clock_in,
-          clock_out,
-          duration_minutes,
-          latitude,
-          longitude,
-          source,
-          created_at
-        FROM attendance_logs
-        WHERE user_id = $1 AND clock_out IS NULL
-        ORDER BY clock_in DESC
+          al.log_id,
+          al.user_id,
+          COALESCE(au.display_name, '') AS user_name,
+          COALESCE(au.email, '') AS user_email,
+          NULL AS user_team_id,
+          al.clock_in,
+          al.clock_out,
+          al.duration_minutes,
+          NULL AS latitude,
+          NULL AS longitude,
+          NULL AS source,
+          al.created_at
+        FROM attendance_logs al
+        LEFT JOIN app_users au ON al.user_id = au.id
+        WHERE al.user_id = $1 AND al.clock_out IS NULL
+        ORDER BY al.clock_in DESC
         LIMIT 1
-        FOR UPDATE
+        FOR UPDATE OF al
         `,
         [userId],
       );
@@ -246,28 +266,37 @@ export class AttendanceRepository {
 
       const log = openLog.rows[0];
 
-      const updated = await client.query<AttendanceRow>(
+      await client.query(
         `
         UPDATE attendance_logs
         SET clock_out = $1,
-            duration_minutes = $2,
-            updated_at = CURRENT_TIMESTAMP
+            duration_minutes = $2
         WHERE log_id = $3
-        RETURNING
-          log_id,
-          user_id,
-          user_name,
-          user_email,
-          user_team_id,
-          clock_in,
-          clock_out,
-          duration_minutes,
-          latitude,
-          longitude,
-          source,
-          created_at
         `,
         [update.clockOut, update.durationMinutes, log.log_id],
+      );
+
+      // Fetch with user details via JOIN
+      const updated = await client.query<AttendanceRow>(
+        `
+        SELECT
+          al.log_id,
+          al.user_id,
+          COALESCE(au.display_name, '') AS user_name,
+          COALESCE(au.email, '') AS user_email,
+          NULL AS user_team_id,
+          al.clock_in,
+          al.clock_out,
+          al.duration_minutes,
+          NULL AS latitude,
+          NULL AS longitude,
+          NULL AS source,
+          al.created_at
+        FROM attendance_logs al
+        LEFT JOIN app_users au ON al.user_id = au.id
+        WHERE al.log_id = $1
+        `,
+        [log.log_id],
       );
 
       return mapAttendanceLog(updated.rows[0]);

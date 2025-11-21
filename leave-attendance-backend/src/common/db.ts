@@ -113,7 +113,7 @@ const createPool = async (): Promise<Pool> => {
     database: config.dbname,
     max: maxConnections,
     idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS || 30_000),
-    connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS || 5_000),
+    connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS || 25_000), // 25s - less than Lambda 30s timeout
     ssl: sslOptions,
   });
 
@@ -130,14 +130,22 @@ export const getPool = async (): Promise<Pool> => {
       poolPromise = createPool()
         .then((createdPool) => {
           pool = createdPool;
+          logger.info('Database connection pool created successfully');
           return createdPool;
         })
-        .finally(() => {
+        .catch((error) => {
+          logger.error('Failed to create database connection pool', undefined, { error });
           poolPromise = null;
+          throw error;
         });
     }
 
-    pool = await poolPromise;
+    try {
+      pool = await poolPromise;
+    } catch (error) {
+      logger.error('Error getting database pool', undefined, { error });
+      throw error;
+    }
   }
   return pool;
 };
@@ -146,12 +154,28 @@ export const query = async <T extends QueryResultRow = QueryResultRow>(
   sql: string | QueryConfig,
   params?: QueryParams,
 ): Promise<QueryResult<T>> => {
-  const dbPool = await getPool();
-  if (typeof sql === 'string') {
-    return dbPool.query<T>(sql, params);
-  }
+  try {
+    const dbPool = await getPool();
+    if (typeof sql === 'string') {
+      return dbPool.query<T>(sql, params);
+    }
 
-  return dbPool.query<T>(sql);
+    return dbPool.query<T>(sql);
+  } catch (error) {
+    if (error instanceof Error) {
+      // Check for connection timeout errors
+      if (error.message.includes('timeout') || error.message.includes('Connection timed out')) {
+        logger.error('Database connection timeout', { sql: typeof sql === 'string' ? sql.substring(0, 100) : 'config' });
+        throw new Error('Database connection timeout. Please check RDS security group and network connectivity.');
+      }
+      // Check for connection refused errors
+      if (error.message.includes('ECONNREFUSED') || error.message.includes('connection refused')) {
+        logger.error('Database connection refused', { sql: typeof sql === 'string' ? sql.substring(0, 100) : 'config' });
+        throw new Error('Database connection refused. Please check database host and port.');
+      }
+    }
+    throw error;
+  }
 };
 
 export const withTransaction = async <T>(callback: (client: PoolClient) => Promise<T>): Promise<T> => {

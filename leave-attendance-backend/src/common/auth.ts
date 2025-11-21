@@ -2,7 +2,7 @@ import { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { AuthenticatedUser, UserRole } from './types';
 import { ForbiddenError, UnauthorizedError } from './errors';
 import { logger } from './logger';
-import { UserRepository } from '../repositories/userRepository';
+import { UserRepository, UserRecord } from '../repositories/userRepository';
 
 interface CognitoJwtPayload {
   sub: string;
@@ -103,10 +103,6 @@ export const authenticateRequest = async (event: APIGatewayProxyEventV2): Promis
   const payload = getClaims(event);
   logger.debug('JWT claims received', { sub: payload.sub });
 
-  // Extract the JWT token from the Authorization header for auth service calls
-  const authHeader = event.headers.authorization || event.headers.Authorization;
-  const authToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
-
   const emailClaim =
     typeof payload.email === 'string'
       ? payload.email
@@ -158,15 +154,22 @@ export const authenticateRequest = async (event: APIGatewayProxyEventV2): Promis
     typeof teamClaim === 'string' ? Number(teamClaim) : typeof teamClaim === 'number' ? teamClaim : Number.NaN;
   const teamIdFromClaims = Number.isFinite(teamNumeric) ? Number(teamNumeric) : null;
 
-  const userRecord = await userRepository.upsertFromClaims({
-    cognitoSub: payload.sub,
-    email: emailClaim,
-    displayName,
-    teamId: teamIdFromClaims ?? undefined,
-    authToken, // Pass the token so auth service can authenticate
-  });
+  let userRecord: UserRecord | null;
+  try {
+    userRecord = await userRepository.findByCognitoSub(payload.sub);
+  } catch (error) {
+    logger.error('Database error while looking up user', { sub: payload.sub }, { error });
+    throw new UnauthorizedError('Database error while authenticating user');
+  }
 
-  const resolvedTeamId = userRecord.teamId ?? teamIdFromClaims ?? null;
+  if (!userRecord) {
+    logger.warn('User not found in app_users table', { sub: payload.sub, email: emailClaim });
+    throw new UnauthorizedError(
+      'User not found in database. Please ensure you have logged in through the auth service first.',
+    );
+  }
+
+  const resolvedTeamId = teamIdFromClaims ?? null;
   const resolvedEmail = userRecord.email ?? emailClaim ?? undefined;
   const resolvedDisplayName = userRecord.displayName ?? displayName ?? resolvedEmail;
 

@@ -65,7 +65,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException e) {
         String traceId = UUID.randomUUID().toString();
-        log.error("Runtime error: {}", e.getMessage(), e);
+        log.error("Runtime error: {} | TraceId: {}", e.getMessage(), traceId, e);
+        log.error("Stack trace:", e);
+        
+        // Log the full stack trace for debugging
+        java.io.StringWriter sw = new java.io.StringWriter();
+        java.io.PrintWriter pw = new java.io.PrintWriter(sw);
+        e.printStackTrace(pw);
+        log.error("Full stack trace:\n{}", sw.toString());
         
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(new ErrorResponse("INTERNAL_ERROR", e.getMessage(), traceId));

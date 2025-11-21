@@ -31,18 +31,34 @@ public class UserService {
     private final com.itcenter.auth.repository.UserRoleRepository userRoleRepository;
     
     public UserProfileResponse getCurrentUserProfile() {
-        org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (!(auth.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt)) {
-            throw new RuntimeException("Invalid authentication principal");
+        try {
+            org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (!(auth.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt)) {
+                log.error("Invalid authentication principal type: {}", auth.getPrincipal() != null ? auth.getPrincipal().getClass().getName() : "null");
+                throw new RuntimeException("Invalid authentication principal");
+            }
+            
+            org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth.getPrincipal();
+            log.debug("Getting user profile for sub: {}", jwt.getClaimAsString("sub"));
+            
+            AppUser user = provisioningService.findOrCreateFromJwt(jwt);
+            
+            if (user == null) {
+                log.error("User is null after findOrCreateFromJwt");
+                throw new RuntimeException("User not found or could not be created");
+            }
+            
+            log.debug("User found/created: id={}, email={}, roles={}", user.getId(), user.getEmail(), 
+                user.getRoles() != null ? user.getRoles().size() : 0);
+            
+            // Note: Login audit is now handled by /api/v1/sessions/mark-login endpoint
+            // to ensure idempotency (once per JWT token)
+            
+            return mapToProfileResponse(user);
+        } catch (Exception e) {
+            log.error("Error in getCurrentUserProfile", e);
+            throw e;
         }
-        
-        org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) auth.getPrincipal();
-        AppUser user = provisioningService.findOrCreateFromJwt(jwt);
-        
-        // Note: Login audit is now handled by /api/v1/sessions/mark-login endpoint
-        // to ensure idempotency (once per JWT token)
-        
-        return mapToProfileResponse(user);
     }
     
     @Transactional
@@ -237,15 +253,33 @@ public class UserService {
     }
     
     private UserProfileResponse mapToProfileResponse(AppUser user) {
-        return UserProfileResponse.builder()
-            .id(user.getId())
-            .email(user.getEmail())
-            .displayName(user.getDisplayName())
-            .locale(user.getLocale())
-            .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
-            .createdAt(user.getCreatedAt())
-            .lastLogin(user.getLastLogin())
-            .build();
+        try {
+            if (user == null) {
+                log.error("mapToProfileResponse called with null user");
+                throw new RuntimeException("User is null");
+            }
+            
+            List<String> roleNames = user.getRoles() != null 
+                ? user.getRoles().stream().map(Role::getName).collect(Collectors.toList())
+                : new java.util.ArrayList<>();
+            
+            log.debug("Mapping user to profile response: id={}, email={}, roles={}", 
+                user.getId(), user.getEmail(), roleNames);
+            
+            return UserProfileResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .displayName(user.getDisplayName())
+                .locale(user.getLocale())
+                .roles(roleNames)
+                .createdAt(user.getCreatedAt())
+                .lastLogin(user.getLastLogin())
+                .build();
+        } catch (Exception e) {
+            log.error("Error mapping user to profile response: userId={}, error={}", 
+                user != null ? user.getId() : "null", e.getMessage(), e);
+            throw new RuntimeException("Failed to map user to profile response: " + e.getMessage(), e);
+        }
     }
     
     private UserSummaryResponse mapToSummaryResponse(AppUser user) {

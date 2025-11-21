@@ -32,6 +32,12 @@ export const createHandler = <T>(
     let user: AuthenticatedUser | null = null;
 
     try {
+      logger.debug('Handler invoked', { 
+        path: event.rawPath, 
+        method: event.requestContext.http.method,
+        requestId: context.awsRequestId 
+      });
+
       if (options.requireAuth !== false) {
         user = await authenticateRequest(event);
         if (options.allowedRoles) {
@@ -48,18 +54,40 @@ export const createHandler = <T>(
       return successResponse(200, result, origin);
     } catch (error) {
       const appError = toApplicationError(error);
-      logger.error('Handler failed', { requestId: context.awsRequestId, userId: user?.userId }, { error });
+      logger.error('Handler failed', { 
+        requestId: context.awsRequestId, 
+        userId: user?.userId,
+        path: event.rawPath,
+        method: event.requestContext.http.method
+      }, { error });
 
-      return errorResponse(
-        appError.statusCode,
-        {
-          code: appError.code,
-          message: appError.message,
-          details: appError.details,
-          requestId: context.awsRequestId,
-        },
-        origin,
-      );
+      // Ensure we always return a valid response, even if error handling fails
+      try {
+        return errorResponse(
+          appError.statusCode,
+          {
+            code: appError.code,
+            message: appError.message,
+            details: appError.details,
+            requestId: context.awsRequestId,
+          },
+          origin,
+        );
+      } catch (responseError) {
+        logger.error('Failed to create error response', undefined, { error: responseError });
+        return {
+          statusCode: 500,
+          body: JSON.stringify({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'An unexpected error occurred',
+            requestId: context.awsRequestId,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            ...(origin ? { 'Access-Control-Allow-Origin': origin } : {}),
+          },
+        };
+      }
     }
   };
 };

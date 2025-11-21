@@ -52,10 +52,12 @@ export class ReportRepository {
       params.push(filters.to);
     }
 
-    if (filters.teamId) {
-      whereClause += ` AND lr.user_team_id = $${index++}`;
-      params.push(filters.teamId);
-    }
+    // Note: user_team_id doesn't exist in leave_requests table
+    // Team filtering would require JOIN with app_users or another source
+    // if (filters.teamId) {
+    //   whereClause += ` AND lr.user_team_id = $${index++}`;
+    //   params.push(filters.teamId);
+    // }
 
     const policyQuery = `
       SELECT
@@ -68,7 +70,7 @@ export class ReportRepository {
         SUM(CASE WHEN lr.status = 'CANCELLED' THEN 1 ELSE 0 END)::INT AS cancelled,
         SUM(
           CASE WHEN lr.status = 'APPROVED'
-            THEN CASE WHEN lr.half_day THEN 0.5 ELSE (lr.end_date - lr.start_date) + 1 END
+            THEN (lr.end_date - lr.start_date) + 1
             ELSE 0
           END
         )::FLOAT AS approved_days
