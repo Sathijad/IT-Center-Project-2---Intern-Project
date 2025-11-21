@@ -2,21 +2,35 @@ import React from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { listBookings, cancelBooking, type Booking } from '../lib/bookingApi'
 import { Calendar, Clock, X, AlertCircle } from 'lucide-react'
-// Note: useAuth hook removed - user context not needed for this page
+import { useAuth } from '../contexts/AuthContext'
 
 const MyBookingsPage: React.FC = () => {
   const queryClient = useQueryClient()
+  const { user, loading: authLoading } = useAuth()
+  const userId = user?.id ?? null
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['bookings', 'my'],
-    queryFn: () => listBookings(),
+  const canFetch = !!userId && !authLoading
+
+  const {
+    data,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['bookings', 'my', userId],
+    queryFn: async () => {
+      if (!userId) {
+        return { bookings: [] }
+      }
+      return listBookings({ user_id: userId })
+    },
+    enabled: canFetch,
     retry: 1,
   })
 
   const cancelMutation = useMutation({
     mutationFn: cancelBooking,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['bookings', 'my', userId] })
     },
   })
 
@@ -39,7 +53,7 @@ const MyBookingsPage: React.FC = () => {
     })
   }
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="max-w-6xl mx-auto">
         <div className="text-center py-12 text-gray-500">Loading bookings...</div>

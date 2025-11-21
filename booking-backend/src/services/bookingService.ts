@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { BookingRepository } from '../repositories/bookingRepository';
 import { RoomRepository } from '../repositories/roomRepository';
 import { BlackoutRepository } from '../repositories/blackoutRepository';
@@ -27,17 +28,27 @@ export class BookingService {
   ) {}
 
   async createBooking(input: CreateBookingInput): Promise<{ booking: Awaited<ReturnType<BookingRepository['findById']>>; isNew: boolean }> {
-    // Check idempotency first
-    if (input.idempotencyKey) {
-      const existing = await this.bookingRepository.findByIdempotencyKey(input.idempotencyKey, input.userId);
-      if (existing) {
-        logger.info('Idempotent booking request', { idempotencyKey: input.idempotencyKey, bookingId: existing.id });
-        return { booking: existing, isNew: false };
-      }
+    const normalizedStart = new Date(input.startTs);
+    const normalizedEnd = new Date(input.endTs);
+    if (Number.isNaN(normalizedStart.getTime()) || Number.isNaN(normalizedEnd.getTime())) {
+      throw new ValidationError('Invalid start or end time provided');
+    }
+
+    const effectiveKey = this.resolveIdempotencyKey({
+      ...input,
+      startTs: normalizedStart,
+      endTs: normalizedEnd,
+    });
+
+    // Check idempotency first (including auto-generated keys)
+    const existing = await this.bookingRepository.findByIdempotencyKey(effectiveKey, input.userId);
+    if (existing) {
+      logger.info('Idempotent booking request', { idempotencyKey: effectiveKey, bookingId: existing.id });
+      return { booking: existing, isNew: false };
     }
 
     // Validate time range
-    if (input.endTs <= input.startTs) {
+    if (normalizedEnd <= normalizedStart) {
       throw new ValidationError('End time must be after start time');
     }
 
@@ -57,7 +68,7 @@ export class BookingService {
     }
 
     // Check blackouts
-    const blackouts = await this.blackoutRepository.checkOverlap(input.roomId, input.startTs, input.endTs);
+    const blackouts = await this.blackoutRepository.checkOverlap(input.roomId, normalizedStart, normalizedEnd);
     if (blackouts.length > 0) {
       throw new ApplicationError(
         'BLACKOUT_VIOLATION',
@@ -68,36 +79,50 @@ export class BookingService {
     }
 
     // Create booking (conflict check happens inside repository with transaction)
-    const booking = await this.bookingRepository.create({
-      roomId: input.roomId,
-      userId: input.userId,
-      startTs: input.startTs,
-      endTs: input.endTs,
-      status: 'CONFIRMED',
-      title: input.title || null,
-      attendees: input.attendees || [],
-      idempotencyKey: input.idempotencyKey || null,
-    });
-
-    // Create audit entry
-    await this.auditRepository.create({
-      bookingId: booking.id,
-      action: 'CREATED',
-      actorId: input.userId,
-      notes: `Booking created for room ${room.name}`,
-    });
-
-    // Enqueue MS Graph sync
     try {
-      await this.graphService.enqueueBookingSync(booking.id, 'create');
+      const booking = await this.bookingRepository.create({
+        roomId: input.roomId,
+        userId: input.userId,
+        startTs: normalizedStart,
+        endTs: normalizedEnd,
+        status: 'CONFIRMED',
+        title: input.title || null,
+        attendees: input.attendees || [],
+        idempotencyKey: effectiveKey,
+      });
+
+      // Create audit entry
+      await this.auditRepository.create({
+        bookingId: booking.id,
+        action: 'CREATED',
+        actorId: input.userId,
+        notes: `Booking created for room ${room.name}`,
+      });
+
+      // Enqueue MS Graph sync
+      try {
+        await this.graphService.enqueueBookingSync(booking.id, 'create');
+      } catch (error) {
+        logger.error('Failed to enqueue Graph sync', { bookingId: booking.id }, { error });
+        // Don't fail the booking creation if sync fails
+      }
+
+      logger.info('Booking created', { bookingId: booking.id, roomId: input.roomId, userId: input.userId });
+
+      return { booking, isNew: true };
     } catch (error) {
-      logger.error('Failed to enqueue Graph sync', { bookingId: booking.id }, { error });
-      // Don't fail the booking creation if sync fails
+      if (this.isIdempotencyViolation(error)) {
+        const duplicate = await this.bookingRepository.findByIdempotencyKey(effectiveKey, input.userId);
+        if (duplicate) {
+          logger.info('Duplicate booking detected via idempotency key', {
+            bookingId: duplicate.id,
+            idempotencyKey: effectiveKey,
+          });
+          return { booking: duplicate, isNew: false };
+        }
+      }
+      throw error;
     }
-
-    logger.info('Booking created', { bookingId: booking.id, roomId: input.roomId, userId: input.userId });
-
-    return { booking, isNew: true };
   }
 
   async cancelBooking(bookingId: number, userId: number, isAdmin: boolean): Promise<Awaited<ReturnType<BookingRepository['findById']>>> {
@@ -157,6 +182,46 @@ export class BookingService {
     status?: BookingStatus;
   }): Promise<Awaited<ReturnType<BookingRepository['search']>>> {
     return this.bookingRepository.search(filters);
+  }
+
+  private resolveIdempotencyKey(params: {
+    roomId: number;
+    userId: number;
+    startTs: Date;
+    endTs: Date;
+    title?: string | null;
+    attendees?: string[];
+    idempotencyKey?: string | null;
+  }): string {
+    if (params.idempotencyKey && params.idempotencyKey.trim().length > 0) {
+      return params.idempotencyKey.trim();
+    }
+
+    const payload = [
+      params.userId,
+      params.roomId,
+      params.startTs.toISOString(),
+      params.endTs.toISOString(),
+      (params.title || '').trim(),
+      ...(params.attendees || []).map((attendee) => attendee.trim()).sort(),
+    ].join('|');
+
+    return `auto-${createHash('sha256').update(payload).digest('hex')}`;
+  }
+
+  private isIdempotencyViolation(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) {
+      return false;
+    }
+
+    const code = (error as { code?: string }).code;
+    const detail = (error as { detail?: string }).detail ?? '';
+
+    if (code !== '23505') {
+      return false;
+    }
+
+    return detail.includes('idempotency_key') || detail.includes('idx_bookings_idempotency_key');
   }
 }
 

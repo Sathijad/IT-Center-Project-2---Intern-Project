@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { listBookings, getRooms, type Booking, type Room } from '../lib/bookingApi'
+import { listBookings, getRooms, type Booking } from '../lib/bookingApi'
 import { BarChart3, Calendar, TrendingUp, AlertCircle } from 'lucide-react'
 
 const BookingReportsPage: React.FC = () => {

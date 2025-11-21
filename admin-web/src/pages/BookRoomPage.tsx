@@ -43,6 +43,8 @@ const BookRoomPage: React.FC = () => {
   const startTs = watch('start_ts')
   const endTs = watch('end_ts')
   const roomId = watch('room_id')
+  const isValidRange =
+    !!startTs && !!endTs ? new Date(endTs).getTime() > new Date(startTs).getTime() : true
 
   // Fetch rooms
   const { data: roomsData, isLoading: roomsLoading, error: roomsError } = useQuery({
@@ -61,13 +63,13 @@ const BookRoomPage: React.FC = () => {
   const { data: availability, isLoading: availabilityLoading, error: availabilityError } = useQuery({
     queryKey: ['room-availability', roomId, startTs, endTs],
     queryFn: () => {
-      if (!roomId || !startTs || !endTs) return null
+      if (!roomId || !startTs || !endTs || !isValidRange) return null
       // Convert datetime-local format to ISO string
       const startISO = new Date(startTs).toISOString()
       const endISO = new Date(endTs).toISOString()
       return getRoomAvailability(roomId, startISO, endISO)
     },
-    enabled: !!roomId && !!startTs && !!endTs,
+    enabled: !!roomId && !!startTs && !!endTs && isValidRange,
     retry: 1,
   })
 
@@ -264,6 +266,12 @@ const BookRoomPage: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {!isValidRange && startTs && endTs && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+                End time must be after the start time.
+              </div>
+            )}
 
             {availabilityError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-2">

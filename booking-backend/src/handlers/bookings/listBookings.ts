@@ -8,8 +8,8 @@ import { ForbiddenError } from '../../common/errors';
 const service = new BookingService();
 
 const querySchema = z.object({
-  user_id: z.string().regex(/^\d+$/).transform(Number).optional(),
-  room_id: z.string().regex(/^\d+$/).transform(Number).optional(),
+  user_id: z.coerce.number().int().positive().optional(),
+  room_id: z.coerce.number().int().positive().optional(),
   start_date: z.string().datetime().optional(),
   end_date: z.string().datetime().optional(),
   status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED']).optional(),
@@ -24,14 +24,20 @@ export const handler = createHandler(async ({ event, user }) => {
   const query = parseQuery(querySchema, event.queryStringParameters);
 
   const isAdmin = user.roles.includes('ADMIN');
+  const numericUserId =
+    typeof user.userId === 'number' ? user.userId : Number(user.userId);
+
+  if (!Number.isFinite(numericUserId)) {
+    throw new ForbiddenError('Invalid authenticated user id');
+  }
 
   // Non-admins can only see their own bookings
-  if (!isAdmin && query.user_id && query.user_id !== user.userId) {
+  if (!isAdmin && query.user_id && query.user_id !== numericUserId) {
     throw new ForbiddenError('You can only view your own bookings');
   }
 
   const filters = {
-    userId: isAdmin ? query.user_id : user.userId,
+    userId: isAdmin ? query.user_id : numericUserId,
     roomId: query.room_id,
     startDate: query.start_date,
     endDate: query.end_date,

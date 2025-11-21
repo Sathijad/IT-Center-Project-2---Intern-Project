@@ -317,7 +317,7 @@ Authorization: Bearer <your-cognito-jwt-token>
 - **Headers:**
   - `Authorization: Bearer <token>`
   - `Content-Type: application/json`
-  - `Idempotency-Key: <unique-key>` (optional, for safe retries)
+  - `Idempotency-Key: <unique-key>` (optional but recommended; the API will auto-generate a deterministic key if omitted)
 - **Body (JSON):**
 ```json
 {
@@ -632,8 +632,8 @@ Authorization: Bearer <your-cognito-jwt-token>
    - Ensure `end_ts` is after `start_ts`
 
 4. **Idempotency:**
-   - Use the `Idempotency-Key` header when creating bookings to safely retry requests
-   - Same key will return the existing booking instead of creating a duplicate
+   - Supplying an `Idempotency-Key` header is recommended to make retries safe. If you don’t provide one, the API automatically generates a deterministic key based on the booking details, so duplicate submissions with the same payload will still reuse the original booking.
+   - The `Idempotency-Key` column in the `bookings` table will now always contain either your supplied value or the auto-generated key.
 
 5. **Role-Based Access:**
    - Regular users can: list rooms, view availability, create/cancel their own bookings
