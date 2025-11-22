@@ -116,3 +116,21 @@ export const updateMockUserRoles = async (
   `, userEmail, roles);
 };
 
+/**
+ * Wait for manual user interaction (e.g., entering verification code)
+ * This pauses execution and waits for the user to complete an action
+ */
+export const waitForManualAction = async (
+  message: string,
+  timeoutSeconds: number = 300
+): Promise<void> => {
+  console.log('\n========================================');
+  console.log(`⏸️  ${message}`);
+  console.log('========================================');
+  console.log(`Waiting up to ${timeoutSeconds} seconds...`);
+  console.log('========================================\n');
+  
+  // Wait for the specified timeout
+  await new Promise(resolve => setTimeout(resolve, timeoutSeconds * 1000));
+};
+

@@ -4,6 +4,12 @@ export const TEST_DATA = {
   // In real scenarios, this would be obtained from a test auth flow
   testUserToken: process.env.TEST_USER_TOKEN || 'mock-jwt-token-for-testing',
   
+  // Real admin credentials for Selenium tests (from environment variables)
+  adminCredentials: {
+    email: process.env.TEST_USER_EMAIL || 'admin@test.com',
+    password: process.env.TEST_USER_PASSWORD || 'Admin@123'
+  },
+  
   // Test user credentials
   testUser: {
     email: 'admin@itcenter.com',
