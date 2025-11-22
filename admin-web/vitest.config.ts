@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    setupFiles: './src/test/setup.ts',
+    setupFiles: ['./src/test/setup.ts', 'allure-vitest/setup'],
     globals: true,
     // Exclude Mocha UI tests (they use a different test runner)
     exclude: [
@@ -16,6 +16,8 @@ export default defineConfig({
       '**/.{idea,git,cache,output,temp}/**',
       '**/tests/ui/**', // Mocha tests, not Vitest
     ],
+    // Allure reporter configuration
+    reporters: ['default', 'allure-vitest/reporter'],
   },
   resolve: {
     alias: {

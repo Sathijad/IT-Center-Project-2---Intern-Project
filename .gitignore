@@ -50,6 +50,10 @@ docker-compose.override.yml
 test-results/
 coverage/
 
+# Allure reports and results
+**/allure-results/
+**/allure-report/
+
 # Performance test results (can be large)
 **/tests/performance/*.json
 
