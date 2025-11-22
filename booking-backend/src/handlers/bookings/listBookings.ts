@@ -36,8 +36,12 @@ export const handler = createHandler(async ({ event, user }) => {
     throw new ForbiddenError('You can only view your own bookings');
   }
 
+  // Default to current user's ID when no user_id is provided (even for admins)
+  // Admins can explicitly provide user_id to view another user's bookings
+  const targetUserId = query.user_id ?? numericUserId;
+
   const filters = {
-    userId: isAdmin ? query.user_id : numericUserId,
+    userId: targetUserId,
     roomId: query.room_id,
     startDate: query.start_date,
     endDate: query.end_date,

@@ -21,8 +21,8 @@ class BookingApiBase {
       return 'http://localhost:3001';
     }
 
-    // Default to production API Gateway URL (update with actual URL after deployment)
-    return 'https://placeholder.execute-api.ap-southeast-2.amazonaws.com';
+    // Default to production API Gateway URL
+    return 'https://7kzqtue6ac.execute-api.ap-southeast-2.amazonaws.com';
   }
 }
 

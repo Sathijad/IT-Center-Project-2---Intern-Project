@@ -10,7 +10,7 @@ const roomRepository = new RoomRepository();
 const bookingRepository = new BookingRepository();
 
 const pathSchema = z.object({
-  id: z.string().regex(/^\d+$/).transform(Number),
+  id: z.coerce.number().int().positive(),
 });
 
 const querySchema = z.object({
@@ -59,13 +59,13 @@ export const handler = createHandler(async ({ event, user }) => {
       id: b.id,
       start: b.startTs.toISOString(),
       end: b.endTs.toISOString(),
-      title: b.title,
+      title: b.title || null,
     })),
     blackouts: blackouts.map((b) => ({
       id: b.id,
       start: b.startTs.toISOString(),
       end: b.endTs.toISOString(),
-      reason: b.reason,
+      reason: b.reason || null,
     })),
   };
 

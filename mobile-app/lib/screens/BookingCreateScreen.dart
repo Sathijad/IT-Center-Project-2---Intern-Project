@@ -203,8 +203,11 @@ class _BookingCreateScreenState extends State<BookingCreateScreen> {
                     border: OutlineInputBorder(),
                   ),
                   items: _rooms.map((room) {
+                    final roomId = room['id'] is int 
+                        ? room['id'] as int 
+                        : int.tryParse(room['id'].toString()) ?? 0;
                     return DropdownMenuItem<int>(
-                      value: room['id'] as int,
+                      value: roomId,
                       child: Text(room['name'] ?? 'Unknown'),
                     );
                   }).toList(),

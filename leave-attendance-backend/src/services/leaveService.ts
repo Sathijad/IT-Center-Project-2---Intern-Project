@@ -48,10 +48,30 @@ export class LeaveService {
   async listRequests(user: AuthenticatedUser, filters: LeaveRequestFilters) {
     const scopedFilters = { ...filters };
 
-    if (user.roles.includes('ADMIN')) {
-      scopedFilters.userId = filters.userId ?? null;
+    // Ensure userId is always set to the current user's ID by default
+    // This ensures both EMPLOYEE and ADMIN see their own requests by default
+    const numericUserId = typeof user.userId === 'number' ? user.userId : Number(user.userId);
+    
+    if (!Number.isFinite(numericUserId) || numericUserId <= 0) {
+      throw new Error(`Invalid user ID: ${user.userId}`);
+    }
+    
+    // Non-admins can only see their own requests (enforce this)
+    if (!user.roles.includes('ADMIN')) {
+      scopedFilters.userId = numericUserId;
     } else {
-      scopedFilters.userId = user.userId;
+      // For admins: use the userId from filters if explicitly provided and valid, otherwise default to own userId
+      const filterUserId = filters.userId;
+      if (filterUserId != null && Number.isFinite(filterUserId) && filterUserId > 0) {
+        scopedFilters.userId = filterUserId;
+      } else {
+        scopedFilters.userId = numericUserId;
+      }
+    }
+
+    // Ensure userId is always set (should never be undefined or null at this point)
+    if (scopedFilters.userId == null || !Number.isFinite(scopedFilters.userId) || scopedFilters.userId <= 0) {
+      throw new Error(`Invalid userId in scopedFilters: ${scopedFilters.userId}`);
     }
 
     return this.repository.getLeaveRequests(scopedFilters);

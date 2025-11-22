@@ -156,7 +156,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         itemCount: _bookings.length,
                         itemBuilder: (context, index) {
                           final booking = _bookings[index];
-                          final id = booking['id'] as int;
+                          final id = booking['id'] is int 
+                              ? booking['id'] as int 
+                              : int.tryParse(booking['id'].toString()) ?? 0;
                           final title = booking['title'] ?? 'Untitled Booking';
                           final status = booking['status'] ?? 'CONFIRMED';
                           final startTs = _formatDateTime(booking['startTs']?.toString());

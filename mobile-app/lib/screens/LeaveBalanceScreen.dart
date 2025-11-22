@@ -38,9 +38,9 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
       }
 
       await _loadLeaveBalance(token);
-      // Load leave history only for the current user, even for admins,
-      // so this screen always shows the relevant user's own requests.
-      await _loadLeaveRequests(token, userId: _currentUserId);
+      // Load leave history - backend will automatically filter by current user
+      // Don't pass user_id, let backend default to current user from JWT token
+      await _loadLeaveRequests(token);
     } catch (e) {
       setState(() {
         _error = e.toString().replaceAll('Exception: ', '');
@@ -95,13 +95,13 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
     }
   }
 
-  Future<void> _loadLeaveRequests(String token, {int? userId}) async {
+  Future<void> _loadLeaveRequests(String token) async {
     try {
       final queryParams = {
         'page': '1',
         'size': '50',
         'sort': 'created_at,desc',
-        if (userId != null) 'user_id': userId.toString(),
+        // Don't pass user_id - backend will automatically filter by current user from JWT
       };
 
       final uri = Uri.parse('${LeaveApiBase.base}/api/v1/leave/requests').replace(queryParameters: queryParams);
@@ -132,7 +132,7 @@ class _LeaveBalanceScreenState extends State<LeaveBalanceScreen> {
         if (refreshedToken != null &&
             refreshedToken.isNotEmpty &&
             refreshedToken != token) {
-          return _loadLeaveRequests(refreshedToken, userId: userId);
+          return _loadLeaveRequests(refreshedToken);
         }
         throw Exception('Session expired. Please sign in again.');
       } else {

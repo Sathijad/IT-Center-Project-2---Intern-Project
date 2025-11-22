@@ -182,9 +182,13 @@ class _BookingSearchScreenState extends State<BookingSearchScreen> {
                             itemCount: _filteredRooms.length,
                             itemBuilder: (context, index) {
                               final room = _filteredRooms[index];
-                              final roomId = room['id'] as int;
+                              final roomId = room['id'] is int 
+                                  ? room['id'] as int 
+                                  : int.tryParse(room['id'].toString()) ?? 0;
                               final name = room['name'] ?? 'Unknown Room';
-                              final capacity = room['capacity'] ?? 0;
+                              final capacity = room['capacity'] is int 
+                                  ? room['capacity'] as int 
+                                  : int.tryParse(room['capacity'].toString()) ?? 0;
                               final location = room['location'] ?? 'No location';
                               final amenities = (room['amenities'] as List? ?? [])
                                   .map((a) => a.toString())

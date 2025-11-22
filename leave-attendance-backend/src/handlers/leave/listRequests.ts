@@ -29,8 +29,13 @@ export const handler = createHandler(async ({ event, user }) => {
     throw new ForbiddenError('Only administrators can view leave requests for other users');
   }
 
+  // Default to current user's ID when no user_id is provided (even for admins)
+  // Admins can explicitly provide user_id to view another user's requests
+  const numericUserId = typeof user.userId === 'number' ? user.userId : Number(user.userId);
+  const targetUserId = query.user_id ? Number(query.user_id) : numericUserId;
+
   const filters = {
-    userId: query.user_id ? Number(query.user_id) : undefined,
+    userId: targetUserId,
     status: query.status,
     startDate: query.from,
     endDate: query.to,
