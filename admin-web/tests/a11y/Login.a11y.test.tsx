@@ -1,20 +1,21 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
+import { vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mock modules that pull in Vite env or API
-jest.mock('../../src/lib/auth', () => ({
+vi.mock('../../src/lib/auth', () => ({
     __esModule: true,
-    startLogin: jest.fn(),
+    startLogin: vi.fn(),
 }));
 
-jest.mock('../../src/contexts/AuthContext', () => ({
+vi.mock('../../src/contexts/AuthContext', () => ({
     useAuth: () => ({ isAuthenticated: false }),
 }));
 
 // Import after mocks are in place to avoid evaluating real deps
-const Login = require('../../src/pages/Login').default as React.FC;
+import Login from '../../src/pages/Login';
 
 expect.extend(toHaveNoViolations);
 

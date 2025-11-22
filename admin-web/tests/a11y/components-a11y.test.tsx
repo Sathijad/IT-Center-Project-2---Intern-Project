@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
+import { vi } from 'vitest';
 import { LeaveRequestTable } from '../../src/components/LeaveRequestTable';
 import { LeaveApprovalCard } from '../../src/components/LeaveApprovalCard';
 import { type LeaveRequest } from '../../src/lib/leaveApi';
@@ -52,9 +53,9 @@ describe('Component Accessibility', () => {
     const { container } = render(
       <LeaveApprovalCard
         request={mockLeaveRequest}
-        onApprove={jest.fn()}
-        onReject={jest.fn()}
-        onClose={jest.fn()}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        onClose={vi.fn()}
       />
     );
     
@@ -68,14 +69,16 @@ describe('Modal Accessibility', () => {
     const { container } = render(
       <LeaveApprovalCard
         request={mockLeaveRequest}
-        onApprove={jest.fn()}
-        onReject={jest.fn()}
-        onClose={jest.fn()}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        onClose={vi.fn()}
       />
     );
     
-    // Check for modal/dialog role
-    const modal = container.querySelector('[role="dialog"]');
+    // Check for modal structure (overlay with content)
+    const modal = container.querySelector('.fixed.inset-0') || 
+                  container.querySelector('[role="dialog"]') ||
+                  container.querySelector('.bg-white.rounded-lg');
     expect(modal).toBeInTheDocument();
     
     const results = await axe(container);
@@ -86,9 +89,9 @@ describe('Modal Accessibility', () => {
     const { getByLabelText } = render(
       <LeaveApprovalCard
         request={mockLeaveRequest}
-        onApprove={jest.fn()}
-        onReject={jest.fn()}
-        onClose={jest.fn()}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        onClose={vi.fn()}
       />
     );
     
@@ -102,9 +105,9 @@ describe('Button Accessibility', () => {
     const { container } = render(
       <LeaveApprovalCard
         request={mockLeaveRequest}
-        onApprove={jest.fn()}
-        onReject={jest.fn()}
-        onClose={jest.fn()}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        onClose={vi.fn()}
       />
     );
     

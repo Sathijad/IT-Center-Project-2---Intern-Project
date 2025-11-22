@@ -1,11 +1,13 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
+import { vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LeaveRequestPage from '../../src/pages/LeaveRequestPage';
 import ApplyLeavePage from '../../src/pages/ApplyLeavePage';
 import AttendancePage from '../../src/pages/AttendancePage';
-import { AuthContext } from '../../src/contexts/AuthContext';
+import { AuthProvider } from '../../src/contexts/AuthContext';
 
 expect.extend(toHaveNoViolations);
 
@@ -19,8 +21,8 @@ const mockUser = {
 const mockAuthContext = {
   user: mockUser,
   isLoading: false,
-  login: jest.fn(),
-  logout: jest.fn(),
+  login: vi.fn(),
+  logout: vi.fn(),
 };
 
 const createWrapper = () => {
@@ -32,11 +34,13 @@ const createWrapper = () => {
   });
 
   return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      <AuthContext.Provider value={mockAuthContext}>
-        {children}
-      </AuthContext.Provider>
-    </QueryClientProvider>
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
   );
 };
 
@@ -86,12 +90,20 @@ describe('Form Accessibility', () => {
       wrapper: createWrapper(),
     });
     
-    const results = await axe(container, {
-      rules: {
-        'keyboard-navigation': { enabled: true },
-      },
+    // Check for keyboard accessibility - verify form inputs are focusable
+    const inputs = container.querySelectorAll('input, select, textarea, button');
+    expect(inputs.length).toBeGreaterThan(0);
+    
+    // Verify all inputs have proper tabindex or are naturally focusable
+    inputs.forEach((input) => {
+      const tabIndex = input.getAttribute('tabindex');
+      // Either no tabindex (naturally focusable) or tabindex >= 0
+      if (tabIndex !== null) {
+        expect(parseInt(tabIndex)).toBeGreaterThanOrEqual(0);
+      }
     });
     
+    const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 

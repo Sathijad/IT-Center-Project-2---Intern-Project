@@ -1,20 +1,21 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
+import { vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Dashboard from '../../src/pages/Dashboard';
 
 // Mock api calls used by the page
-jest.mock('../../src/lib/api', () => ({
+vi.mock('../../src/lib/api', () => ({
 	__esModule: true,
 	default: {
-		get: jest.fn().mockResolvedValue({ data: { totalElements: 0, content: [] } }),
+		get: vi.fn().mockResolvedValue({ data: { totalElements: 0, content: [] } }),
 	},
 }));
 
 // Lightweight mock for AuthContext
-jest.mock('../../src/contexts/AuthContext', () => {
+vi.mock('../../src/contexts/AuthContext', () => {
 	const React = require('react');
 	return {
 		useAuth: () => ({
@@ -22,7 +23,7 @@ jest.mock('../../src/contexts/AuthContext', () => {
 			loading: false,
 			isAdmin: true,
 			isAuthenticated: true,
-			setUser: jest.fn(),
+			setUser: vi.fn(),
 		}),
 	};
 });

@@ -8,6 +8,14 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     globals: true,
+    // Exclude Mocha UI tests (they use a different test runner)
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/cypress/**',
+      '**/.{idea,git,cache,output,temp}/**',
+      '**/tests/ui/**', // Mocha tests, not Vitest
+    ],
   },
   resolve: {
     alias: {
