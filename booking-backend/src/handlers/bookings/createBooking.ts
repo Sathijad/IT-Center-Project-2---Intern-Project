@@ -55,6 +55,23 @@ export const handler = createHandler(async ({ event, user, context }) => {
 
   const statusCode = result.isNew ? 201 : 200;
 
-  return successResponse(statusCode, { booking: result.booking }, origin);
+  // Enhance booking with room information
+  if (!result.booking) {
+    throw new Error('Booking creation failed - no booking returned');
+  }
+
+  const booking = result.booking;
+  const bookingWithRoom = booking as typeof booking & { roomName?: string | null; roomCapacity?: number | null; roomLocation?: string | null };
+  const enhancedBooking = {
+    ...booking,
+    room: bookingWithRoom.roomName ? {
+      id: booking.roomId,
+      name: bookingWithRoom.roomName,
+      capacity: bookingWithRoom.roomCapacity,
+      location: bookingWithRoom.roomLocation,
+    } : null,
+  };
+
+  return successResponse(statusCode, { booking: enhancedBooking }, origin);
 });
 

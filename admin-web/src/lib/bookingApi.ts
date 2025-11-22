@@ -67,6 +67,12 @@ export interface Booking {
   externalEventId: string | null
   createdAt: string
   updatedAt: string
+  room?: {
+    id: number
+    name: string
+    capacity: number | null
+    location: string | null
+  } | null
 }
 
 export interface BlackoutWindow {

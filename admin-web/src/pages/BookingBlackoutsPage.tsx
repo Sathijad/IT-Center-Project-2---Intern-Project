@@ -122,7 +122,13 @@ const BookingBlackoutsPage: React.FC = () => {
   }
 
   const getRoomName = (roomId: number) => {
-    return rooms.find((r) => r.id === roomId)?.name || `Room ${roomId}`
+    // Ensure type-safe comparison - convert both to numbers
+    const bookingRoomId = typeof roomId === 'number' ? roomId : Number(roomId)
+    const room = rooms.find((r) => {
+      const rId = typeof r.id === 'number' ? r.id : Number(r.id)
+      return rId === bookingRoomId
+    })
+    return room?.name || `Room ${roomId}`
   }
 
   if (blackoutsLoading) {

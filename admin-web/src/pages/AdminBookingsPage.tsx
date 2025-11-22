@@ -41,8 +41,18 @@ const AdminBookingsPage: React.FC = () => {
     })
   }
 
-  const getRoomName = (roomId: number) => {
-    return rooms.find((r) => r.id === roomId)?.name || `Room ${roomId}`
+  const getRoomName = (booking: Booking) => {
+    // Use room info from booking if available (preferred)
+    if (booking.room?.name) {
+      return booking.room.name
+    }
+    // Fallback to rooms list lookup
+    const bookingRoomId = typeof booking.roomId === 'number' ? booking.roomId : Number(booking.roomId)
+    const room = rooms.find((r) => {
+      const rId = typeof r.id === 'number' ? r.id : Number(r.id)
+      return rId === bookingRoomId
+    })
+    return room?.name || `Room ${booking.roomId}`
   }
 
   if (bookingsLoading) {
@@ -173,7 +183,7 @@ const AdminBookingsPage: React.FC = () => {
                     <div className="text-sm text-gray-500">ID: {booking.id}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{getRoomName(booking.roomId)}</div>
+                    <div className="text-sm text-gray-900">{getRoomName(booking)}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-600">

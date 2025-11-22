@@ -50,6 +50,20 @@ export const handler = createHandler(async ({ event, user }) => {
 
   const bookings = await service.listBookings(filters);
 
-  return successResponse(200, { bookings }, origin);
+  // Enhance bookings with room information
+  const bookingsWithRoomInfo = bookings.map((booking) => {
+    const bookingWithRoom = booking as typeof booking & { roomName?: string | null; roomCapacity?: number | null; roomLocation?: string | null };
+    return {
+      ...booking,
+      room: bookingWithRoom.roomName ? {
+        id: booking.roomId,
+        name: bookingWithRoom.roomName,
+        capacity: bookingWithRoom.roomCapacity,
+        location: bookingWithRoom.roomLocation,
+      } : null,
+    };
+  });
+
+  return successResponse(200, { bookings: bookingsWithRoomInfo }, origin);
 });
 

@@ -31,9 +31,13 @@ interface BookingRow {
   external_event_id: string | null;
   created_at: Date;
   updated_at: Date;
+  // Room information (from JOIN)
+  room_name?: string | null;
+  room_capacity?: number | null;
+  room_location?: string | null;
 }
 
-const mapBooking = (row: BookingRow): Booking => ({
+const mapBooking = (row: BookingRow): Booking & { roomName?: string | null; roomCapacity?: number | null; roomLocation?: string | null } => ({
   id: typeof row.id === 'number' ? row.id : Number(row.id),
   roomId: typeof row.room_id === 'number' ? row.room_id : Number(row.room_id),
   userId: typeof row.user_id === 'number' ? row.user_id : Number(row.user_id),
@@ -46,6 +50,10 @@ const mapBooking = (row: BookingRow): Booking => ({
   externalEventId: row.external_event_id,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
+  // Include room information if available
+  roomName: row.room_name || null,
+  roomCapacity: row.room_capacity || null,
+  roomLocation: row.room_location || null,
 });
 
 export interface BookingSearchFilters {
@@ -60,9 +68,25 @@ export class BookingRepository {
   async findById(id: number): Promise<Booking | null> {
     const result = await query<BookingRow>(
       `
-      SELECT id, room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id, created_at, updated_at
-      FROM bookings
-      WHERE id = $1
+      SELECT 
+        b.id, 
+        b.room_id, 
+        b.user_id, 
+        b.start_ts, 
+        b.end_ts, 
+        b.status, 
+        b.title, 
+        b.attendees, 
+        b.idempotency_key, 
+        b.external_event_id, 
+        b.created_at, 
+        b.updated_at,
+        r.name AS room_name,
+        r.capacity AS room_capacity,
+        r.location AS room_location
+      FROM bookings b
+      LEFT JOIN rooms r ON b.room_id = r.id
+      WHERE b.id = $1
       `,
       [id],
     );
@@ -177,10 +201,26 @@ export class BookingRepository {
 
     const result = await query<BookingRow>(
       `
-      SELECT id, room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id, created_at, updated_at
-      FROM bookings
+      SELECT 
+        b.id, 
+        b.room_id, 
+        b.user_id, 
+        b.start_ts, 
+        b.end_ts, 
+        b.status, 
+        b.title, 
+        b.attendees, 
+        b.idempotency_key, 
+        b.external_event_id, 
+        b.created_at, 
+        b.updated_at,
+        r.name AS room_name,
+        r.capacity AS room_capacity,
+        r.location AS room_location
+      FROM bookings b
+      LEFT JOIN rooms r ON b.room_id = r.id
       ${whereClause}
-      ORDER BY start_ts DESC
+      ORDER BY b.start_ts DESC
       `,
       params,
     );
@@ -265,11 +305,12 @@ export class BookingRepository {
         throw new Error(`Invalid roomId: ${booking.roomId}`);
       }
 
-      const result = await client.query<BookingRow>(
+      // Insert booking first
+      const insertResult = await client.query<{ id: number }>(
         `
         INSERT INTO bookings (room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id)
         VALUES ($1::bigint, $2::bigint, $3::timestamptz, $4::timestamptz, $5::varchar, $6::varchar, $7::jsonb, $8::varchar, $9::varchar)
-        RETURNING id, room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id, created_at, updated_at
+        RETURNING id
         `,
         [
           roomId,
@@ -284,7 +325,35 @@ export class BookingRepository {
         ],
       );
 
-      return mapBooking(result.rows[0]);
+      const newBookingId = insertResult.rows[0].id;
+
+      // Fetch the booking with room information
+      const bookingWithRoom = await client.query<BookingRow>(
+        `
+        SELECT 
+          b.id, 
+          b.room_id, 
+          b.user_id, 
+          b.start_ts, 
+          b.end_ts, 
+          b.status, 
+          b.title, 
+          b.attendees, 
+          b.idempotency_key, 
+          b.external_event_id, 
+          b.created_at, 
+          b.updated_at,
+          r.name AS room_name,
+          r.capacity AS room_capacity,
+          r.location AS room_location
+        FROM bookings b
+        LEFT JOIN rooms r ON b.room_id = r.id
+        WHERE b.id = $1
+        `,
+        [newBookingId],
+      );
+
+      return mapBooking(bookingWithRoom.rows[0]);
     });
   }
 
@@ -327,21 +396,49 @@ export class BookingRepository {
     }
 
     params.push(id);
-    const result = await query<BookingRow>(
+    
+    // Update the booking
+    const updateResult = await query<{ id: number }>(
       `
       UPDATE bookings
       SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
       WHERE id = $${paramIndex}
-      RETURNING id, room_id, user_id, start_ts, end_ts, status, title, attendees, idempotency_key, external_event_id, created_at, updated_at
+      RETURNING id
       `,
       params,
     );
 
-    if (result.rowCount === 0) {
+    if (updateResult.rowCount === 0) {
       throw new NotFoundError('Booking not found', { bookingId: id });
     }
 
-    return mapBooking(result.rows[0]);
+    // Fetch the updated booking with room information
+    const bookingWithRoom = await query<BookingRow>(
+      `
+      SELECT 
+        b.id, 
+        b.room_id, 
+        b.user_id, 
+        b.start_ts, 
+        b.end_ts, 
+        b.status, 
+        b.title, 
+        b.attendees, 
+        b.idempotency_key, 
+        b.external_event_id, 
+        b.created_at, 
+        b.updated_at,
+        r.name AS room_name,
+        r.capacity AS room_capacity,
+        r.location AS room_location
+      FROM bookings b
+      LEFT JOIN rooms r ON b.room_id = r.id
+      WHERE b.id = $1
+      `,
+      [id],
+    );
+
+    return mapBooking(bookingWithRoom.rows[0]);
   }
 
   async cancel(id: number): Promise<Booking> {

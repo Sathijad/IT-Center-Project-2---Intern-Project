@@ -30,7 +30,17 @@ const BookingReportsPage: React.FC = () => {
   // Calculate utilization metrics
   const calculateUtilization = () => {
     const roomStats = rooms.map((room) => {
-      const roomBookings = bookings.filter((b: Booking) => b.roomId === room.id)
+      // Ensure type-safe comparison - convert both to numbers
+      const roomId = typeof room.id === 'number' ? room.id : Number(room.id)
+      const roomBookings = bookings.filter((b: Booking) => {
+        // First check if booking has room info and it matches
+        if (b.room?.id && b.room.id === roomId) {
+          return true
+        }
+        // Fallback to roomId comparison
+        const bookingRoomId = typeof b.roomId === 'number' ? b.roomId : Number(b.roomId)
+        return bookingRoomId === roomId
+      })
       const totalHours = roomBookings.reduce((sum: number, b: Booking) => {
         const start = new Date(b.startTs)
         const end = new Date(b.endTs)
@@ -44,9 +54,14 @@ const BookingReportsPage: React.FC = () => {
       const totalAvailableHours = daysInRange * 8 // Assuming 8 hours per day
       const utilizationPercent = totalAvailableHours > 0 ? (totalHours / totalAvailableHours) * 100 : 0
 
+      // Use room name from booking if available, otherwise use room list
+      const roomName = roomBookings.length > 0 && roomBookings[0].room?.name 
+        ? roomBookings[0].room.name 
+        : room.name
+
       return {
         roomId: room.id,
-        roomName: room.name,
+        roomName: roomName,
         bookingCount: roomBookings.length,
         totalHours: Math.round(totalHours * 10) / 10,
         utilizationPercent: Math.round(utilizationPercent * 10) / 10,

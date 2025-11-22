@@ -32,6 +32,22 @@ export const handler = createHandler(async ({ event, user }) => {
   const isAdmin = user.roles.includes('ADMIN');
   const booking = await service.cancelBooking(params.id, numericUserId, isAdmin);
 
-  return successResponse(200, { booking }, origin);
+  if (!booking) {
+    throw new Error('Booking cancellation failed - no booking returned');
+  }
+
+  // Enhance booking with room information
+  const bookingWithRoom = booking as typeof booking & { roomName?: string | null; roomCapacity?: number | null; roomLocation?: string | null };
+  const enhancedBooking = {
+    ...booking,
+    room: bookingWithRoom.roomName ? {
+      id: booking.roomId,
+      name: bookingWithRoom.roomName,
+      capacity: bookingWithRoom.roomCapacity,
+      location: bookingWithRoom.roomLocation,
+    } : null,
+  };
+
+  return successResponse(200, { booking: enhancedBooking }, origin);
 });
 
