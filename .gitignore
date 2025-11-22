@@ -61,3 +61,12 @@ captures/*.pcap
 *.tmp
 *.temp
 
+# Serverless Framework build artifacts
+**/.serverless/
+**/.esbuild/
+
+# Flutter generated files
+mobile-app/**/GeneratedPluginRegistrant.swift
+mobile-app/**/GeneratedPluginRegistrant.m
+mobile-app/**/GeneratedPluginRegistrant.h
+
