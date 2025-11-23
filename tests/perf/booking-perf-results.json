@@ -1,0 +1,518 @@
+{
+  "setup_data": {
+    "healthCheckPassed": true
+  },
+  "root_group": {
+    "groups": [
+      {
+        "path": "::setup",
+        "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+        "groups": [],
+        "checks": [],
+        "name": "setup"
+      },
+      {
+        "groups": [],
+        "checks": [],
+        "name": "teardown",
+        "path": "::teardown",
+        "id": "a8a9942382e8ffe2e56ef29e664b8229"
+      }
+    ],
+    "checks": [
+      {
+        "name": "health check status is 200",
+        "path": "::health check status is 200",
+        "id": "d89ad1db9736d06506c2c682124fe48f",
+        "passes": 862,
+        "fails": 377
+      },
+      {
+        "name": "health check has status field",
+        "path": "::health check has status field",
+        "id": "9b8939a7f1fd031bce64053172cb0bf1",
+        "passes": 862,
+        "fails": 377
+      },
+      {
+        "name": "rooms list status is 200",
+        "path": "::rooms list status is 200",
+        "id": "39d9f0df435cb354c5e51fc03db4d39e",
+        "passes": 723,
+        "fails": 375
+      },
+      {
+        "name": "rooms list has data",
+        "path": "::rooms list has data",
+        "id": "2da106af920929bb2684f2d308a1402b",
+        "passes": 723,
+        "fails": 375
+      },
+      {
+        "path": "::get room status is 200",
+        "id": "11816e73c247cc799817468406b203e2",
+        "passes": 621,
+        "fails": 102,
+        "name": "get room status is 200"
+      },
+      {
+        "name": "get room has room data",
+        "path": "::get room has room data",
+        "id": "bbae1e86ab77a8052c07ab5fbe67d133",
+        "passes": 621,
+        "fails": 102
+      },
+      {
+        "path": "::availability status is 200",
+        "id": "905421068fbc26b3264dea73d229545f",
+        "passes": 635,
+        "fails": 88,
+        "name": "availability status is 200"
+      },
+      {
+        "fails": 88,
+        "name": "availability has timeline data",
+        "path": "::availability has timeline data",
+        "id": "b2b1a558c02308af3b0fd45062e66376",
+        "passes": 635
+      },
+      {
+        "fails": 0,
+        "name": "booking create status is 200, 201, 409, or 503",
+        "path": "::booking create status is 200, 201, 409, or 503",
+        "id": "cbf8da4b0bbfcd21351eaa037bf7d3db",
+        "passes": 723
+      },
+      {
+        "name": "booking create has booking data",
+        "path": "::booking create has booking data",
+        "id": "3ac1a520d53b04d9d33a8bf8cca80bea",
+        "passes": 723,
+        "fails": 0
+      },
+      {
+        "passes": 603,
+        "fails": 120,
+        "name": "bookings list status is 200",
+        "path": "::bookings list status is 200",
+        "id": "067ad310f6c4296bdc2385824e131104"
+      },
+      {
+        "name": "bookings list has data",
+        "path": "::bookings list has data",
+        "id": "b63426e1c8937bb7dc2c55270cf51aa1",
+        "passes": 603,
+        "fails": 120
+      },
+      {
+        "id": "50afcfd931063915fb2e5b5ede43fef2",
+        "passes": 201,
+        "fails": 97,
+        "name": "admin rooms list status is 200",
+        "path": "::admin rooms list status is 200"
+      },
+      {
+        "name": "admin bookings list status is 200",
+        "path": "::admin bookings list status is 200",
+        "id": "bb501372aca56550fe09d1f0c35c8995",
+        "passes": 196,
+        "fails": 102
+      },
+      {
+        "name": "ICS export status is 200",
+        "path": "::ICS export status is 200",
+        "id": "c6c14a8d6c219d181024a4208500aa95",
+        "passes": 177,
+        "fails": 47
+      },
+      {
+        "name": "ICS export has calendar content",
+        "path": "::ICS export has calendar content",
+        "id": "5f403fd599b03882f841fef92447214a",
+        "passes": 177,
+        "fails": 47
+      },
+      {
+        "name": "my bookings list status is 200",
+        "path": "::my bookings list status is 200",
+        "id": "2edc0dcd27fb05d9826d79b13ac00e01",
+        "passes": 696,
+        "fails": 402
+      },
+      {
+        "name": "blackouts list status is 200",
+        "path": "::blackouts list status is 200",
+        "id": "a5e5fa94813469c20f231a2f8b6707b7",
+        "passes": 198,
+        "fails": 100
+      },
+      {
+        "name": "blackouts list has data",
+        "path": "::blackouts list has data",
+        "id": "2f026b8aad449b1d1876c51387ed2031",
+        "passes": 198,
+        "fails": 100
+      },
+      {
+        "fails": 0,
+        "name": "blackout create status is 201, 422, or 503",
+        "path": "::blackout create status is 201, 422, or 503",
+        "id": "a983d3c6bceeecafd3675588e23ce94f",
+        "passes": 56
+      },
+      {
+        "fails": 0,
+        "name": "blackout create has blackout data",
+        "path": "::blackout create has blackout data",
+        "id": "10f2c9e4eb5da164f02d33773b6de16b",
+        "passes": 56
+      },
+      {
+        "name": "blackout update status is 200",
+        "path": "::blackout update status is 200",
+        "id": "fcd7741f9f8b6e15350189517d4faa04",
+        "passes": 26,
+        "fails": 3
+      },
+      {
+        "id": "b2a556f59abbb19fea65fb5072db512e",
+        "passes": 15,
+        "fails": 0,
+        "name": "blackout delete status is 200",
+        "path": "::blackout delete status is 200"
+      },
+      {
+        "id": "7ec5f0bc4eaa2576604d53e2c2b4456b",
+        "passes": 0,
+        "fails": 36,
+        "name": "MS Graph sync enqueue status is 202",
+        "path": "::MS Graph sync enqueue status is 202"
+      }
+    ],
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "options": {
+    "summaryTrendStats": [
+      "avg",
+      "min",
+      "med",
+      "max",
+      "p(90)",
+      "p(95)"
+    ],
+    "summaryTimeUnit": "",
+    "noColor": false
+  },
+  "state": {
+    "isStdOutTTY": true,
+    "isStdErrTTY": true,
+    "testRunDurationMs": 309419.3087
+  },
+  "metrics": {
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0,
+        "max": 271.8248,
+        "p(90)": 0,
+        "p(95)": 0,
+        "avg": 1.2732036138222105,
+        "min": 0
+      }
+    },
+    "availability_check_duration": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 208.61272475795298,
+        "min": 156,
+        "med": 194,
+        "max": 1144,
+        "p(90)": 249,
+        "p(95)": 292
+      },
+      "thresholds": {
+        "p(95)<1000": {
+          "ok": true
+        }
+      }
+    },
+    "checks": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.7715864953689872,
+        "passes": 10330,
+        "fails": 3058
+      }
+    },
+    "http_req_duration": {
+      "thresholds": {
+        "p(99)<2000": {
+          "ok": true
+        },
+        "p(95)<1000": {
+          "ok": true
+        }
+      },
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 305.36441000000025,
+        "p(95)": 424.24029499999995,
+        "avg": 394.8565369427586,
+        "min": 144.5111,
+        "med": 199.08235000000002,
+        "max": 30800.1676
+      }
+    },
+    "data_sent": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "rate": 2387.0165152366267,
+        "count": 738589
+      }
+    },
+    "http_req_blocked": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 0,
+        "med": 0,
+        "max": 2037.228,
+        "p(90)": 0,
+        "p(95)": 0,
+        "avg": 2.88433923766816
+      }
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 2635,
+        "rate": 8.515952062173294
+      }
+    },
+    "total_requests": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 7581,
+        "rate": 24.500733428210907
+      }
+    },
+    "room_list_duration": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 228.3296903460838,
+        "min": 150,
+        "med": 191,
+        "max": 1394,
+        "p(90)": 315.60000000000014,
+        "p(95)": 514.6499999999985
+      },
+      "thresholds": {
+        "p(95)<1000": {
+          "ok": true
+        }
+      }
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 7582,
+        "rate": 24.503965288576058
+      }
+    },
+    "iteration_duration": {
+      "values": {
+        "p(90)": 7858.6204800000005,
+        "p(95)": 8288.485779999999,
+        "avg": 3899.2018177095238,
+        "min": 5.0632,
+        "med": 2367.9142,
+        "max": 38867.6817
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "vus_max": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 53,
+        "min": 53,
+        "max": 53
+      }
+    },
+    "ics_export_duration": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "min": 161,
+        "med": 214.5,
+        "max": 1150,
+        "p(90)": 371.70000000000005,
+        "p(95)": 442.49999999999994,
+        "avg": 252.89285714285714
+      }
+    },
+    "http_req_waiting": {
+      "values": {
+        "avg": 387.3066250329709,
+        "min": 144.5111,
+        "med": 195.11829999999998,
+        "max": 30800.1676,
+        "p(90)": 289.37234,
+        "p(95)": 395.67927499999985
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "data_received": {
+      "contains": "data",
+      "values": {
+        "count": 89051426,
+        "rate": 287801.7741495911
+      },
+      "type": "counter"
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 1,
+        "min": 0,
+        "max": 53
+      }
+    },
+    "http_req_duration{expected_response:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 434.6582699999993,
+        "avg": 237.20406209110996,
+        "min": 148.9129,
+        "med": 206.4801,
+        "max": 1906.1423,
+        "p(90)": 314.17774000000003
+      }
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 18.732000000000014,
+        "p(95)": 33.338579999999965,
+        "avg": 7.296288657346347,
+        "min": 0,
+        "med": 0.48,
+        "max": 1196.8189
+      }
+    },
+    "booking_create_duration": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 1651.9045643153527,
+        "min": 161,
+        "med": 210,
+        "max": 30801,
+        "p(90)": 414.8000000000004,
+        "p(95)": 907.2999999999996
+      },
+      "thresholds": {
+        "p(95)<2000": {
+          "ok": true
+        }
+      }
+    },
+    "errors": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.2438992217385569,
+        "passes": 1849,
+        "fails": 5732
+      },
+      "thresholds": {
+        "rate<0.30": {
+          "ok": true
+        }
+      }
+    },
+    "booking_list_duration": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "min": 154,
+        "med": 237,
+        "max": 1465,
+        "p(90)": 417,
+        "p(95)": 540.6999999999999,
+        "avg": 278.2116182572614
+      },
+      "thresholds": {
+        "p(95)<1000": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_sending": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 0.2536232524399903,
+        "min": 0,
+        "med": 0,
+        "max": 24.691,
+        "p(90)": 0.7354,
+        "p(95)": 0.8371399999999999
+      }
+    },
+    "http_req_failed": {
+      "values": {
+        "rate": 0.342785544711158,
+        "passes": 2599,
+        "fails": 4983
+      },
+      "thresholds": {
+        "rate<0.30": {
+          "ok": false
+        }
+      },
+      "type": "rate",
+      "contains": "default"
+    },
+    "blackout_create_duration": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 229.78571428571428,
+        "min": 169,
+        "med": 196.5,
+        "max": 982,
+        "p(90)": 286,
+        "p(95)": 350.5
+      }
+    },
+    "http_req_tls_handshaking": {
+      "values": {
+        "avg": 1.4578073859140077,
+        "min": 0,
+        "med": 0,
+        "max": 724.6796,
+        "p(90)": 0,
+        "p(95)": 0
+      },
+      "type": "trend",
+      "contains": "time"
+    }
+  }
+}

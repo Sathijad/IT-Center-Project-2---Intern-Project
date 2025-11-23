@@ -182,6 +182,8 @@ functions:
 
   bookingsCreate:
     handler: src/handlers/bookings/createBooking.handler
+    timeout: 60
+    memorySize: 1024
     events:
       - httpApi:
           method: POST
@@ -214,6 +216,8 @@ functions:
 
   blackoutsCreate:
     handler: src/handlers/blackouts/createBlackout.handler
+    timeout: 60
+    memorySize: 1024
     events:
       - httpApi:
           method: POST
