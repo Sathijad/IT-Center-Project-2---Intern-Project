@@ -14,9 +14,9 @@
 - Jest config: `admin-web/jest.config.cjs`
 - Jest setup: `admin-web/jest.setup-a11y.ts`
 - Component a11y tests: `admin-web/tests/a11y/*.a11y.test.tsx`
-  - `Login.a11y.test.tsx`
-  - `Dashboard.a11y.test.tsx`
-  - `Users.a11y.test.tsx`
+  - Phase 1: `Login.a11y.test.tsx`, `Dashboard.a11y.test.tsx`, `Users.a11y.test.tsx`
+  - Phase 2: `leave-a11y.test.tsx`, `components-a11y.test.tsx`
+  - Phase 3: `BookRoomPage.a11y.test.tsx`, `MyBookingsPage.a11y.test.tsx`, `BookingRoomsPage.a11y.test.tsx`, `BookingBlackoutsPage.a11y.test.tsx`, `AdminBookingsPage.a11y.test.tsx`, `BookingReportsPage.a11y.test.tsx`, `phase3-booking-a11y.test.tsx`
 - E2E a11y smoke: `admin-web/tests/ui/a11y.smoke.spec.ts`
 
 ### How to run
@@ -37,8 +37,10 @@ Notes:
 - E2E will start mock API + dev server + headless Chrome and run tests. The a11y smoke test injects `axe-core` via CDN and fails on serious/critical issues defined in the spec.
 
 ### Current results (latest local run)
-- Component a11y tests: 3/3 passed
-  - `Login`, `Dashboard`, `Users` → jest-axe reported no violations in rendered markup under test conditions (mocked network/auth where applicable)
+- Component a11y tests: 
+  - Phase 1: `Login`, `Dashboard`, `Users` → jest-axe reported no violations
+  - Phase 2: `LeaveRequestPage`, `ApplyLeavePage`, `AttendancePage` → jest-axe reported no violations
+  - Phase 3: All 6 booking pages → jest-axe reported no violations (see `phase3-booking-a11y.test.tsx` for comprehensive tests)
 - E2E a11y smoke: included in suite; ensure the app is running via the `npm run e2e` harness to validate in-browser. The smoke test asserts no serious/critical violations on `Dashboard` after auth token seeding.
 
 ### Why these three pages (scope and rationale)
@@ -80,6 +82,18 @@ Notes:
 - Runs axe-core in a real browser session after auth is seeded.
 - Catches runtime-only issues not visible in jsdom (computed styles, focus order, CSS-only icon buttons, contrast from finalized Tailwind classes).
 - Gating: we treat `color-contrast`, `button-name`, `label`, and keyboard-related rules as serious/critical for smoke.
+
+### Phase 3 Booking Pages Coverage
+- **Employee Pages**: `BookRoomPage`, `MyBookingsPage`
+  - Tests booking form accessibility, room search filters, booking list structure
+  - Validates keyboard navigation, form labels, and color contrast
+- **Admin Pages**: `BookingRoomsPage`, `BookingBlackoutsPage`, `AdminBookingsPage`, `BookingReportsPage`
+  - Tests CRUD operations accessibility, table semantics, filter forms
+  - Validates admin-only features are properly accessible
+- **Comprehensive Test**: `phase3-booking-a11y.test.tsx`
+  - Runs all Phase 3 pages in a single suite
+  - Cross-cutting concerns: forms, keyboard navigation, color contrast
+  - Run with: `npm run a11y:test:phase3`
 
 ### Future expansions (recommended)
 - Add page coverage: `Profile`, `AuditLog`, and `UserDetail` a11y tests (component level) and include them in smoke as needed.

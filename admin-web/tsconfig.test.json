@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "strict": false,
-    "types": ["node", "mocha", "chai"]
+    "types": ["node", "mocha", "chai", "jest", "@testing-library/jest-dom"]
   },
   "ts-node": {
     "compilerOptions": {
@@ -18,7 +18,8 @@
     }
   },
   "include": [
-    "tests/**/*.ts"
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
   ],
   "exclude": [
     "node_modules",
