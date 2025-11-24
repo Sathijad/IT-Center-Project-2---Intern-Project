@@ -3,7 +3,8 @@
 Secure, role-based staff authentication system with AWS Cognito OIDC integration.
 
 **Phase 1**: Authentication & User Management  
-**Phase 2**: Leave & Attendance Management (NEW)
+**Phase 2**: Leave & Attendance Management (NEW)  
+**Phase 4**: Schedules & Task Management (ASP.NET Core + RDS + Hangfire + React/Flutter surfaces)
 
 ## 🏗️ Project Structure
 
@@ -12,6 +13,7 @@ Secure, role-based staff authentication system with AWS Cognito OIDC integration
 /leave-attendance-backend  # Node.js Lambda - Phase 2 Leave/Attendance
 /admin-web             # React (Vite + Tailwind)
 /mobile-app            # Flutter
+/schedules-backend     # ASP.NET Core 9 Schedules & Tasks API (Phase 4)
 /infra                 # Docker Compose, PostgreSQL, MailHog
 /docs                  # OpenAPI, ERD, documentation
 ```
@@ -121,6 +123,13 @@ AWS_REGION: ap-southeast-2
 - ✅ Admin leave approval workflow
 - ✅ Attendance logs and reporting
 - ✅ Node.js Lambda backend (API Gateway)
+
+### Phase 4 - Schedules & Tasks (NEW)
+- ✅ ASP.NET Core 9 schedules/tasks API with PostgreSQL + EF Core
+- ✅ Hangfire jobs for MS Graph sync, Teams notifications, CSV imports
+- ✅ Feature-flagged MS Graph + Teams integrations
+- ✅ React admin planner + Flutter mobile views (in progress)
+- ✅ OpenAPI docs, ERD, runbooks, and automated tests
 
 ## ⚠️ Important: AWS Cognito Configuration
 

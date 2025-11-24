@@ -1,0 +1,644 @@
+openapi: 3.0.3
+info:
+  title: IT Office Staff Management - Phase 4 API
+  version: 1.0.0
+  description: >
+    Staff schedules & task management APIs for Phase 4.
+servers:
+  - url: https://api.itcenter.example.com
+    description: Production
+  - url: https://staging-api.itcenter.example.com
+    description: Staging
+  - url: http://localhost:8080
+    description: Local development
+tags:
+  - name: Schedules
+  - name: Tasks
+  - name: TaskComments
+  - name: Imports
+  - name: Availability
+  - name: Integrations
+  - name: Health
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    PageParam:
+      in: query
+      name: page
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: 1-based page number.
+    SizeParam:
+      in: query
+      name: size
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Page size (default 20, max 100).
+  responses:
+    ErrorResponse:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Schedule:
+      type: object
+      properties:
+        scheduleId:
+          type: string
+          format: uuid
+        userId:
+          type: integer
+          format: int64
+        teamId:
+          type: string
+          format: uuid
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        recurrence:
+          $ref: '#/components/schemas/Recurrence'
+        status:
+          type: string
+          enum: [ACTIVE, CANCELLED]
+        source:
+          type: string
+          enum: [MANUAL, IMPORT, SYNC]
+        metadata:
+          type: object
+          additionalProperties: true
+        createdBy:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ScheduleCreateRequest:
+      type: object
+      required: [userId, startTime, endTime]
+      properties:
+        userId:
+          type: integer
+          format: int64
+        teamId:
+          type: string
+          format: uuid
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        recurrence:
+          $ref: '#/components/schemas/RecurrenceCreate'
+        source:
+          type: string
+          enum: [MANUAL, IMPORT, SYNC]
+          default: MANUAL
+        metadata:
+          type: object
+          additionalProperties: true
+    Recurrence:
+      type: object
+      nullable: true
+      properties:
+        recurrenceId:
+          type: string
+          format: uuid
+        pattern:
+          type: string
+          enum: [WEEKLY, CUSTOM]
+        interval:
+          type: integer
+          default: 1
+        byDay:
+          type: array
+          items:
+            type: string
+        repeatUntil:
+          type: string
+          format: date
+        timezone:
+          type: string
+    RecurrenceCreate:
+      allOf:
+        - $ref: '#/components/schemas/Recurrence'
+      required: [pattern, timezone]
+    Task:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, DONE]
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        assigneeId:
+          type: integer
+          format: int64
+        reporterId:
+          type: integer
+          format: int64
+        scheduleId:
+          type: string
+          format: uuid
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TaskCreateRequest:
+      type: object
+      required: [title, assigneeId]
+      properties:
+        title:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+          default: MEDIUM
+        dueDate:
+          type: string
+          format: date-time
+        assigneeId:
+          type: integer
+          format: int64
+        scheduleId:
+          type: string
+          format: uuid
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+    TaskUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, DONE]
+        dueDate:
+          type: string
+          format: date-time
+        assigneeId:
+          type: integer
+          format: int64
+        metadata:
+          type: object
+          additionalProperties: true
+    TaskCommentRequest:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              url:
+                type: string
+    ImportJob:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+        totals:
+          type: object
+          properties:
+            totalRows:
+              type: integer
+            successRows:
+              type: integer
+            failureRows:
+              type: integer
+        errorDetails:
+          type: array
+          items:
+            type: object
+        initiatedBy:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+    AvailabilitySlot:
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [FREE, BUSY]
+    Error:
+      type: object
+      required: [code, message, requestId]
+      properties:
+        code:
+          type: string
+          enum: [SCHEDULE_CONFLICT, NOT_FOUND, VALIDATION_ERROR, INTERNAL_ERROR]
+        message:
+          type: string
+        requestId:
+          type: string
+paths:
+  /api/v1/schedules:
+    get:
+      tags: [Schedules]
+      summary: List schedules
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: user_id
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: team_id
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: range
+          description: ISO8601 start/end separated by comma (e.g., 2025-01-01/2025-01-07)
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Paged schedules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Schedule'
+                  page:
+                    type: integer
+                  size:
+                    type: integer
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      tags: [Schedules]
+      summary: Create schedule
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleCreateRequest'
+      responses:
+        '201':
+          description: Schedule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+        '409':
+          description: Schedule conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/schedules/{schedule_id}:
+    patch:
+      tags: [Schedules]
+      summary: Update schedule
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: schedule_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleCreateRequest'
+      responses:
+        '200':
+          description: Updated schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      tags: [Schedules]
+      summary: Delete schedule
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: schedule_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/tasks:
+    get:
+      tags: [Tasks]
+      summary: List tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: assignee
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [PENDING, IN_PROGRESS, DONE]
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Paged tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  page:
+                    type: integer
+                  size:
+                    type: integer
+                  total:
+                    type: integer
+    post:
+      tags: [Tasks]
+      summary: Create task
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/tasks/{task_id}:
+    patch:
+      tags: [Tasks]
+      summary: Update task
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdateRequest'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/tasks/{task_id}/comments:
+    post:
+      tags: [TaskComments]
+      summary: Add comment to task
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCommentRequest'
+      responses:
+        '201':
+          description: Comment created
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/imports/schedules:
+    post:
+      tags: [Imports]
+      summary: Start schedule CSV import
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '202':
+          description: Import job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJob'
+  /api/v1/imports/{job_id}:
+    get:
+      tags: [Imports]
+      summary: Get import job status
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJob'
+        '404':
+          $ref: '#/components/responses/ErrorResponse'
+  /api/v1/availability:
+    get:
+      tags: [Availability]
+      summary: Get MS Graph free/busy availability
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: user_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: range
+          required: true
+          schema:
+            type: string
+            description: ISO8601 interval (start/end)
+      responses:
+        '200':
+          description: Availability slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AvailabilitySlot'
+  /api/v1/integrations/msgraph/sync:
+    post:
+      tags: [Integrations]
+      summary: Trigger MS Graph sync for a user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, range]
+              properties:
+                userId:
+                  type: integer
+                  format: int64
+                range:
+                  type: string
+                  description: ISO8601 start/end interval
+      responses:
+        '202':
+          description: Sync scheduled
+  /api/v1/healthz:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
