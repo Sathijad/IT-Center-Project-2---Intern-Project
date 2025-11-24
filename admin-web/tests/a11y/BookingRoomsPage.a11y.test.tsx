@@ -1,6 +1,7 @@
-import React from 'react';
+// React is needed for JSX
+/// <reference path="./jest-axe.d.ts" />
 import { render } from '@testing-library/react';
-import { axe, toHaveNoViolations } from 'jest-axe';
+import { axe } from 'jest-axe';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import BookingRoomsPage from '../../src/pages/BookingRoomsPage';
@@ -100,7 +101,7 @@ jest.mock('../../src/contexts/AuthContext', () => ({
 // Mock window.confirm
 global.window.confirm = jest.fn(() => true);
 
-expect.extend(toHaveNoViolations);
+// toHaveNoViolations is extended in jest.setup-a11y.ts
 
 describe('BookingRoomsPage accessibility', () => {
 	let queryClient: QueryClient;

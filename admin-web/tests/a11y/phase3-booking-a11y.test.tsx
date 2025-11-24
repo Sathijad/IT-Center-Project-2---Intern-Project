@@ -3,6 +3,7 @@ import { render, cleanup, waitFor } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { allure } from './allure-helper';
 
 // Import all Phase 3 booking pages
 import BookRoomPage from '../../src/pages/BookRoomPage';
@@ -248,6 +249,9 @@ const createWrapper = (queryClient: QueryClient) => {
 };
 
 describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
+	allure.epic('Accessibility Testing');
+	allure.feature('Phase 3 Booking Pages');
+	
 	let queryClient: QueryClient;
 
 	beforeEach(() => {
@@ -264,6 +268,8 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 	});
 
 	describe('Employee Pages', () => {
+		allure.story('Employee Pages');
+		
 		beforeEach(() => {
 			// Set employee auth for employee pages
 			mockUseAuth.mockReturnValue(mockEmployeeAuth);
@@ -272,6 +278,10 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 		});
 
 		it('BookRoomPage has no accessibility violations', async () => {
+			allure.startCase('BookRoomPage has no accessibility violations');
+			allure.story('BookRoomPage');
+			allure.severity('critical');
+			allure.description('Comprehensive accessibility test for BookRoomPage using axe-core');
 			const { container } = render(<BookRoomPage />, {
 				wrapper: createWrapper(queryClient),
 			});
@@ -289,10 +299,28 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 					'form-field-multiple-labels': { enabled: true },
 				},
 			});
+			
+			// Attach results to Allure
+			allure.attachment('BookRoomPage Accessibility Results', JSON.stringify({
+				violations: results.violations,
+				passes: results.passes.length,
+				incomplete: results.incomplete.length,
+			}, null, 2), 'application/json');
+			
+			if (results.violations.length > 0) {
+				allure.endCase('failed', { message: `Found ${results.violations.length} accessibility violations` });
+			} else {
+				allure.endCase('passed');
+			}
+			
 			expect(results).toHaveNoViolations();
 		});
 
 		it('MyBookingsPage has no accessibility violations', async () => {
+			allure.startCase('MyBookingsPage has no accessibility violations');
+			allure.story('MyBookingsPage');
+			allure.severity('critical');
+			
 			const { container } = render(<MyBookingsPage />, {
 				wrapper: createWrapper(queryClient),
 			});
@@ -307,11 +335,24 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 					'label': { enabled: false },
 				},
 			});
+			
+			allure.attachment('MyBookingsPage Results', JSON.stringify({
+				violations: results.violations,
+				passes: results.passes.length,
+			}, null, 2), 'application/json');
+			
+			if (results.violations.length > 0) {
+				allure.endCase('failed', { message: `Found ${results.violations.length} violations` });
+			} else {
+				allure.endCase('passed');
+			}
+			
 			expect(results).toHaveNoViolations();
 		});
 	});
 
 	describe('Admin Pages', () => {
+		allure.story('Admin Pages');
 		beforeEach(() => {
 			// Set admin auth for admin pages
 			mockUseAuth.mockReturnValue(mockAdminAuth);
@@ -320,6 +361,10 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 		});
 
 		it('BookingRoomsPage has no accessibility violations', async () => {
+			allure.startCase('BookingRoomsPage has no accessibility violations');
+			allure.story('BookingRoomsPage');
+			allure.severity('critical');
+			
 			const { container } = render(<BookingRoomsPage />, {
 				wrapper: createWrapper(queryClient),
 			});
@@ -334,10 +379,25 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 					'label': { enabled: false },
 				},
 			});
+			
+			allure.attachment('BookingRoomsPage Results', JSON.stringify({
+				violations: results.violations,
+				passes: results.passes.length,
+			}, null, 2), 'application/json');
+			
+			if (results.violations.length > 0) {
+				allure.endCase('failed', { message: `Found ${results.violations.length} violations` });
+			} else {
+				allure.endCase('passed');
+			}
+			
 			expect(results).toHaveNoViolations();
 		});
 
 		it('BookingBlackoutsPage has no accessibility violations', async () => {
+			allure.startCase('BookingBlackoutsPage has no accessibility violations');
+			allure.story('BookingBlackoutsPage');
+			allure.severity('critical');
 			const { container } = render(<BookingBlackoutsPage />, {
 				wrapper: createWrapper(queryClient),
 			});
@@ -352,10 +412,25 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 					'label': { enabled: false },
 				},
 			});
+			
+			allure.attachment('BookingBlackoutsPage Results', JSON.stringify({
+				violations: results.violations,
+				passes: results.passes.length,
+			}, null, 2), 'application/json');
+			
+			if (results.violations.length > 0) {
+				allure.endCase('failed', { message: `Found ${results.violations.length} violations` });
+			} else {
+				allure.endCase('passed');
+			}
+			
 			expect(results).toHaveNoViolations();
 		});
 
 		it('AdminBookingsPage has no accessibility violations', async () => {
+			allure.startCase('AdminBookingsPage has no accessibility violations');
+			allure.story('AdminBookingsPage');
+			allure.severity('critical');
 			const { container } = render(<AdminBookingsPage />, {
 				wrapper: createWrapper(queryClient),
 			});
@@ -370,10 +445,25 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 					'label': { enabled: false },
 				},
 			});
+			
+			allure.attachment('AdminBookingsPage Results', JSON.stringify({
+				violations: results.violations,
+				passes: results.passes.length,
+			}, null, 2), 'application/json');
+			
+			if (results.violations.length > 0) {
+				allure.endCase('failed', { message: `Found ${results.violations.length} violations` });
+			} else {
+				allure.endCase('passed');
+			}
+			
 			expect(results).toHaveNoViolations();
 		});
 
 		it('BookingReportsPage has no accessibility violations', async () => {
+			allure.startCase('BookingReportsPage has no accessibility violations');
+			allure.story('BookingReportsPage');
+			allure.severity('critical');
 			const { container } = render(<BookingReportsPage />, {
 				wrapper: createWrapper(queryClient),
 			});
@@ -390,12 +480,30 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 					'label': { enabled: false },
 				},
 			});
+			
+			allure.attachment('BookingReportsPage Results', JSON.stringify({
+				violations: results.violations,
+				passes: results.passes.length,
+			}, null, 2), 'application/json');
+			
+			if (results.violations.length > 0) {
+				allure.endCase('failed', { message: `Found ${results.violations.length} violations` });
+			} else {
+				allure.endCase('passed');
+			}
+			
 			expect(results).toHaveNoViolations();
 		});
 	});
 
 	describe('Cross-cutting Accessibility Concerns', () => {
+		allure.story('Cross-cutting Concerns');
+		
 		it('all forms have proper labels', async () => {
+			allure.startCase('all forms have proper labels');
+			allure.story('Form Labels');
+			allure.severity('normal');
+			allure.description('Tests all Phase 3 forms for proper label associations');
 			const pages = [
 				{ component: BookRoomPage, auth: mockEmployeeAuth },
 				{ component: BookingRoomsPage, auth: mockAdminAuth },
@@ -458,6 +566,13 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 					const violationId = v.id || v.ruleId || '';
 					return !['label', 'heading-order', 'select-name'].includes(violationId);
 				});
+				
+				allure.attachment(`${Page.name} Form Label Results`, JSON.stringify({
+					labelViolations: results.violations.filter(v => v.id === 'label'),
+					formFieldMultipleLabels: results.violations.filter(v => v.id === 'form-field-multiple-labels'),
+					otherViolations: filteredViolations,
+				}, null, 2), 'application/json');
+				
 				expect(filteredViolations).toHaveLength(0);
 				
 				// Cleanup after each iteration
@@ -465,9 +580,16 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 				freshQueryClient.clear();
 				cleanup();
 			}
+			
+			allure.endCase('passed');
 		});
 
 		it('all interactive elements are keyboard accessible', async () => {
+			allure.startCase('all interactive elements are keyboard accessible');
+			allure.story('Keyboard Navigation');
+			allure.severity('normal');
+			allure.description('Tests that all interactive elements are keyboard accessible across Phase 3 pages');
+			
 			const pages = [
 				{ component: BookRoomPage, auth: mockEmployeeAuth },
 				{ component: MyBookingsPage, auth: mockEmployeeAuth },
@@ -532,6 +654,12 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 					const violationId = v.id || v.ruleId || '';
 					return !['label', 'heading-order', 'select-name'].includes(violationId);
 				});
+				
+				allure.attachment(`${Page.name} Keyboard Navigation Results`, JSON.stringify({
+					focusOrderViolations: results.violations.filter(v => v.id === 'focus-order-semantics'),
+					otherViolations: filteredViolations,
+				}, null, 2), 'application/json');
+				
 				expect(filteredViolations).toHaveLength(0);
 				
 				// Cleanup after each iteration
@@ -539,6 +667,8 @@ describe('Phase 3 Booking Pages - Comprehensive Accessibility Tests', () => {
 				freshQueryClient.clear();
 				cleanup();
 			}
+			
+			allure.endCase('passed');
 		});
 
 		// Note: Color contrast tests disabled in jsdom environment
