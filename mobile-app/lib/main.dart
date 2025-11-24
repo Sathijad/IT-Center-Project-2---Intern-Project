@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_driver/driver_extension.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'src/auth_service.dart';
 import 'src/api_client.dart';
@@ -7,6 +8,7 @@ import 'src/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  enableFlutterDriverExtension();
   await AuthService.instance.init(); // Amplify init
   runApp(const MyApp());
 }
