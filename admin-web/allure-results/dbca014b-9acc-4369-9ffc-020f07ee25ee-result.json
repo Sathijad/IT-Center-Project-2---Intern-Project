@@ -1,0 +1,33 @@
+{
+  "name": "BookingRoomsPage has no accessibility violations",
+  "status": "passed",
+  "stage": "finished",
+  "steps": [],
+  "attachments": [
+    {
+      "name": "BookingRoomsPage Results",
+      "source": "5da8c5fb-0966-4f25-a036-50212988ce73-attachment.json",
+      "type": "application/json"
+    }
+  ],
+  "labels": [
+    {
+      "name": "suite",
+      "value": "Accessibility Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Accessibility"
+    },
+    {
+      "name": "story",
+      "value": "BookingRoomsPage"
+    },
+    {
+      "name": "severity",
+      "value": "critical"
+    }
+  ],
+  "start": 1763920552739,
+  "stop": 1763920552852
+}

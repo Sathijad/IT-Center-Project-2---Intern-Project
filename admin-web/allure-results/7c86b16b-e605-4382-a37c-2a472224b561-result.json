@@ -1,0 +1,33 @@
+{
+  "name": "BookingReportsPage has no accessibility violations",
+  "status": "passed",
+  "stage": "finished",
+  "steps": [],
+  "attachments": [
+    {
+      "name": "BookingReportsPage Results",
+      "source": "405a79e7-1401-4ff6-8768-cc5fac478f6d-attachment.json",
+      "type": "application/json"
+    }
+  ],
+  "labels": [
+    {
+      "name": "suite",
+      "value": "Accessibility Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Accessibility"
+    },
+    {
+      "name": "story",
+      "value": "BookingReportsPage"
+    },
+    {
+      "name": "severity",
+      "value": "critical"
+    }
+  ],
+  "start": 1763955564842,
+  "stop": 1763955565046
+}

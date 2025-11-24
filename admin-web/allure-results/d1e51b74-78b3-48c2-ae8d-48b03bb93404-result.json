@@ -1,0 +1,59 @@
+{
+  "name": "all interactive elements are keyboard accessible",
+  "status": "passed",
+  "stage": "finished",
+  "steps": [],
+  "attachments": [
+    {
+      "name": "BookRoomPage Keyboard Navigation Results",
+      "source": "d780b545-ee7a-4ff3-b951-d6adc8e2e9bd-attachment.json",
+      "type": "application/json"
+    },
+    {
+      "name": "MyBookingsPage Keyboard Navigation Results",
+      "source": "749cef47-ef05-4e4b-b458-6799a33f326b-attachment.json",
+      "type": "application/json"
+    },
+    {
+      "name": "BookingRoomsPage Keyboard Navigation Results",
+      "source": "8c85d000-f49d-4ec3-9612-51bbfdf702f3-attachment.json",
+      "type": "application/json"
+    },
+    {
+      "name": "BookingBlackoutsPage Keyboard Navigation Results",
+      "source": "cb55bfe7-049e-4626-86b9-34cd9907bec1-attachment.json",
+      "type": "application/json"
+    },
+    {
+      "name": "AdminBookingsPage Keyboard Navigation Results",
+      "source": "050bc5d9-4fa3-4955-9298-ddaccf37090d-attachment.json",
+      "type": "application/json"
+    },
+    {
+      "name": "BookingReportsPage Keyboard Navigation Results",
+      "source": "2e89e244-39e6-48b7-9dee-d9f3d5400e3d-attachment.json",
+      "type": "application/json"
+    }
+  ],
+  "labels": [
+    {
+      "name": "suite",
+      "value": "Accessibility Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Accessibility"
+    },
+    {
+      "name": "story",
+      "value": "Keyboard Navigation"
+    },
+    {
+      "name": "severity",
+      "value": "normal"
+    }
+  ],
+  "start": 1763954690379,
+  "stop": 1763954693423,
+  "description": "Tests that all interactive elements are keyboard accessible across Phase 3 pages"
+}

@@ -1,0 +1,33 @@
+{
+  "name": "BookingBlackoutsPage has no accessibility violations",
+  "status": "passed",
+  "stage": "finished",
+  "steps": [],
+  "attachments": [
+    {
+      "name": "BookingBlackoutsPage Results",
+      "source": "eb749c57-070e-4793-ac03-8e36b59cd62a-attachment.json",
+      "type": "application/json"
+    }
+  ],
+  "labels": [
+    {
+      "name": "suite",
+      "value": "Accessibility Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Accessibility"
+    },
+    {
+      "name": "story",
+      "value": "BookingBlackoutsPage"
+    },
+    {
+      "name": "severity",
+      "value": "critical"
+    }
+  ],
+  "start": 1763919390335,
+  "stop": 1763919390491
+}

@@ -1,0 +1,33 @@
+{
+  "name": "MyBookingsPage has no accessibility violations",
+  "status": "passed",
+  "stage": "finished",
+  "steps": [],
+  "attachments": [
+    {
+      "name": "MyBookingsPage Results",
+      "source": "4e82b5ef-9b9c-41d8-9a4f-2e1fa037d32a-attachment.json",
+      "type": "application/json"
+    }
+  ],
+  "labels": [
+    {
+      "name": "suite",
+      "value": "Accessibility Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Accessibility"
+    },
+    {
+      "name": "story",
+      "value": "MyBookingsPage"
+    },
+    {
+      "name": "severity",
+      "value": "critical"
+    }
+  ],
+  "start": 1763920278360,
+  "stop": 1763920278548
+}

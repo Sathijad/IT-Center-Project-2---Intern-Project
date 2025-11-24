@@ -19,6 +19,10 @@ import BookingBlackoutsPage from './pages/BookingBlackoutsPage'
 import AdminBookingsPage from './pages/AdminBookingsPage'
 import BookingReportsPage from './pages/BookingReportsPage'
 import Layout from './components/Layout'
+import SchedulesPlannerPage from './pages/SchedulesPlannerPage'
+import TasksDashboardPage from './pages/TasksDashboardPage'
+import CsvImportPage from './pages/CsvImportPage'
+import ScheduleReportsPage from './pages/ScheduleReportsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -137,6 +141,38 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="ADMIN">
                     <BookingReportsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="schedules"
+                element={
+                  <ProtectedRoute requiredRole="TL">
+                    <SchedulesPlannerPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="tasks"
+                element={
+                  <ProtectedRoute>
+                    <TasksDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="imports"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <CsvImportPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="reports"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <ScheduleReportsPage />
                   </ProtectedRoute>
                 }
               />

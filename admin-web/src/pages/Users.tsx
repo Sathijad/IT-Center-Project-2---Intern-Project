@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import api, { deleteUser as deleteUserApi } from '../lib/api'
-import { Search, UserPlus, Settings, Trash2 } from 'lucide-react'
+import { Search, Settings, Trash2 } from 'lucide-react'
 
 const Users: React.FC = () => {
   const navigate = useNavigate()

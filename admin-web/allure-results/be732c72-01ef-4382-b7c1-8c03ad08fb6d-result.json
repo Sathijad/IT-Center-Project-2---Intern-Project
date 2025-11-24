@@ -1,0 +1,44 @@
+{
+  "name": "all forms have proper labels",
+  "status": "passed",
+  "stage": "finished",
+  "steps": [],
+  "attachments": [
+    {
+      "name": "BookRoomPage Form Label Results",
+      "source": "4dbb8a22-3197-4283-81cd-8f8479269aac-attachment.json",
+      "type": "application/json"
+    },
+    {
+      "name": "BookingRoomsPage Form Label Results",
+      "source": "62d709df-7afc-4654-a340-d1464339e0d1-attachment.json",
+      "type": "application/json"
+    },
+    {
+      "name": "BookingBlackoutsPage Form Label Results",
+      "source": "882a985e-2f45-4d7a-aa61-1b62da78594b-attachment.json",
+      "type": "application/json"
+    }
+  ],
+  "labels": [
+    {
+      "name": "suite",
+      "value": "Accessibility Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Accessibility"
+    },
+    {
+      "name": "story",
+      "value": "Form Labels"
+    },
+    {
+      "name": "severity",
+      "value": "normal"
+    }
+  ],
+  "start": 1763953638440,
+  "stop": 1763953641558,
+  "description": "Tests all Phase 3 forms for proper label associations"
+}

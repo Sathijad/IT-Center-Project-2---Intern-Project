@@ -1,0 +1,43 @@
+{
+  "name": "form inputs are keyboard navigable",
+  "status": "passed",
+  "stage": "finished",
+  "steps": [],
+  "attachments": [
+    {
+      "name": "Interactive Elements",
+      "source": "f7735d59-bcf3-4fcd-a6ad-76bfdac13db4-attachment.json",
+      "type": "application/json"
+    },
+    {
+      "name": "Keyboard Navigation Results",
+      "source": "2e7a332c-7b58-414d-915e-d7ae01699b82-attachment.json",
+      "type": "application/json"
+    }
+  ],
+  "labels": [
+    {
+      "name": "suite",
+      "value": "Accessibility Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Accessibility"
+    },
+    {
+      "name": "feature",
+      "value": "Accessibility"
+    },
+    {
+      "name": "story",
+      "value": "BookRoomPage - Keyboard Navigation"
+    },
+    {
+      "name": "severity",
+      "value": "normal"
+    }
+  ],
+  "start": 1763919978628,
+  "stop": 1763919979309,
+  "description": "Tests that all form inputs are keyboard accessible and have proper focus order"
+}

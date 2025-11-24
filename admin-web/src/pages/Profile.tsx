@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '../contexts/AuthContext'
 import api from '../lib/api'
 import { User } from 'lucide-react'
 
 const Profile: React.FC = () => {
-  const { user } = useAuth()
   const queryClient = useQueryClient()
   const [displayName, setDisplayName] = useState('')
   const [locale, setLocale] = useState('en-US')

@@ -9,6 +9,8 @@ import '../screens/ClockInOutScreen.dart';
 import '../screens/LeaveBalanceScreen.dart';
 import '../screens/BookingSearchScreen.dart';
 import '../screens/MyBookingsScreen.dart';
+import '../screens/ScheduleOverviewScreen.dart';
+import '../screens/MyTasksScreen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -293,6 +295,50 @@ class _HomeScreenState extends State<HomeScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => const MyBookingsScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              key: const ValueKey('schedule_action_card'),
+                              icon: Icons.calendar_month,
+                              title: 'My Schedule',
+                              subtitle: 'See upcoming shifts',
+                              color: Colors.cyan,
+                              onTap: () {
+                                if (userData?['id'] == null) return;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ScheduleOverviewScreen(userId: userData!['id'] as int),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              key: const ValueKey('tasks_action_card'),
+                              icon: Icons.checklist,
+                              title: 'My Tasks',
+                              subtitle: 'Track assignments',
+                              color: Colors.brown,
+                              onTap: () {
+                                if (userData?['id'] == null) return;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MyTasksScreen(assigneeId: userData!['id'] as int),
                                   ),
                                 );
                               },

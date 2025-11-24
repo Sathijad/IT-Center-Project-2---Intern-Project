@@ -1,0 +1,34 @@
+{
+  "name": "BookRoomPage has no accessibility violations",
+  "status": "passed",
+  "stage": "finished",
+  "steps": [],
+  "attachments": [
+    {
+      "name": "BookRoomPage Accessibility Results",
+      "source": "d786eb12-3988-4b1c-97a6-420b80a73237-attachment.json",
+      "type": "application/json"
+    }
+  ],
+  "labels": [
+    {
+      "name": "suite",
+      "value": "Accessibility Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Accessibility"
+    },
+    {
+      "name": "story",
+      "value": "BookRoomPage"
+    },
+    {
+      "name": "severity",
+      "value": "critical"
+    }
+  ],
+  "start": 1763919662862,
+  "stop": 1763919663575,
+  "description": "Comprehensive accessibility test for BookRoomPage using axe-core"
+}

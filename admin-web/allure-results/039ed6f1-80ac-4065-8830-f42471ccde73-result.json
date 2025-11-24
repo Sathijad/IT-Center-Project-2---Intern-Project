@@ -1,0 +1,38 @@
+{
+  "name": "has no detectable a11y violations",
+  "status": "passed",
+  "stage": "finished",
+  "steps": [],
+  "attachments": [
+    {
+      "name": "Accessibility Results",
+      "source": "b57cc753-e776-46e7-ad41-98543dfb870d-attachment.json",
+      "type": "application/json"
+    }
+  ],
+  "labels": [
+    {
+      "name": "suite",
+      "value": "Accessibility Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Accessibility"
+    },
+    {
+      "name": "feature",
+      "value": "Accessibility"
+    },
+    {
+      "name": "story",
+      "value": "BookRoomPage"
+    },
+    {
+      "name": "severity",
+      "value": "critical"
+    }
+  ],
+  "start": 1763953648121,
+  "stop": 1763953648901,
+  "description": "Tests BookRoomPage for accessibility violations using axe-core"
+}

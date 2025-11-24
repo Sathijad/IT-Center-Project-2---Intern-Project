@@ -1,0 +1,38 @@
+{
+  "name": "booking form has proper labels and structure",
+  "status": "passed",
+  "stage": "finished",
+  "steps": [],
+  "attachments": [
+    {
+      "name": "Form Label Results",
+      "source": "104dfd89-7515-437e-9355-ada591100e3a-attachment.json",
+      "type": "application/json"
+    }
+  ],
+  "labels": [
+    {
+      "name": "suite",
+      "value": "Accessibility Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Accessibility"
+    },
+    {
+      "name": "feature",
+      "value": "Accessibility"
+    },
+    {
+      "name": "story",
+      "value": "BookRoomPage - Form Labels"
+    },
+    {
+      "name": "severity",
+      "value": "high"
+    }
+  ],
+  "start": 1763919396698,
+  "stop": 1763919396967,
+  "description": "Tests booking form for proper label associations and structure"
+}

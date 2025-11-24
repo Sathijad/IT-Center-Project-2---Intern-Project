@@ -29,7 +29,7 @@ vi.mock('../../lib/api', () => ({
 }))
 
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: ({ queryFn }: any) => ({
+  useQuery: () => ({
     data: {
       email: 'test@example.com',
       displayName: 'Test User',

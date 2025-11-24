@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { listBlackouts, createBlackout, updateBlackout, deleteBlackout, getRooms, type BlackoutWindow, type Room } from '../lib/bookingApi'
+import { listBlackouts, createBlackout, updateBlackout, deleteBlackout, getRooms, type BlackoutWindow } from '../lib/bookingApi'
 import { Plus, Edit, Trash2, Calendar, AlertCircle } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'

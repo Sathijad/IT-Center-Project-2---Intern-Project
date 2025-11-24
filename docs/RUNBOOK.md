@@ -209,6 +209,17 @@ flutter build apk --release  # Android
 flutter build ios --release   # iOS
 ```
 
+## Phase 4 Addendum — Schedules & Tasks
+
+- **Service:** `schedules-backend/src/Schedules.Api` (ASP.NET Core 8). Deploy as container with access to the same AWS RDS PostgreSQL instance used by earlier phases.
+- **Config:** Supply `ConnectionStrings:SchedulesDb` + Cognito authority/audience, feature flags, Microsoft Graph credentials, Teams webhook, and OTLP endpoint (`Telemetry:OtlpEndpoint`).
+- **Migrations:** Run `dotnet ef database update` (migration `Phase4Initial`) from `schedules-backend`. Database role must have `CREATE TABLE` + `ALTER` permissions.
+- **Background Jobs:** Hangfire server embedded in API; dashboard at `/jobs`. Recurring job `daily-reminders` schedule controlled via `Jobs:ReminderSchedule`.
+- **Feature Flags:** Toggle `enable_ms_graph_sync`, `enable_task_notifications`, `enable_bulk_import` through configuration or AWS Secrets Manager for staged rollout.
+- **Integrations:** Microsoft Graph scopes `Calendars.ReadWrite`, `User.Read`, `offline_access`. Teams notifications use webhook defined in config; ensure outbound HTTPS is allowed.
+- **Health & Monitoring:** New `/healthz` endpoint plus OpenTelemetry traces (export to Grafana/Tempo). Alerts: API p95 > 500 ms, Hangfire job failure ratio > 5%, mobile task API failure > 1%.
+- **Rollback:** Disable feature flags, pause Hangfire jobs, revert DB via backups (no destructive migrations). Redeploy last stable container if new API errors spike.
+
 ## Support Contacts
 
 - Backend Issues: backend-team@itcenter.com

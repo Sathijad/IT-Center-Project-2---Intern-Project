@@ -2,6 +2,7 @@ import { describe, it } from 'vitest'
 import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { axe, toHaveNoViolations } from 'vitest-axe'
+import { expect, vi } from 'vitest'
 import Login from '../pages/Login'
 
 expect.extend(toHaveNoViolations)

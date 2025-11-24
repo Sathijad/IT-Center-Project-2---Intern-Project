@@ -2,12 +2,12 @@ import React from 'react'
 import { Outlet, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { logout } from '../lib/auth'
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  User as UserIcon, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  User as UserIcon,
+  LogOut,
   Menu,
   X,
   Calendar,
@@ -15,7 +15,11 @@ import {
   CalendarCheck,
   Building2,
   CalendarX,
-  BarChart3
+  BarChart3,
+  CalendarRange,
+  ClipboardList,
+  UploadCloud,
+  PieChart,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -23,6 +27,7 @@ const Layout: React.FC = () => {
   const { user, isAdmin } = useAuth()
   // const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const hasTeamLead = isAdmin || user?.roles?.includes('TL')
 
   const handleLogout = () => {
     logout()
@@ -32,16 +37,26 @@ const Layout: React.FC = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    ...(isAdmin ? [
-      { name: 'Users', href: '/users', icon: Users },
-      { name: 'Audit Log', href: '/audit', icon: FileText },
-      { name: 'Leave Management', href: '/admin/leave', icon: CalendarCheck },
-      { name: 'Attendance', href: '/admin/attendance', icon: Clock },
-      { name: 'Rooms', href: '/admin/booking/rooms', icon: Building2 },
-      { name: 'Blackouts', href: '/admin/booking/blackouts', icon: CalendarX },
-      { name: 'All Bookings', href: '/admin/booking/bookings', icon: Calendar },
-      { name: 'Booking Reports', href: '/admin/booking/reports', icon: BarChart3 },
-    ] : []),
+    ...(hasTeamLead
+      ? [
+          { name: 'Team Planner', href: '/schedules', icon: CalendarRange },
+          { name: 'Attendance', href: '/admin/attendance', icon: Clock },
+        ]
+      : []),
+    { name: 'Tasks', href: '/tasks', icon: ClipboardList },
+    ...(isAdmin
+      ? [
+          { name: 'Users', href: '/users', icon: Users },
+          { name: 'Audit Log', href: '/audit', icon: FileText },
+          { name: 'Leave Management', href: '/admin/leave', icon: CalendarCheck },
+          { name: 'Rooms', href: '/admin/booking/rooms', icon: Building2 },
+          { name: 'Blackouts', href: '/admin/booking/blackouts', icon: CalendarX },
+          { name: 'All Bookings', href: '/admin/booking/bookings', icon: Calendar },
+          { name: 'Booking Reports', href: '/admin/booking/reports', icon: BarChart3 },
+          { name: 'CSV Imports', href: '/imports', icon: UploadCloud },
+          { name: 'Scheduler Reports', href: '/reports', icon: PieChart },
+        ]
+      : []),
     { name: 'My Leave', href: '/leave/history', icon: Calendar },
     { name: 'Apply Leave', href: '/leave', icon: CalendarCheck },
     { name: 'Book Room', href: '/bookings/new', icon: Building2 },

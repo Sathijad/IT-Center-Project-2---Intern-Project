@@ -9,7 +9,8 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
-  const { user, loading, isAdmin } = useAuth()
+  const { user, loading } = useAuth()
+  const roles = user?.roles || []
 
   if (loading) {
     return (
@@ -23,7 +24,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
     return <Navigate to="/login" replace />
   }
 
-  if (requiredRole && requiredRole === 'ADMIN' && !isAdmin) {
+  if (requiredRole && !roles.includes(requiredRole)) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">

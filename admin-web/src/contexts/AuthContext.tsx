@@ -7,6 +7,7 @@ interface User {
   email: string
   displayName: string
   roles: string[]
+  lastLogin?: string
 }
 
 interface AuthContextType {

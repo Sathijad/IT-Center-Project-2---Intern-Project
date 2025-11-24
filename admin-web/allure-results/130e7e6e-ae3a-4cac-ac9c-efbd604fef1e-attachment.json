@@ -1,0 +1,53 @@
+{
+  "count": 8,
+  "elements": [
+    {
+      "tagName": "INPUT",
+      "type": "number",
+      "name": null,
+      "id": ""
+    },
+    {
+      "tagName": "INPUT",
+      "type": "text",
+      "name": null,
+      "id": ""
+    },
+    {
+      "tagName": "INPUT",
+      "type": "hidden",
+      "name": "room_id",
+      "id": ""
+    },
+    {
+      "tagName": "INPUT",
+      "type": "text",
+      "name": "title",
+      "id": ""
+    },
+    {
+      "tagName": "INPUT",
+      "type": "datetime-local",
+      "name": "start_ts",
+      "id": ""
+    },
+    {
+      "tagName": "INPUT",
+      "type": "datetime-local",
+      "name": "end_ts",
+      "id": ""
+    },
+    {
+      "tagName": "INPUT",
+      "type": "text",
+      "name": "attendees",
+      "id": ""
+    },
+    {
+      "tagName": "BUTTON",
+      "type": "submit",
+      "name": null,
+      "id": ""
+    }
+  ]
+}

@@ -9,9 +9,8 @@ import {
   getRoomAvailability,
   createBooking,
   type Room,
-  type AvailabilityResponse,
 } from '../lib/bookingApi'
-import { Calendar, Clock, Users, MapPin, Search, AlertCircle } from 'lucide-react'
+import { Users, MapPin, AlertCircle } from 'lucide-react'
 
 const bookingSchema = z.object({
   room_id: z.number().min(1, 'Please select a room'),
@@ -60,7 +59,7 @@ const BookRoomPage: React.FC = () => {
   const rooms = roomsData?.rooms || []
 
   // Fetch availability when room and time are selected
-  const { data: availability, isLoading: availabilityLoading, error: availabilityError } = useQuery({
+  const { data: availability, error: availabilityError } = useQuery({
     queryKey: ['room-availability', roomId, startTs, endTs],
     queryFn: () => {
       if (!roomId || !startTs || !endTs || !isValidRange) return null

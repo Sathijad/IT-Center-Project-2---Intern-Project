@@ -1,0 +1,74 @@
+{
+  "info": {
+    "name": "Phase4 Schedules API",
+    "_postman_id": "8d9c2d1e-4127-4f1f-9c24-1d9a50ec0d05",
+    "description": "Postman collection covering schedules, tasks, imports, and availability endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List Schedules",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/schedules?size=5",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "schedules"],
+          "query": [{ "key": "size", "value": "5" }]
+        }
+      }
+    },
+    {
+      "name": "Create Task",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" },
+          { "key": "Idempotency-Key", "value": "{{$guid}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\":\"Perf Task\",\"assigneeId\":1,\"priority\":\"High\",\"tags\":[\"perf\"]}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/tasks",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "tasks"]
+        }
+      }
+    },
+    {
+      "name": "Trigger CSV Import",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"fileName\":\"schedules.csv\",\"base64Payload\":\"{{csvPayload}}\",\"dryRun\":true}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/imports/schedules",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "imports", "schedules"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "https://api.itcenter.local" },
+    { "key": "token", "value": "" },
+    { "key": "csvPayload", "value": "" }
+  ]
+}
+

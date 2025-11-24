@@ -8,6 +8,8 @@ const api = axios.create({
   },
 })
 
+const MAX_RETRIES = 2
+
 // Add token interceptor
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
@@ -20,17 +22,31 @@ api.interceptors.request.use((config) => {
 // Handle errors
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Only redirect to login on 401 (unauthorized), not on other errors
+  async (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token')
       localStorage.removeItem('id_token')
-      // Only redirect if we're not already on the login page
       if (window.location.pathname !== '/login') {
         window.location.href = '/login'
       }
+      return Promise.reject(error)
     }
-    return Promise.reject(error)
+
+    const config = error.config as typeof error.config & { __retryCount?: number }
+    if (!config) {
+      return Promise.reject(error)
+    }
+    const shouldRetry = !error.response || error.response.status >= 500
+    if (!shouldRetry) {
+      return Promise.reject(error)
+    }
+
+    config.__retryCount = (config.__retryCount ?? 0) + 1
+    if (config.__retryCount > MAX_RETRIES) {
+      return Promise.reject(error)
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200 * config.__retryCount))
+    return api(config)
   }
 )
 

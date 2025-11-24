@@ -1,0 +1,544 @@
+openapi: 3.0.3
+info:
+  title: IT Center Staff Scheduler API
+  version: 0.1.0
+  description: Phase 4 schedules and task management endpoints.
+servers:
+  - url: https://api.itcenter.local
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/schedules:
+    get:
+      summary: List schedules
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: user_id
+          schema:
+            type: integer
+        - in: query
+          name: team_id
+          schema:
+            type: integer
+        - in: query
+          name: range
+          schema:
+            type: string
+            format: date-time
+          description: ISO8601 range start (paired with range_end)
+        - in: query
+          name: range_end
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paged schedules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedSchedules'
+    post:
+      summary: Create schedule
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateScheduleRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+  /api/v1/schedules/{schedule_id}:
+    patch:
+      summary: Update schedule
+      parameters:
+        - in: path
+          name: schedule_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScheduleRequest'
+      responses:
+        '200':
+          description: Updated schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+    delete:
+      summary: Delete schedule
+      parameters:
+        - in: path
+          name: schedule_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+  /api/v1/tasks:
+    get:
+      summary: List tasks
+      parameters:
+        - in: query
+          name: assignee
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [Pending, InProgress, Blocked, Done]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paged tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedTasks'
+    post:
+      summary: Create task
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /api/v1/tasks/{task_id}:
+    patch:
+      summary: Update task
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /api/v1/tasks/{task_id}/comments:
+    post:
+      summary: Add task comment
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskNoteRequest'
+      responses:
+        '200':
+          description: Task with comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  /api/v1/imports/schedules:
+    post:
+      summary: Upload schedules CSV
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportRequest'
+      responses:
+        '202':
+          description: Import job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJob'
+  /api/v1/imports/{job_id}:
+    get:
+      summary: Get import job status
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJob'
+  /api/v1/availability:
+    get:
+      summary: Get availability
+      parameters:
+        - in: query
+          name: user_id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: rangeStart
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: rangeEnd
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Availability
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Availability'
+  /api/v1/integrations/msgraph/sync:
+    post:
+      summary: Trigger manual sync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheduleId:
+                  type: string
+                  format: uuid
+      responses:
+        '202':
+          description: Sync triggered
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Schedule:
+      type: object
+      properties:
+        scheduleId:
+          type: string
+          format: uuid
+        userId:
+          type: integer
+        teamId:
+          type: integer
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+        calendarEventId:
+          type: string
+          nullable: true
+    CreateScheduleRequest:
+      type: object
+      required: [userId, title, startTime, endTime]
+      properties:
+        userId:
+          type: integer
+        teamId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        isAllDay:
+          type: boolean
+        createRecurrence:
+          type: boolean
+        recurrence:
+          $ref: '#/components/schemas/RecurrencePayload'
+    RecurrencePayload:
+      type: object
+      properties:
+        pattern:
+          type: string
+        interval:
+          type: integer
+        byDay:
+          type: string
+        byMonthDay:
+          type: string
+        until:
+          type: string
+          format: date-time
+    UpdateScheduleRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        isAllDay:
+          type: boolean
+        recurrence:
+          $ref: '#/components/schemas/RecurrencePayload'
+        cancel:
+          type: boolean
+    Task:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        assigneeId:
+          type: integer
+        scheduleId:
+          type: string
+          format: uuid
+        priority:
+          type: string
+        status:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskNote'
+    TaskNote:
+      type: object
+      properties:
+        noteId:
+          type: string
+          format: uuid
+        authorId:
+          type: integer
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    CreateTaskRequest:
+      type: object
+      required: [title, assigneeId]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        assigneeId:
+          type: integer
+        scheduleId:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum: [Low, Medium, High, Critical]
+          default: Medium
+        dueDate:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+        status:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+    CreateTaskNoteRequest:
+      type: object
+      properties:
+        body:
+          type: string
+    ImportRequest:
+      type: object
+      required: [fileName, base64Payload]
+      properties:
+        fileName:
+          type: string
+        base64Payload:
+          type: string
+        dryRun:
+          type: boolean
+    ImportJob:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        jobType:
+          type: string
+        status:
+          type: string
+        processedCount:
+          type: integer
+        failedCount:
+          type: integer
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        errorDetails:
+          type: string
+    Availability:
+      type: object
+      properties:
+        userId:
+          type: integer
+        busySlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailabilitySlot'
+    AvailabilitySlot:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        source:
+          type: string
+    PagedSchedules:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Schedule'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalCount:
+          type: integer
+    PagedTasks:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalCount:
+          type: integer
+
