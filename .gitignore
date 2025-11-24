@@ -45,6 +45,11 @@ docker-compose.override.yml
 *.jar
 *.war
 *.ear
+**/bin/
+**/obj/
+*.pdb
+*.user
+*.suo
 
 # Test results
 test-results/
