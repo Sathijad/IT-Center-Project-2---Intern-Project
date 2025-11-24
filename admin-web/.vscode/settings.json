@@ -1,0 +1,25 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.useLabelDetailsInCompletionEntries": true,
+  "files.associations": {
+    "**/tests/**/*.test.tsx": "typescriptreact",
+    "**/tests/**/*.test.ts": "typescript"
+  },
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.validate.enable": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/allure-results": true,
+    "**/allure-report": true,
+    "**/coverage": true
+  }
+}
+
