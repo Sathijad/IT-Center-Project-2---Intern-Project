@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Polly;
@@ -37,6 +38,32 @@ builder.Services.AddSwaggerGen(options =>
     {
         options.IncludeXmlComments(xmlPath);
     }
+    
+    // Add JWT Bearer authentication to Swagger
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Enter your Cognito JWT token below.\n\nExample: Bearer eyJraWQiOiJ...",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+    
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 builder.Services.Configure<FeatureFlagOptions>(configuration.GetSection(FeatureFlagOptions.SectionName));
@@ -88,8 +115,34 @@ builder.Services
     .AddJwtBearer(options =>
     {
         options.Authority = configuration["Authentication:Authority"];
-        options.Audience = configuration["Authentication:Audience"];
-        options.RequireHttpsMetadata = true;
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        
+        // IMPORTANT: Map inbound claims to preserve original JWT claim names
+        // This ensures 'sub' claim is available as 'sub', not mapped to a different type
+        options.MapInboundClaims = false;
+        
+        // Configure token validation parameters
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = configuration["Authentication:Authority"],
+            ValidateLifetime = true,
+            // For development: disable audience validation (Cognito access tokens may not have 'aud' claim)
+            // For production: enable and set proper audience
+            ValidateAudience = !builder.Environment.IsDevelopment(),
+            ValidAudience = configuration["Authentication:Audience"],
+            // Also accept Cognito Client ID as valid audience if provided
+            ValidAudiences = builder.Environment.IsDevelopment() 
+                ? null 
+                : new[]
+                {
+                    configuration["Authentication:Audience"],
+                    "3rdnl5ind8guti89jrbob85r4i" // Cognito Client ID
+                },
+            // Map Cognito groups to ASP.NET Core role claims
+            RoleClaimType = "cognito:groups",
+            NameClaimType = "cognito:username"
+        };
     });
 
 builder.Services.AddAuthorization(options =>
