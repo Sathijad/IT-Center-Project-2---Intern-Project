@@ -135,6 +135,8 @@ public class SchedulesDbContext(DbContextOptions<SchedulesDbContext> options) : 
         var taskId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-222222222222");
         var noteId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-333333333333");
         var recurrenceId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-444444444444");
+        var seedBaseline = new DateTimeOffset(2025, 1, 6, 0, 0, 0, TimeSpan.Zero);
+        var createdTimestamp = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
         modelBuilder.Entity<RecurrencePattern>().HasData(new RecurrencePattern
         {
@@ -142,7 +144,7 @@ public class SchedulesDbContext(DbContextOptions<SchedulesDbContext> options) : 
             Pattern = "WEEKLY",
             Interval = 1,
             ByDay = "MO,WE,FR",
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = createdTimestamp
         });
 
         modelBuilder.Entity<Schedule>().HasData(new Schedule
@@ -152,15 +154,15 @@ public class SchedulesDbContext(DbContextOptions<SchedulesDbContext> options) : 
             TeamId = 10,
             Title = "Sample Onsite Shift",
             Description = "Seeded schedule for QA validation",
-            StartTime = DateTimeOffset.UtcNow.AddDays(1).Date.AddHours(9),
-            EndTime = DateTimeOffset.UtcNow.AddDays(1).Date.AddHours(17),
+            StartTime = seedBaseline.AddHours(9),
+            EndTime = seedBaseline.AddHours(17),
             IsAllDay = false,
             Source = ScheduleSource.Internal,
             Status = ScheduleStatus.Confirmed,
             RecurrenceId = recurrenceId,
             CreatedBy = 1,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            CreatedAt = createdTimestamp,
+            UpdatedAt = createdTimestamp
         });
 
         modelBuilder.Entity<TaskItem>().HasData(new TaskItem
@@ -172,11 +174,11 @@ public class SchedulesDbContext(DbContextOptions<SchedulesDbContext> options) : 
             ScheduleId = scheduleId,
             Priority = TaskPriority.High,
             Status = TaskStatusEnum.InProgress,
-            DueDate = DateTimeOffset.UtcNow.AddDays(2),
+            DueDate = seedBaseline.AddDays(1).AddHours(17),
             Tags = new[] { "seed", "demo" },
             CreatedBy = 2,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            CreatedAt = createdTimestamp,
+            UpdatedAt = createdTimestamp
         });
 
         modelBuilder.Entity<TaskNote>().HasData(new TaskNote
@@ -185,8 +187,8 @@ public class SchedulesDbContext(DbContextOptions<SchedulesDbContext> options) : 
             TaskItemId = taskId,
             AuthorId = 2,
             Body = "Seeded comment for validation.",
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            CreatedAt = createdTimestamp,
+            UpdatedAt = createdTimestamp
         });
     }
 }

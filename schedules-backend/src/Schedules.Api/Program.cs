@@ -2,9 +2,13 @@ using System.Reflection;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Hangfire;
+using Hangfire.MemoryStorage;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -38,23 +42,41 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.Configure<FeatureFlagOptions>(configuration.GetSection(FeatureFlagOptions.SectionName));
 builder.Services.Configure<GraphOptions>(configuration.GetSection(GraphOptions.SectionName));
 builder.Services.Configure<JobOptions>(configuration.GetSection(JobOptions.SectionName));
+builder.Services.Configure<PersistenceOptions>(configuration.GetSection(PersistenceOptions.SectionName));
 
-builder.Services.AddDbContext<SchedulesDbContext>(opt =>
-{
-    opt.UseNpgsql(schedulesConnection);
-});
-builder.Services.AddDbContextFactory<SchedulesDbContext>(opt =>
-{
-    opt.UseNpgsql(schedulesConnection);
-});
+var useInMemoryDatabase = configuration.GetValue<bool?>($"{PersistenceOptions.SectionName}:UseInMemory") ?? false;
 
-builder.Services.AddHangfire(config =>
+if (useInMemoryDatabase)
 {
-    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-        .UseSimpleAssemblyNameTypeSerializer()
-        .UseRecommendedSerializerSettings()
-        .UsePostgreSqlStorage(schedulesConnection);
-});
+    builder.Services.AddDbContext<SchedulesDbContext>(opt => opt.UseInMemoryDatabase("SchedulesDb"));
+    builder.Services.AddHangfire(config => config.UseMemoryStorage());
+}
+else
+{
+    builder.Services.AddDbContext<SchedulesDbContext>(opt =>
+    {
+        opt.UseNpgsql(schedulesConnection);
+    });
+    builder.Services.AddHangfire(config =>
+    {
+        config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UsePostgreSqlStorage(schedulesConnection);
+    });
+}
+
+builder.Services.AddDbContextFactory<SchedulesDbContext>((_, options) =>
+{
+    if (useInMemoryDatabase)
+    {
+        options.UseInMemoryDatabase("SchedulesDb");
+    }
+    else
+    {
+        options.UseNpgsql(schedulesConnection);
+    }
+}, ServiceLifetime.Scoped);
 
 builder.Services.AddHangfireServer(options =>
 {
@@ -110,10 +132,22 @@ builder.Services.AddOpenTelemetry()
             });
     });
 
-builder.Services.AddHealthChecks()
-    .AddCheck<DatabaseHealthCheck>("database");
+var healthChecks = builder.Services.AddHealthChecks();
+if (useInMemoryDatabase)
+{
+    healthChecks.AddCheck("in_memory_database", () => HealthCheckResult.Healthy("In-memory database in use"));
+}
+else
+{
+    healthChecks.AddCheck<DatabaseHealthCheck>("database");
+}
 
 var app = builder.Build();
+
+// Database migrations are handled via raw SQL files (migrations/20251125_phase4_schedules.sql)
+// Run the SQL migration directly on RDS using pgAdmin or AWS Query Editor before deploying.
+// This follows the same pattern as Phase 2 (Leave/Attendance) and Phase 3 (Booking).
+// Do NOT use EF Core migrations (dotnet ef database update) for production/RDS.
 
 if (app.Environment.IsDevelopment())
 {
