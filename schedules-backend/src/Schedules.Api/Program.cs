@@ -24,12 +24,17 @@ using Schedules.Services;
 using Schedules.Services.Interfaces;
 using Schedules.Validators;
 using Schedules.Workers;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 var schedulesConnection = configuration.GetConnectionString("SchedulesDb");
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -70,6 +75,12 @@ builder.Services.Configure<FeatureFlagOptions>(configuration.GetSection(FeatureF
 builder.Services.Configure<GraphOptions>(configuration.GetSection(GraphOptions.SectionName));
 builder.Services.Configure<JobOptions>(configuration.GetSection(JobOptions.SectionName));
 builder.Services.Configure<PersistenceOptions>(configuration.GetSection(PersistenceOptions.SectionName));
+
+var graphOptionsSnapshot = new GraphOptions();
+configuration.GetSection(GraphOptions.SectionName).Bind(graphOptionsSnapshot);
+var graphConfigured = !string.IsNullOrWhiteSpace(graphOptionsSnapshot.TenantId)
+                      && !string.IsNullOrWhiteSpace(graphOptionsSnapshot.ClientId)
+                      && !string.IsNullOrWhiteSpace(graphOptionsSnapshot.ClientSecret);
 
 var useInMemoryDatabase = configuration.GetValue<bool?>($"{PersistenceOptions.SectionName}:UseInMemory") ?? false;
 
@@ -169,7 +180,16 @@ builder.Services.AddScoped<ScheduleImportWorker>();
 builder.Services.AddScoped<TaskNotificationWorker>();
 builder.Services.AddScoped<CalendarSyncWorker>();
 builder.Services.AddScoped<DailyReminderWorker>();
-builder.Services.AddSingleton<IMsGraphClient, MsGraphClient>();
+
+if (graphConfigured)
+{
+    builder.Services.AddSingleton<IMsGraphClient, MsGraphClient>();
+}
+else
+{
+    Console.WriteLine("Graph credentials not configured. Falling back to NoopMsGraphClient.");
+    builder.Services.AddSingleton<IMsGraphClient, NoopMsGraphClient>();
+}
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracer =>

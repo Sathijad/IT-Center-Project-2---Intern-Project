@@ -1,5 +1,4 @@
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using Schedules.Contracts;
 using Schedules.Contracts.Schedules;
@@ -36,12 +35,13 @@ public class ScheduleService(SchedulesDbContext dbContext, IMapper mapper) : ISc
         baseQuery = baseQuery.Include(s => s.Recurrence);
 
         var total = await baseQuery.CountAsync(cancellationToken);
-        var items = await baseQuery
+        var schedules = await baseQuery
             .OrderBy(s => s.StartTime)
             .Skip((query.Page - 1) * query.Size)
             .Take(query.Size)
-            .ProjectTo<ScheduleResponse>(mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);
+
+        var items = mapper.Map<List<ScheduleResponse>>(schedules);
 
         return new PagedResult<ScheduleResponse>(items, query.Page, query.Size, total);
     }
@@ -85,7 +85,25 @@ public class ScheduleService(SchedulesDbContext dbContext, IMapper mapper) : ISc
         };
 
         dbContext.Schedules.Add(schedule);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        
+        Console.WriteLine($"[ScheduleService] Adding schedule to context: {schedule.ScheduleId}");
+        Console.WriteLine($"[ScheduleService] Schedule details: UserId={schedule.UserId}, Title={schedule.Title}, StartTime={schedule.StartTime}");
+        
+        try
+        {
+            var savedCount = await dbContext.SaveChangesAsync(cancellationToken);
+            Console.WriteLine($"[ScheduleService] ✅ SaveChangesAsync completed. Saved {savedCount} entity/entities");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ScheduleService] ❌ Error saving schedule: {ex.Message}");
+            Console.WriteLine($"[ScheduleService] Exception type: {ex.GetType().Name}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"[ScheduleService] Inner exception: {ex.InnerException.Message}");
+            }
+            throw;
+        }
 
         return mapper.Map<ScheduleResponse>(schedule);
     }
@@ -166,14 +184,22 @@ public class ScheduleService(SchedulesDbContext dbContext, IMapper mapper) : ISc
 
     private async Task EnsureNoConflicts(long userId, DateTimeOffset start, DateTimeOffset end, CancellationToken cancellationToken, Guid? excludeId = null)
     {
-        var overlap = await dbContext.Schedules
+        var conflictingSchedules = await dbContext.Schedules
             .Where(s => s.UserId == userId && (excludeId == null || s.ScheduleId != excludeId))
-            .AnyAsync(s => s.StartTime < end && start < s.EndTime, cancellationToken);
+            .Where(s => s.StartTime < end && start < s.EndTime)
+            .ToListAsync(cancellationToken);
 
-        if (overlap)
+        if (conflictingSchedules.Any())
         {
+            Console.WriteLine($"[ScheduleService] ⚠️ Found {conflictingSchedules.Count} conflicting schedule(s):");
+            foreach (var conflict in conflictingSchedules)
+            {
+                Console.WriteLine($"[ScheduleService]   - ScheduleId: {conflict.ScheduleId}, Title: {conflict.Title}, Start: {conflict.StartTime}, End: {conflict.EndTime}");
+            }
             throw new ConflictException("Schedule overlaps with an existing entry.");
         }
+        
+        Console.WriteLine($"[ScheduleService] ✅ No conflicts found for userId={userId}, start={start}, end={end}");
     }
 }
 

@@ -27,8 +27,11 @@ public class AvailabilityService(
         if (_flags.EnableMsGraphSync)
         {
             var upn = await userDirectory.GetUserPrincipalNameAsync(userId, cancellationToken);
-            var remoteBusy = await graphClient.GetAvailabilityAsync(upn, rangeStart, rangeEnd, cancellationToken);
-            localBusy.AddRange(remoteBusy);
+            if (!string.IsNullOrWhiteSpace(upn))
+            {
+                var remoteBusy = await graphClient.GetAvailabilityAsync(upn, rangeStart, rangeEnd, cancellationToken);
+                localBusy.AddRange(remoteBusy);
+            }
         }
 
         return new AvailabilityResponse(userId, localBusy);

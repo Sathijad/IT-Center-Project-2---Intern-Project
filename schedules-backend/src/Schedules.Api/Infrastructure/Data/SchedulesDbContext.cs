@@ -131,6 +131,9 @@ public class SchedulesDbContext(DbContextOptions<SchedulesDbContext> options) : 
 
     private static void SeedReferenceData(ModelBuilder modelBuilder)
     {
+        // NOTE: Seed data is commented out to avoid conflicts during development
+        // Uncomment and run migrations if you need seed data for testing
+        /*
         var scheduleId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-111111111111");
         var taskId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-222222222222");
         var noteId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-333333333333");
@@ -164,7 +167,9 @@ public class SchedulesDbContext(DbContextOptions<SchedulesDbContext> options) : 
             CreatedAt = createdTimestamp,
             UpdatedAt = createdTimestamp
         });
+        */
 
+        /*
         modelBuilder.Entity<TaskItem>().HasData(new TaskItem
         {
             TaskItemId = taskId,
@@ -190,6 +195,7 @@ public class SchedulesDbContext(DbContextOptions<SchedulesDbContext> options) : 
             CreatedAt = createdTimestamp,
             UpdatedAt = createdTimestamp
         });
+        */
     }
 }
 

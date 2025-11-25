@@ -23,7 +23,21 @@ public class ScheduleProfile : Profile
                         src.Recurrence.Until)));
 
         CreateMap<TaskItem, TaskResponse>()
-            .ForMember(dest => dest.TaskId, opt => opt.MapFrom(src => src.TaskItemId));
+            .ForMember(dest => dest.TaskId, opt => opt.MapFrom(src => src.TaskItemId))
+            .ConstructUsing(src => new TaskResponse(
+                src.TaskItemId,
+                src.Title,
+                src.Description,
+                src.AssigneeId,
+                src.ScheduleId,
+                src.Priority,
+                src.Status,
+                src.DueDate,
+                src.Tags ?? Array.Empty<string>(),
+                src.MsGraphItemId,
+                src.CreatedAt,
+                src.UpdatedAt,
+                Array.Empty<TaskNoteResponse>()));
 
         CreateMap<TaskNote, TaskNoteResponse>()
             .ForMember(dest => dest.NoteId, opt => opt.MapFrom(src => src.TaskNoteId));

@@ -1,9 +1,9 @@
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using Schedules.Contracts;
 using Schedules.Contracts.Tasks;
 using Schedules.Domain.Entities;
+using Schedules.Domain.Enums;
 using Schedules.Errors;
 using Schedules.Infrastructure.Data;
 using Schedules.Services.Interfaces;
@@ -23,18 +23,19 @@ public class TaskService(SchedulesDbContext dbContext, IMapper mapper) : ITaskSe
             baseQuery = baseQuery.Where(t => t.AssigneeId == query.Assignee);
         }
 
-        if (!string.IsNullOrWhiteSpace(query.Status))
+        if (!string.IsNullOrWhiteSpace(query.Status) && Enum.TryParse<Schedules.Domain.Enums.TaskStatus>(query.Status, true, out var parsedStatus))
         {
-            baseQuery = baseQuery.Where(t => t.Status.ToString().Equals(query.Status, StringComparison.OrdinalIgnoreCase));
+            baseQuery = baseQuery.Where(t => t.Status == parsedStatus);
         }
 
         var total = await baseQuery.CountAsync(cancellationToken);
-        var items = await baseQuery
+        var tasks = await baseQuery
             .OrderBy(t => t.DueDate ?? t.CreatedAt)
             .Skip((query.Page - 1) * query.Size)
             .Take(query.Size)
-            .ProjectTo<TaskResponse>(mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);
+
+        var items = mapper.Map<List<TaskResponse>>(tasks);
 
         return new PagedResult<TaskResponse>(items, query.Page, query.Size, total);
     }
@@ -131,6 +132,12 @@ public class TaskService(SchedulesDbContext dbContext, IMapper mapper) : ITaskSe
 
         entity.Notes.Add(note);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Reload task with notes to include the new note in response
+        await dbContext.Entry(entity)
+            .Collection(e => e.Notes)
+            .Query()
+            .LoadAsync(cancellationToken);
 
         return mapper.Map<TaskResponse>(entity);
     }
