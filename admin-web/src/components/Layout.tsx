@@ -27,7 +27,7 @@ const Layout: React.FC = () => {
   const { user, isAdmin } = useAuth()
   // const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const hasTeamLead = isAdmin || user?.roles?.includes('TL')
+  // Removed hasTeamLead - only ADMIN and EMPLOYEE roles exist
 
   const handleLogout = () => {
     logout()
@@ -37,7 +37,7 @@ const Layout: React.FC = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    ...(hasTeamLead
+    ...(isAdmin
       ? [
           { name: 'Team Planner', href: '/schedules', icon: CalendarRange },
           { name: 'Attendance', href: '/admin/attendance', icon: Clock },

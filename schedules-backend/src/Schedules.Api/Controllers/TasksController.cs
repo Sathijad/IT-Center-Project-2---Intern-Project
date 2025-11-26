@@ -42,7 +42,7 @@ public class TasksController(
     }
 
     [HttpPost]
-    [Authorize(Policy = "TeamLead")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<TaskResponse>> Create(
         [FromBody] CreateTaskRequest request,
         [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
@@ -82,7 +82,7 @@ public class TasksController(
     }
 
     [HttpPatch("{taskId:guid}")]
-    [Authorize(Policy = "TeamLead")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<TaskResponse>> Update(Guid taskId, [FromBody] UpdateTaskRequest request, CancellationToken cancellationToken)
     {
         try

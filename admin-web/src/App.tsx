@@ -147,7 +147,7 @@ function App() {
               <Route
                 path="schedules"
                 element={
-                  <ProtectedRoute requiredRole="TL">
+                  <ProtectedRoute requiredRole="ADMIN">
                     <SchedulesPlannerPage />
                   </ProtectedRoute>
                 }

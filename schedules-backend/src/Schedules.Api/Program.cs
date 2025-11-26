@@ -159,8 +159,8 @@ builder.Services
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("ADMIN"));
-    options.AddPolicy("TeamLead", policy => policy.RequireRole("ADMIN", "TL"));
-    options.AddPolicy("Employee", policy => policy.RequireRole("ADMIN", "TL", "EMP"));
+    // Removed TeamLead policy - only ADMIN and EMPLOYEE roles exist
+    options.AddPolicy("Employee", policy => policy.RequireRole("ADMIN", "EMP"));
 });
 
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());

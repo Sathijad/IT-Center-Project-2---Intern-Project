@@ -7,7 +7,7 @@
 
 ## Backend Changes
 - **API Surface:** `/api/v1/schedules`, `/tasks`, `/imports`, `/availability`, `/integrations/msgraph/sync`, `/healthz`.
-- **Auth:** Cognito JWT validation with role policies (ADMIN, TL, EMP).
+- **Auth:** Cognito JWT validation with role policies (ADMIN, EMP). Only ADMIN can create/manage schedules and tasks. EMPLOYEE can view own schedules and assigned tasks.
 - **Background Jobs:** Hangfire workers for calendar sync, task notifications, CSV import processing, and daily reminders.
 - **Feature Flags:** `enable_ms_graph_sync`, `enable_task_notifications`, `enable_bulk_import`.
 - **Telemetry:** OpenTelemetry traces → OTLP endpoint, Grafana dashboards (API latency, job success, schedules/day, tasks/day).

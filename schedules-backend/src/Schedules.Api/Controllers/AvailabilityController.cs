@@ -10,7 +10,7 @@ namespace Schedules.Controllers;
 public class AvailabilityController(IAvailabilityService availabilityService) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = "TeamLead")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<AvailabilityResponse>> Get([FromQuery] long user_id, [FromQuery] DateTimeOffset rangeStart, [FromQuery] DateTimeOffset rangeEnd, CancellationToken cancellationToken)
     {
         try

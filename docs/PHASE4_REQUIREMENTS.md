@@ -10,8 +10,7 @@
 | Role      | Capabilities |
 |-----------|--------------|
 | Employee  | View own schedules/tasks, add task comments, receive reminders. |
-| Team Lead | Manage team schedules, assign tasks, review availability and workload. |
-| Admin     | Full CRUD, CSV imports, reports, feature-flag toggles, background job monitoring. |
+| Admin     | Full CRUD for schedules and tasks, CSV imports, reports, feature-flag toggles, background job monitoring, manage all schedules and assign tasks to any employee. |
 
 ## Functional Scope
 1. **Schedules:** Weekly planner CRUD, no overlapping entries per user, recurrence support, MS Graph sync and free/busy overlays.

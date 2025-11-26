@@ -15,8 +15,8 @@ class SchedulerApi {
   Future<List<dynamic>> fetchSchedules({
     required int userId,
   }) async {
-    final query = Uri.parse('${ApiBase.base}/api/v1/schedules').replace(queryParameters: {
-      'user_id': '$userId',
+    // Use /my endpoint for employees to view their own schedules
+    final query = Uri.parse('${ApiBase.base}/api/v1/schedules/my').replace(queryParameters: {
       'rangeStart': DateTime.now().toIso8601String(),
       'rangeEnd': DateTime.now().add(const Duration(days: 7)).toIso8601String(),
     });

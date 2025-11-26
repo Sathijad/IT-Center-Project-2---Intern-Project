@@ -20,7 +20,7 @@ public class SchedulesController(
     IDbContextFactory<SchedulesDbContext> dbContextFactory) : ControllerBase
 {
     [HttpGet]
-    [Authorize(Policy = "TeamLead")]
+    [Authorize(Policy = "AdminOnly")]
     [ProducesResponseType(typeof(PagedResult<ScheduleResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<ScheduleResponse>>> Get([FromQuery] ScheduleQuery query, CancellationToken cancellationToken)
     {
@@ -41,8 +41,41 @@ public class SchedulesController(
         }
     }
 
+    [HttpGet("my")]
+    [Authorize(Policy = "Employee")]
+    [ProducesResponseType(typeof(PagedResult<ScheduleResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResult<ScheduleResponse>>> GetMySchedules([FromQuery] ScheduleQuery query, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+            var actorId = await User.GetActorIdAsync(dbContext, cancellationToken);
+            
+            if (actorId == 0)
+            {
+                return Unauthorized("Unable to determine user ID from token.");
+            }
+            
+            // Force query to only show schedules for the current user
+            query.UserId = actorId;
+            
+            var response = await scheduleService.GetAsync(query, cancellationToken);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SchedulesController.GetMySchedules] Error: {ex.Message}");
+            Console.WriteLine($"[SchedulesController.GetMySchedules] Stack trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"[SchedulesController.GetMySchedules] Inner exception: {ex.InnerException.Message}");
+            }
+            throw;
+        }
+    }
+
     [HttpPost]
-    [Authorize(Policy = "TeamLead")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<ScheduleResponse>> Create([FromBody] CreateScheduleRequest request, CancellationToken cancellationToken)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -75,7 +108,7 @@ public class SchedulesController(
     }
 
     [HttpPatch("{scheduleId:guid}")]
-    [Authorize(Policy = "TeamLead")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<ScheduleResponse>> Update(Guid scheduleId, [FromBody] UpdateScheduleRequest request, CancellationToken cancellationToken)
     {
         try
