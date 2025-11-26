@@ -22,8 +22,16 @@ public class SchedulesController(
     [HttpGet]
     [Authorize(Policy = "AdminOnly")]
     [ProducesResponseType(typeof(PagedResult<ScheduleResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<PagedResult<ScheduleResponse>>> Get([FromQuery] ScheduleQuery query, CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<ScheduleResponse>>> Get(
+        [FromQuery(Name = "userId")] long? userId,
+        [FromQuery(Name = "teamId")] long? teamId,
+        [FromQuery(Name = "rangeStart")] DateTimeOffset? rangeStart,
+        [FromQuery(Name = "rangeEnd")] DateTimeOffset? rangeEnd,
+        CancellationToken cancellationToken,
+        [FromQuery(Name = "page")] int page = 1,
+        [FromQuery(Name = "size")] int size = 20)
     {
+        var query = new ScheduleQuery(userId, teamId, rangeStart, rangeEnd, page, size);
         try
         {
             var response = await scheduleService.GetAsync(query, cancellationToken);

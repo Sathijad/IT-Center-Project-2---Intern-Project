@@ -1,0 +1,5 @@
+UserId,TeamId,Title,Description,StartTime,EndTime
+1,10,Morning Shift,Daily work shift,2025-01-15T09:00:00Z,2025-01-15T11:00:00Z
+2,10,Team Meeting,Weekly sync meeting,2025-01-15T14:00:00Z,2025-01-15T15:00:00Z
+3,10,Training Session,Product training,2025-01-16T08:00:00Z,2025-01-16T10:00:00Z
+1,10,Evening Shift,Second half,2025-01-17T13:00:00Z,2025-01-17T17:00:00Z

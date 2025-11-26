@@ -56,13 +56,31 @@ const SchedulesPlannerPage = () => {
 
   const { data, isLoading, error } = useQuery<PagedResponse<Schedule>>({
     queryKey: ['schedules', filters],
-    queryFn: () =>
-      listSchedules({
-        user_id: filters.userId || undefined,
-        team_id: filters.teamId || undefined,
-        rangeStart: filters.rangeStart ? new Date(filters.rangeStart).toISOString() : undefined,
-        rangeEnd: filters.rangeEnd ? new Date(filters.rangeEnd).toISOString() : undefined,
-      }),
+    queryFn: () => {
+      const params: Record<string, any> = {}
+      
+      // Only include parameters if they have values (not empty strings)
+      if (filters.userId && filters.userId.trim() !== '') {
+        const userIdNum = Number(filters.userId)
+        if (!isNaN(userIdNum) && userIdNum > 0) {
+          params.userId = userIdNum
+        }
+      }
+      if (filters.teamId && filters.teamId.trim() !== '') {
+        const teamIdNum = Number(filters.teamId)
+        if (!isNaN(teamIdNum) && teamIdNum > 0) {
+          params.teamId = teamIdNum
+        }
+      }
+      if (filters.rangeStart && filters.rangeStart.trim() !== '') {
+        params.rangeStart = new Date(filters.rangeStart).toISOString()
+      }
+      if (filters.rangeEnd && filters.rangeEnd.trim() !== '') {
+        params.rangeEnd = new Date(filters.rangeEnd).toISOString()
+      }
+      
+      return listSchedules(params)
+    },
   })
 
   const createMutation = useMutation({
