@@ -57,9 +57,10 @@ public class SchedulesController(
             }
             
             // Force query to only show schedules for the current user
-            query.UserId = actorId;
+            // Create new query with UserId set (records have init-only properties)
+            var userQuery = query with { UserId = actorId };
             
-            var response = await scheduleService.GetAsync(query, cancellationToken);
+            var response = await scheduleService.GetAsync(userQuery, cancellationToken);
             return Ok(response);
         }
         catch (Exception ex)

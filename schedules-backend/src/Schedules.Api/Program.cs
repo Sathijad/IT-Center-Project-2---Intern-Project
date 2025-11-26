@@ -30,6 +30,35 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 var schedulesConnection = configuration.GetConnectionString("SchedulesDb");
 
+// Add CORS support
+builder.Services.AddCors(options =>
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        // In development, allow localhost origins
+        options.AddPolicy("AllowFrontend", policy =>
+        {
+            policy.WithOrigins("http://localhost:5173", "https://localhost:5173", "http://localhost:3000")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        });
+    }
+    else
+    {
+        // In production, specify exact origins
+        var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() 
+            ?? new[] { "https://your-production-domain.com" };
+        options.AddPolicy("AllowFrontend", policy =>
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        });
+    }
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -229,6 +258,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

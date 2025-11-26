@@ -7,12 +7,23 @@ const ScheduleReportsPage = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['schedule-reports'],
     queryFn: async () => {
-      const [schedules, tasks] = await Promise.all([
-        listSchedules({ size: 50 }),
-        listTasks({ size: 50 }),
-      ])
-      return { schedules, tasks }
+      try {
+        const [schedules, tasks] = await Promise.all([
+          listSchedules({ size: 50 }),
+          listTasks({ size: 50 }),
+        ])
+        return { schedules, tasks }
+      } catch (err: any) {
+        console.error('Failed to load reports:', err)
+        // Log more details about the error
+        if (err.response) {
+          console.error('Response status:', err.response.status)
+          console.error('Response data:', err.response.data)
+        }
+        throw err
+      }
     },
+    retry: 1,
   })
 
   const metrics = useMemo(() => {
@@ -43,7 +54,19 @@ const ScheduleReportsPage = () => {
       </header>
 
       {isLoading && <p className="text-sm text-gray-500">Loading metrics...</p>}
-      {error && <p className="text-sm text-red-600">Failed to load reports.</p>}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm font-medium text-red-800">Failed to load reports.</p>
+          <p className="text-xs text-red-600 mt-1">
+            {error instanceof Error ? error.message : 'Unknown error occurred'}
+          </p>
+          {error && 'response' in error && (
+            <p className="text-xs text-red-500 mt-1">
+              Status: {(error as any).response?.status} - {(error as any).response?.statusText}
+            </p>
+          )}
+        </div>
+      )}
 
       {metrics && (
         <div className="grid gap-6 lg:grid-cols-2">

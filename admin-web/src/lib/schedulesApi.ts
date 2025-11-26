@@ -22,6 +22,17 @@ schedulesApi.interceptors.request.use((config) => {
 schedulesApi.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Log error details for debugging
+    if (!error.response) {
+      // Network error or CORS error
+      console.error('Network/CORS error:', error.message)
+      if (error.code === 'ERR_NETWORK' || error.message?.includes('CORS')) {
+        console.error('CORS or network issue. Check if backend is running and CORS is configured.')
+      }
+    } else {
+      console.error('API error:', error.response.status, error.response.data)
+    }
+    
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token')
       localStorage.removeItem('id_token')
@@ -30,6 +41,11 @@ schedulesApi.interceptors.response.use(
       }
       return Promise.reject(error)
     }
+    
+    if (error.response?.status === 403) {
+      console.error('Forbidden: User may not have required role (ADMIN)')
+    }
+    
     return Promise.reject(error)
   }
 )

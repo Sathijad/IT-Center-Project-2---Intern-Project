@@ -15,9 +15,21 @@ public class ScheduleQueryValidator : AbstractValidator<ScheduleQuery>
 
     private static bool HaveValidRange(ScheduleQuery query)
     {
-        return query.RangeStart.HasValue == query.RangeEnd.HasValue
-               ? query.RangeStart <= query.RangeEnd
-               : !query.RangeStart.HasValue && !query.RangeEnd.HasValue;
+        // Both must be provided together, or neither should be provided
+        if (!query.RangeStart.HasValue && !query.RangeEnd.HasValue)
+        {
+            // Neither provided - this is valid (no date range filter)
+            return true;
+        }
+        
+        if (query.RangeStart.HasValue && query.RangeEnd.HasValue)
+        {
+            // Both provided - check that start is before or equal to end
+            return query.RangeStart.Value <= query.RangeEnd.Value;
+        }
+        
+        // One provided but not the other - invalid
+        return false;
     }
 }
 
