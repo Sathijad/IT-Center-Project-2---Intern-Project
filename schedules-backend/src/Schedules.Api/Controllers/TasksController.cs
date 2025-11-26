@@ -22,20 +22,58 @@ public class TasksController(
 {
     [HttpGet]
     [Authorize(Policy = "Employee")]
-    public async Task<ActionResult<PagedResult<TaskResponse>>> Get([FromQuery] TaskQuery query, CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<TaskResponse>>> Get(
+        [FromQuery(Name = "assignee")] long? assignee,
+        [FromQuery(Name = "status")] string? status,
+        [FromQuery(Name = "page")] int page = 1,
+        [FromQuery(Name = "size")] int size = 20,
+        CancellationToken cancellationToken = default)
     {
         try
         {
+            await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+            var actorId = await User.GetActorIdAsync(dbContext, cancellationToken);
+            
+            if (actorId == 0)
+            {
+                Console.WriteLine($"[TasksController.Get] ❌ Unable to determine user ID from token");
+                return Unauthorized("Unable to determine user ID from token.");
+            }
+            
+            // Security: If assignee is provided, ensure it matches the authenticated user
+            // (Non-admin users can only view their own tasks)
+            if (assignee.HasValue && assignee.Value != actorId)
+            {
+                // Check if user is admin (can view other users' tasks)
+                var isAdmin = User.IsInRole("ADMIN");
+                if (!isAdmin)
+                {
+                    Console.WriteLine($"[TasksController.Get] ⚠️ User {actorId} attempted to view tasks for user {assignee.Value} (not authorized)");
+                    return Forbid("You can only view your own tasks.");
+                }
+            }
+            
+            // Use authenticated user's ID if assignee not provided or not authorized
+            var finalAssignee = assignee.HasValue && (assignee.Value == actorId || User.IsInRole("ADMIN")) 
+                ? assignee.Value 
+                : actorId;
+            
+            Console.WriteLine($"[TasksController.Get] Fetching tasks for assignee: {finalAssignee}, page: {page}, size: {size}");
+            
+            var query = new TaskQuery(Assignee: finalAssignee, Status: status, Page: page, Size: size);
             var response = await taskService.GetAsync(query, cancellationToken);
+            
+            Console.WriteLine($"[TasksController.Get] ✅ Retrieved {response.Items.Count} tasks (total: {response.TotalCount})");
             return Ok(response);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[TasksController.Get] Error: {ex.Message}");
+            Console.WriteLine($"[TasksController.Get] ❌ Error: {ex.Message}");
             Console.WriteLine($"[TasksController.Get] Stack trace: {ex.StackTrace}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"[TasksController.Get] Inner exception: {ex.InnerException.Message}");
+                Console.WriteLine($"[TasksController.Get] Inner stack trace: {ex.InnerException.StackTrace}");
             }
             throw; // Re-throw to let ExceptionHandlingMiddleware handle it
         }

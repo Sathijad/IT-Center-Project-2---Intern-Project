@@ -30,7 +30,7 @@ class _ScheduleOverviewScreenState extends State<ScheduleOverviewScreen> {
       final data = await _api.fetchSchedules(userId: widget.userId);
       setState(() => _schedules = data);
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = 'Error loading schedules: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _loading = false);
     }

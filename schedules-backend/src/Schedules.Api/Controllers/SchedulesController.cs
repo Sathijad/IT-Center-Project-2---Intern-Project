@@ -52,32 +52,52 @@ public class SchedulesController(
     [HttpGet("my")]
     [Authorize(Policy = "Employee")]
     [ProducesResponseType(typeof(PagedResult<ScheduleResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<PagedResult<ScheduleResponse>>> GetMySchedules([FromQuery] ScheduleQuery query, CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<ScheduleResponse>>> GetMySchedules(
+        [FromQuery(Name = "rangeStart")] DateTimeOffset? rangeStart,
+        [FromQuery(Name = "rangeEnd")] DateTimeOffset? rangeEnd,
+        [FromQuery(Name = "page")] int page = 1,
+        [FromQuery(Name = "size")] int size = 20,
+        CancellationToken cancellationToken = default)
     {
         try
         {
+            Console.WriteLine($"[SchedulesController.GetMySchedules] Request received - rangeStart: {rangeStart}, rangeEnd: {rangeEnd}, page: {page}, size: {size}");
+            
+            // Convert DateTimeOffset to UTC (PostgreSQL requires UTC for timestamp with time zone)
+            DateTimeOffset? rangeStartUtc = rangeStart?.ToUniversalTime();
+            DateTimeOffset? rangeEndUtc = rangeEnd?.ToUniversalTime();
+            
+            Console.WriteLine($"[SchedulesController.GetMySchedules] Converted to UTC - rangeStart: {rangeStartUtc}, rangeEnd: {rangeEndUtc}");
+            
             await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
             var actorId = await User.GetActorIdAsync(dbContext, cancellationToken);
             
             if (actorId == 0)
             {
+                Console.WriteLine($"[SchedulesController.GetMySchedules] ❌ Unable to determine user ID from token");
                 return Unauthorized("Unable to determine user ID from token.");
             }
             
-            // Force query to only show schedules for the current user
-            // Create new query with UserId set (records have init-only properties)
-            var userQuery = query with { UserId = actorId };
+            Console.WriteLine($"[SchedulesController.GetMySchedules] ✅ User ID resolved: {actorId}");
             
+            // Create query with explicit parameters (using UTC dates)
+            var userQuery = new ScheduleQuery(UserId: actorId, TeamId: null, RangeStart: rangeStartUtc, RangeEnd: rangeEndUtc, Page: page, Size: size);
+            
+            Console.WriteLine($"[SchedulesController.GetMySchedules] Executing query for user {actorId}...");
             var response = await scheduleService.GetAsync(userQuery, cancellationToken);
+            
+            Console.WriteLine($"[SchedulesController.GetMySchedules] ✅ Retrieved {response.Items.Count} schedules (total: {response.TotalCount})");
             return Ok(response);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[SchedulesController.GetMySchedules] Error: {ex.Message}");
+            Console.WriteLine($"[SchedulesController.GetMySchedules] ❌ Error: {ex.Message}");
+            Console.WriteLine($"[SchedulesController.GetMySchedules] Exception type: {ex.GetType().Name}");
             Console.WriteLine($"[SchedulesController.GetMySchedules] Stack trace: {ex.StackTrace}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"[SchedulesController.GetMySchedules] Inner exception: {ex.InnerException.Message}");
+                Console.WriteLine($"[SchedulesController.GetMySchedules] Inner stack trace: {ex.InnerException.StackTrace}");
             }
             throw;
         }

@@ -31,7 +31,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
       final data = await _api.fetchTasks(assigneeId: widget.assigneeId);
       setState(() => _tasks = data);
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = 'Error loading tasks: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _loading = false);
     }

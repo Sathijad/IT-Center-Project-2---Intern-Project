@@ -13,29 +13,36 @@ class SchedulerApi {
   }
 
   Future<List<dynamic>> fetchSchedules({
-    required int userId,
+    int? userId,
   }) async {
     // Use /my endpoint for employees to view their own schedules
-    final query = Uri.parse('${ApiBase.base}/api/v1/schedules/my').replace(queryParameters: {
+    // Use schedules backend (port 5166) instead of auth backend (port 8080)
+    final query = Uri.parse('${ApiBase.schedulesBase}/api/v1/schedules/my').replace(queryParameters: {
       'rangeStart': DateTime.now().toIso8601String(),
       'rangeEnd': DateTime.now().add(const Duration(days: 7)).toIso8601String(),
     });
     final response = await http.get(query, headers: await _headers());
     if (response.statusCode != 200) {
-      throw Exception('Failed to load schedules');
+      final errorBody = response.body;
+      throw Exception('Failed to load schedules: ${response.statusCode} - $errorBody');
     }
     final data = json.decode(response.body) as Map<String, dynamic>;
     return (data['items'] as List?) ?? [];
   }
 
-  Future<List<dynamic>> fetchTasks({required int assigneeId}) async {
-    final query = Uri.parse('${ApiBase.base}/api/v1/tasks').replace(queryParameters: {
-      'assignee': '$assigneeId',
+  Future<List<dynamic>> fetchTasks({int? assigneeId}) async {
+    final queryParams = <String, String>{
       'size': '50',
-    });
+    };
+    if (assigneeId != null) {
+      queryParams['assignee'] = '$assigneeId';
+    }
+    // Use schedules backend (port 5166) instead of auth backend (port 8080)
+    final query = Uri.parse('${ApiBase.schedulesBase}/api/v1/tasks').replace(queryParameters: queryParams);
     final response = await http.get(query, headers: await _headers());
     if (response.statusCode != 200) {
-      throw Exception('Failed to load tasks');
+      final errorBody = response.body;
+      throw Exception('Failed to load tasks: ${response.statusCode} - $errorBody');
     }
     final data = json.decode(response.body) as Map<String, dynamic>;
     return (data['items'] as List?) ?? [];
@@ -45,8 +52,9 @@ class SchedulerApi {
     required String taskId,
     required String body,
   }) async {
+    // Use schedules backend (port 5166) instead of auth backend (port 8080)
     final response = await http.post(
-      Uri.parse('${ApiBase.base}/api/v1/tasks/$taskId/comments'),
+      Uri.parse('${ApiBase.schedulesBase}/api/v1/tasks/$taskId/comments'),
       headers: await _headers(),
       body: json.encode({'body': body}),
     );

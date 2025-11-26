@@ -1,9 +1,11 @@
 using System.Reflection;
+using System.Security.Claims;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,10 +37,15 @@ builder.Services.AddCors(options =>
 {
     if (builder.Environment.IsDevelopment())
     {
-        // In development, allow localhost origins
+        // In development, allow localhost origins (including Flutter web on port 56956)
         options.AddPolicy("AllowFrontend", policy =>
         {
-            policy.WithOrigins("http://localhost:5173", "https://localhost:5173", "http://localhost:3000")
+            policy.WithOrigins(
+                    "http://localhost:5173", 
+                    "https://localhost:5173", 
+                    "http://localhost:3000",
+                    "http://localhost:56956",
+                    "http://localhost:8080")  // Also allow auth backend port for consistency
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
@@ -186,16 +193,20 @@ builder.Services
                     configuration["Authentication:Audience"],
                     "3rdnl5ind8guti89jrbob85r4i" // Cognito Client ID
                 },
-            // Map Cognito groups to ASP.NET Core role claims
-            RoleClaimType = "cognito:groups",
+            // Role claims will be added by JwtClaimsTransformation from database
+            // We use standard ClaimTypes.Role for role claims
+            RoleClaimType = ClaimTypes.Role,
             NameClaimType = "cognito:username"
         };
     });
+
+builder.Services.AddTransient<IClaimsTransformation, JwtClaimsTransformation>();
 
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("ADMIN"));
     // Removed TeamLead policy - only ADMIN and EMPLOYEE roles exist
+    // Note: EMPLOYEE from database is mapped to "EMP" role claim
     options.AddPolicy("Employee", policy => policy.RequireRole("ADMIN", "EMP"));
 });
 
@@ -212,6 +223,7 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAvailabilityService, AvailabilityService>();
 builder.Services.AddScoped<IImportService, ImportService>();
 builder.Services.AddScoped<IUserDirectory, DefaultUserDirectory>();
+builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<ScheduleImportWorker>();
 builder.Services.AddScoped<TaskNotificationWorker>();
 builder.Services.AddScoped<CalendarSyncWorker>();
