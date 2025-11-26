@@ -24,8 +24,21 @@ public class SchedulesController(
     [ProducesResponseType(typeof(PagedResult<ScheduleResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<ScheduleResponse>>> Get([FromQuery] ScheduleQuery query, CancellationToken cancellationToken)
     {
-        var response = await scheduleService.GetAsync(query, cancellationToken);
-        return Ok(response);
+        try
+        {
+            var response = await scheduleService.GetAsync(query, cancellationToken);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SchedulesController.Get] Error: {ex.Message}");
+            Console.WriteLine($"[SchedulesController.Get] Stack trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"[SchedulesController.Get] Inner exception: {ex.InnerException.Message}");
+            }
+            throw; // Re-throw to let ExceptionHandlingMiddleware handle it
+        }
     }
 
     [HttpPost]
@@ -65,18 +78,34 @@ public class SchedulesController(
     [Authorize(Policy = "TeamLead")]
     public async Task<ActionResult<ScheduleResponse>> Update(Guid scheduleId, [FromBody] UpdateScheduleRequest request, CancellationToken cancellationToken)
     {
-        var schedule = await scheduleService.UpdateAsync(scheduleId, request, cancellationToken);
-        backgroundJobClient.Enqueue<CalendarSyncWorker>(worker =>
-            worker.PushAsync(schedule.ScheduleId, CancellationToken.None));
-        return Ok(schedule);
+        try
+        {
+            var schedule = await scheduleService.UpdateAsync(scheduleId, request, cancellationToken);
+            backgroundJobClient.Enqueue<CalendarSyncWorker>(worker =>
+                worker.PushAsync(schedule.ScheduleId, CancellationToken.None));
+            return Ok(schedule);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SchedulesController.Update] Error: {ex.Message}");
+            throw;
+        }
     }
 
     [HttpDelete("{scheduleId:guid}")]
     [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Delete(Guid scheduleId, CancellationToken cancellationToken)
     {
-        await scheduleService.DeleteAsync(scheduleId, cancellationToken);
-        return NoContent();
+        try
+        {
+            await scheduleService.DeleteAsync(scheduleId, cancellationToken);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SchedulesController.Delete] Error: {ex.Message}");
+            throw;
+        }
     }
 }
 

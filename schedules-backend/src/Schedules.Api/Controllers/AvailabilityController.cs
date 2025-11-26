@@ -13,8 +13,16 @@ public class AvailabilityController(IAvailabilityService availabilityService) : 
     [Authorize(Policy = "TeamLead")]
     public async Task<ActionResult<AvailabilityResponse>> Get([FromQuery] long user_id, [FromQuery] DateTimeOffset rangeStart, [FromQuery] DateTimeOffset rangeEnd, CancellationToken cancellationToken)
     {
-        var response = await availabilityService.GetAsync(user_id, rangeStart, rangeEnd, cancellationToken);
-        return Ok(response);
+        try
+        {
+            var response = await availabilityService.GetAsync(user_id, rangeStart, rangeEnd, cancellationToken);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AvailabilityController.Get] Error: {ex.Message}");
+            throw;
+        }
     }
 }
 

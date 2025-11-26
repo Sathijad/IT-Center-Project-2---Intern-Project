@@ -14,36 +14,66 @@ public class ScheduleService(SchedulesDbContext dbContext, IMapper mapper) : ISc
 {
     public async Task<PagedResult<ScheduleResponse>> GetAsync(ScheduleQuery query, CancellationToken cancellationToken)
     {
-        var baseQuery = dbContext.Schedules.AsNoTracking();
-
-        if (query.UserId.HasValue)
+        try
         {
-            baseQuery = baseQuery.Where(s => s.UserId == query.UserId);
-        }
+            // Build base query for filtering (without Include for count)
+            var countQuery = dbContext.Schedules.AsNoTracking();
+            var dataQuery = dbContext.Schedules.AsNoTracking();
 
-        if (query.TeamId.HasValue)
+            if (query.UserId.HasValue)
+            {
+                countQuery = countQuery.Where(s => s.UserId == query.UserId);
+                dataQuery = dataQuery.Where(s => s.UserId == query.UserId);
+            }
+
+            if (query.TeamId.HasValue)
+            {
+                countQuery = countQuery.Where(s => s.TeamId == query.TeamId);
+                dataQuery = dataQuery.Where(s => s.TeamId == query.TeamId);
+            }
+
+            if (query.RangeStart.HasValue && query.RangeEnd.HasValue)
+            {
+                countQuery = countQuery.Where(s =>
+                    s.StartTime < query.RangeEnd && s.EndTime > query.RangeStart);
+                dataQuery = dataQuery.Where(s =>
+                    s.StartTime < query.RangeEnd && s.EndTime > query.RangeStart);
+            }
+
+            // Count without Include (more efficient)
+            Console.WriteLine($"[ScheduleService.GetAsync] Executing count query...");
+            var total = await countQuery.CountAsync(cancellationToken);
+            Console.WriteLine($"[ScheduleService.GetAsync] Count result: {total}");
+
+            // Include Recurrence only when fetching data
+            Console.WriteLine($"[ScheduleService.GetAsync] Executing data query with Include...");
+            var schedules = await dataQuery
+                .Include(s => s.Recurrence)
+                .OrderBy(s => s.StartTime)
+                .Skip((query.Page - 1) * query.Size)
+                .Take(query.Size)
+                .ToListAsync(cancellationToken);
+            Console.WriteLine($"[ScheduleService.GetAsync] Retrieved {schedules.Count} schedules");
+
+            // Map to response
+            Console.WriteLine($"[ScheduleService.GetAsync] Mapping schedules to response...");
+            var items = mapper.Map<List<ScheduleResponse>>(schedules);
+            Console.WriteLine($"[ScheduleService.GetAsync] Mapping completed. {items.Count} items mapped");
+
+            return new PagedResult<ScheduleResponse>(items, query.Page, query.Size, total);
+        }
+        catch (Exception ex)
         {
-            baseQuery = baseQuery.Where(s => s.TeamId == query.TeamId);
+            Console.WriteLine($"[ScheduleService.GetAsync] ❌ ERROR: {ex.Message}");
+            Console.WriteLine($"[ScheduleService.GetAsync] Exception type: {ex.GetType().Name}");
+            Console.WriteLine($"[ScheduleService.GetAsync] Stack trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"[ScheduleService.GetAsync] Inner exception: {ex.InnerException.Message}");
+                Console.WriteLine($"[ScheduleService.GetAsync] Inner stack trace: {ex.InnerException.StackTrace}");
+            }
+            throw;
         }
-
-        if (query.RangeStart.HasValue && query.RangeEnd.HasValue)
-        {
-            baseQuery = baseQuery.Where(s =>
-                s.StartTime < query.RangeEnd && s.EndTime > query.RangeStart);
-        }
-
-        baseQuery = baseQuery.Include(s => s.Recurrence);
-
-        var total = await baseQuery.CountAsync(cancellationToken);
-        var schedules = await baseQuery
-            .OrderBy(s => s.StartTime)
-            .Skip((query.Page - 1) * query.Size)
-            .Take(query.Size)
-            .ToListAsync(cancellationToken);
-
-        var items = mapper.Map<List<ScheduleResponse>>(schedules);
-
-        return new PagedResult<ScheduleResponse>(items, query.Page, query.Size, total);
     }
 
     public async Task<ScheduleResponse> CreateAsync(CreateScheduleRequest request, long actorId, CancellationToken cancellationToken)

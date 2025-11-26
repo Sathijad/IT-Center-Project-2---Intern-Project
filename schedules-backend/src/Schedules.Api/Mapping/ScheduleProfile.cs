@@ -2,6 +2,7 @@ using AutoMapper;
 using Schedules.Contracts.Schedules;
 using Schedules.Contracts.Tasks;
 using Schedules.Domain.Entities;
+using System.Linq;
 
 namespace Schedules.Mapping;
 
@@ -16,14 +17,16 @@ public class ScheduleProfile : Profile
                     ? null
                     : new RecurrenceDto(
                         src.Recurrence.RecurrencePatternId,
-                        src.Recurrence.Pattern,
+                        src.Recurrence.Pattern ?? string.Empty,
                         src.Recurrence.Interval,
                         src.Recurrence.ByDay,
                         src.Recurrence.ByMonthDay,
                         src.Recurrence.Until)));
 
+        CreateMap<TaskNote, TaskNoteResponse>()
+            .ConstructUsing(src => new TaskNoteResponse(src.TaskNoteId, src.AuthorId, src.Body, src.CreatedAt));
+
         CreateMap<TaskItem, TaskResponse>()
-            .ForMember(dest => dest.TaskId, opt => opt.MapFrom(src => src.TaskItemId))
             .ConstructUsing(src => new TaskResponse(
                 src.TaskItemId,
                 src.Title,
@@ -37,10 +40,10 @@ public class ScheduleProfile : Profile
                 src.MsGraphItemId,
                 src.CreatedAt,
                 src.UpdatedAt,
-                Array.Empty<TaskNoteResponse>()));
+                src.Notes != null && src.Notes.Any()
+                    ? src.Notes.Select(n => new TaskNoteResponse(n.TaskNoteId, n.AuthorId, n.Body, n.CreatedAt)).ToList()
+                    : new List<TaskNoteResponse>()));
 
-        CreateMap<TaskNote, TaskNoteResponse>()
-            .ForMember(dest => dest.NoteId, opt => opt.MapFrom(src => src.TaskNoteId));
     }
 }
 

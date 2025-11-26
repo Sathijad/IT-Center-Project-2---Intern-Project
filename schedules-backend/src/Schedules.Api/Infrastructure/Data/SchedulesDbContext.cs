@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Schedules.Domain.Entities;
 using Schedules.Domain.Enums;
 using TaskStatusEnum = Schedules.Domain.Enums.TaskStatus;
@@ -45,6 +46,7 @@ public class SchedulesDbContext(DbContextOptions<SchedulesDbContext> options) : 
         entity.Property(x => x.CreatedBy).HasColumnName("created_by");
         entity.Property(x => x.CreatedAt).HasColumnName("created_at");
         entity.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        entity.Property(x => x.RecurrenceId).HasColumnName("recurrence_id");
         entity.HasIndex(x => new { x.UserId, x.StartTime }).HasDatabaseName("idx_schedules_user_start");
         entity.HasIndex(x => new { x.UserId, x.StartTime, x.EndTime }).IsUnique();
 
@@ -119,7 +121,21 @@ public class SchedulesDbContext(DbContextOptions<SchedulesDbContext> options) : 
         entity.Property(x => x.JobType).HasColumnName("job_type").HasConversion<string>().HasMaxLength(30);
         entity.Property(x => x.RequestedBy).HasColumnName("requested_by");
         entity.Property(x => x.FilePath).HasColumnName("file_path").HasMaxLength(500);
-        entity.Property(x => x.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20);
+        // Map enum to database constraint values:
+        // Queued -> "QUEUED", Running -> "PROCESSING", Succeeded -> "COMPLETED", Failed -> "FAILED", Cancelled -> "CANCELLED
+        var statusConverter = new ValueConverter<ImportJobStatus, string>(
+            v => v == ImportJobStatus.Queued ? "QUEUED" :
+                 v == ImportJobStatus.Running ? "PROCESSING" :
+                 v == ImportJobStatus.Succeeded ? "COMPLETED" :
+                 v == ImportJobStatus.Failed ? "FAILED" :
+                 v == ImportJobStatus.Cancelled ? "CANCELLED" : v.ToString().ToUpperInvariant(),
+            v => v == "QUEUED" ? ImportJobStatus.Queued :
+                 v == "PROCESSING" ? ImportJobStatus.Running :
+                 v == "COMPLETED" ? ImportJobStatus.Succeeded :
+                 v == "FAILED" ? ImportJobStatus.Failed :
+                 v == "CANCELLED" ? ImportJobStatus.Cancelled :
+                 (ImportJobStatus)Enum.Parse(typeof(ImportJobStatus), v, true));
+        entity.Property(x => x.Status).HasColumnName("status").HasConversion(statusConverter).HasMaxLength(20);
         entity.Property(x => x.ErrorDetails).HasColumnName("error_details");
         entity.Property(x => x.ProcessedCount).HasColumnName("processed_count");
         entity.Property(x => x.FailedCount).HasColumnName("failed_count");
