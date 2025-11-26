@@ -23,6 +23,15 @@ public class ScheduleProfile : Profile
                         src.Recurrence.ByMonthDay,
                         src.Recurrence.Until)));
 
+        CreateMap<RecurrencePattern, RecurrenceDto>()
+            .ConstructUsing(src => new RecurrenceDto(
+                src.RecurrencePatternId,
+                src.Pattern ?? string.Empty,
+                src.Interval,
+                src.ByDay,
+                src.ByMonthDay,
+                src.Until));
+
         CreateMap<TaskNote, TaskNoteResponse>()
             .ConstructUsing(src => new TaskNoteResponse(src.TaskNoteId, src.AuthorId, src.Body, src.CreatedAt));
 
