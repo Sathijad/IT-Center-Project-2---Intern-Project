@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +34,7 @@ public class TasksController(
         {
             await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
             var actorId = await User.GetActorIdAsync(dbContext, cancellationToken);
+            var isAdmin = User.IsInRole("ADMIN");
             
             if (actorId == 0)
             {
@@ -40,25 +42,24 @@ public class TasksController(
                 return Unauthorized("Unable to determine user ID from token.");
             }
             
-            // Security: If assignee is provided, ensure it matches the authenticated user
-            // (Non-admin users can only view their own tasks)
-            if (assignee.HasValue && assignee.Value != actorId)
+            long? finalAssignee = null;
+            
+            if (assignee.HasValue)
             {
-                // Check if user is admin (can view other users' tasks)
-                var isAdmin = User.IsInRole("ADMIN");
-                if (!isAdmin)
+                if (!isAdmin && assignee.Value != actorId)
                 {
                     Console.WriteLine($"[TasksController.Get] ⚠️ User {actorId} attempted to view tasks for user {assignee.Value} (not authorized)");
                     return Forbid("You can only view your own tasks.");
                 }
+                finalAssignee = assignee.Value;
+            }
+            else
+            {
+                // Employees always restricted to their own tasks, admins can view all tasks
+                finalAssignee = isAdmin ? null : actorId;
             }
             
-            // Use authenticated user's ID if assignee not provided or not authorized
-            var finalAssignee = assignee.HasValue && (assignee.Value == actorId || User.IsInRole("ADMIN")) 
-                ? assignee.Value 
-                : actorId;
-            
-            Console.WriteLine($"[TasksController.Get] Fetching tasks for assignee: {finalAssignee}, page: {page}, size: {size}");
+            Console.WriteLine($"[TasksController.Get] Fetching tasks for assignee: {(finalAssignee.HasValue ? finalAssignee.ToString() : "ALL")}, page: {page}, size: {size}");
             
             var query = new TaskQuery(Assignee: finalAssignee, Status: status, Page: page, Size: size);
             var response = await taskService.GetAsync(query, cancellationToken);
@@ -120,11 +121,56 @@ public class TasksController(
     }
 
     [HttpPatch("{taskId:guid}")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "Employee")]
     public async Task<ActionResult<TaskResponse>> Update(Guid taskId, [FromBody] UpdateTaskRequest request, CancellationToken cancellationToken)
     {
         try
         {
+            await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+            var actorId = await User.GetActorIdAsync(dbContext, cancellationToken);
+            var isAdmin = User.IsInRole("ADMIN");
+            
+            if (actorId == 0)
+            {
+                Console.WriteLine($"[TasksController.Update] ❌ Unable to determine user ID from token");
+                return Unauthorized("Unable to determine user ID from token.");
+            }
+            
+            var existingTask = await dbContext.Tasks
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.TaskItemId == taskId, cancellationToken);
+            
+            if (existingTask is null)
+            {
+                return NotFound($"Task {taskId} not found");
+            }
+            
+            if (!isAdmin)
+            {
+                if (existingTask.AssigneeId != actorId)
+                {
+                    Console.WriteLine($"[TasksController.Update] ⚠️ User {actorId} attempted to update task {taskId} not assigned to them");
+                    return Forbid("You can only update tasks assigned to you.");
+                }
+                
+                var invalidFields = new List<string>();
+                if (request.Title is not null) invalidFields.Add(nameof(request.Title));
+                if (request.Description is not null) invalidFields.Add(nameof(request.Description));
+                if (request.Priority.HasValue) invalidFields.Add(nameof(request.Priority));
+                if (request.DueDate.HasValue) invalidFields.Add(nameof(request.DueDate));
+                if (request.Tags is not null) invalidFields.Add(nameof(request.Tags));
+                
+                if (invalidFields.Count > 0)
+                {
+                    return Forbid($"You may only update the task status. Fields not permitted: {string.Join(", ", invalidFields)}");
+                }
+                
+                if (!request.Status.HasValue)
+                {
+                    return BadRequest("Status is required when updating your task.");
+                }
+            }
+            
             var task = await taskService.UpdateAsync(taskId, request, cancellationToken);
             return Ok(task);
         }

@@ -20,6 +20,7 @@ import AdminBookingsPage from './pages/AdminBookingsPage'
 import BookingReportsPage from './pages/BookingReportsPage'
 import Layout from './components/Layout'
 import SchedulesPlannerPage from './pages/SchedulesPlannerPage'
+import MySchedulePage from './pages/MySchedulePage'
 import TasksDashboardPage from './pages/TasksDashboardPage'
 import CsvImportPage from './pages/CsvImportPage'
 import ScheduleReportsPage from './pages/ScheduleReportsPage'
@@ -149,6 +150,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="ADMIN">
                     <SchedulesPlannerPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="schedules/my"
+                element={
+                  <ProtectedRoute>
+                    <MySchedulePage />
                   </ProtectedRoute>
                 }
               />

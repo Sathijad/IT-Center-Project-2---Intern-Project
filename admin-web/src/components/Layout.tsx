@@ -42,7 +42,9 @@ const Layout: React.FC = () => {
           { name: 'Team Planner', href: '/schedules', icon: CalendarRange },
           { name: 'Attendance', href: '/admin/attendance', icon: Clock },
         ]
-      : []),
+      : [
+          { name: 'My Schedule', href: '/schedules/my', icon: CalendarRange },
+        ]),
     { name: 'Tasks', href: '/tasks', icon: ClipboardList },
     ...(isAdmin
       ? [

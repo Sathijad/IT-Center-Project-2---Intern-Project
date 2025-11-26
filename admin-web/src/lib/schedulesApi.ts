@@ -88,6 +88,11 @@ export async function listSchedules(params: Record<string, any>) {
   return data
 }
 
+export async function listMySchedules(params: { rangeStart?: string; rangeEnd?: string }) {
+  const { data } = await api.get<PagedResponse<Schedule>>('/api/v1/schedules/my', { params })
+  return data
+}
+
 export async function createSchedule(payload: any) {
   const { data } = await api.post<Schedule>('/api/v1/schedules', payload)
   return data

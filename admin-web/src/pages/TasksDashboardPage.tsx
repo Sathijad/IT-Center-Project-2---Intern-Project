@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '../contexts/AuthContext'
 import {
   listTasks,
   createTask,
@@ -27,6 +28,7 @@ type TaskForm = z.infer<typeof taskSchema>
 const statusOptions = ['Pending', 'InProgress', 'Blocked', 'Done']
 
 const TasksDashboardPage = () => {
+  const { user, isAdmin } = useAuth()
   const queryClient = useQueryClient()
   const [filters, setFilters] = useState({ status: '', assignee: '' })
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({})
@@ -38,13 +40,19 @@ const TasksDashboardPage = () => {
     },
   })
 
+  // For EMPLOYEE role, automatically filter by their user ID
+  const effectiveAssignee = isAdmin 
+    ? (filters.assignee || undefined)
+    : (user?.id?.toString() || undefined)
+
   const { data, isLoading, error } = useQuery<PagedResponse<Task>>({
-    queryKey: ['tasks', filters],
+    queryKey: ['tasks', filters, user?.id],
     queryFn: () =>
       listTasks({
         status: filters.status || undefined,
-        assignee: filters.assignee || undefined,
+        assignee: effectiveAssignee,
       }),
+    enabled: !!user?.id, // Only fetch if user is loaded
   })
 
   const createMutation = useMutation({
@@ -93,8 +101,9 @@ const TasksDashboardPage = () => {
       </header>
 
       <section className="grid gap-6 md:grid-cols-2">
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 rounded-xl shadow border border-gray-100 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-800">Assign Task</h2>
+        {isAdmin && (
+          <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 rounded-xl shadow border border-gray-100 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-800">Assign Task</h2>
           <label className="flex flex-col text-sm text-gray-600">
             Title
             <input type="text" className="mt-1 rounded border px-3 py-2" {...register('title')} />
@@ -141,7 +150,8 @@ const TasksDashboardPage = () => {
             {createMutation.isPending ? 'Saving...' : 'Create Task'}
           </button>
           {createMutation.isError && <p className="text-sm text-red-600">Failed to create task.</p>}
-        </form>
+          </form>
+        )}
 
         <div className="bg-white p-6 rounded-xl shadow border border-gray-100 space-y-4">
           <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
@@ -160,15 +170,23 @@ const TasksDashboardPage = () => {
               ))}
             </select>
           </label>
-          <label className="flex flex-col text-sm text-gray-600">
-            Assignee ID
-            <input
-              type="text"
-              className="mt-1 rounded border px-3 py-2"
-              value={filters.assignee}
-              onChange={(e) => setFilters((prev) => ({ ...prev, assignee: e.target.value }))}
-            />
-          </label>
+          {isAdmin && (
+            <label className="flex flex-col text-sm text-gray-600">
+              Assignee ID
+              <input
+                type="text"
+                className="mt-1 rounded border px-3 py-2"
+                value={filters.assignee}
+                onChange={(e) => setFilters((prev) => ({ ...prev, assignee: e.target.value }))}
+              />
+            </label>
+          )}
+          {!isAdmin && (
+            <div className="text-sm text-gray-600">
+              <p className="font-medium">Showing your tasks only</p>
+              <p className="text-xs text-gray-500 mt-1">You can only view tasks assigned to you.</p>
+            </div>
+          )}
         </div>
       </section>
 
