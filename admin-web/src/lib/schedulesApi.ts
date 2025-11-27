@@ -52,6 +52,15 @@ schedulesApi.interceptors.response.use(
 
 const api = schedulesApi
 
+export type Recurrence = {
+  recurrenceId?: string
+  pattern?: string
+  interval?: number
+  byDay?: string
+  byMonthDay?: string
+  until?: string
+}
+
 export type Schedule = {
   scheduleId: string
   userId: number
@@ -62,6 +71,7 @@ export type Schedule = {
   endTime: string
   status: string
   calendarEventId?: string
+  recurrence?: Recurrence
 }
 
 export type Task = {
