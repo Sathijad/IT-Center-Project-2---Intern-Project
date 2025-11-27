@@ -213,6 +213,7 @@ const TasksDashboardPage = () => {
                   </div>
                   <div className="mt-3 md:mt-0 flex items-center gap-2">
                     <select
+                      aria-label={`Set status for ${task.title}`}
                       className="rounded border px-3 py-1 text-sm"
                       value={task.status}
                       onChange={(e) => statusMutation.mutate({ id: task.taskId, status: e.target.value })}
