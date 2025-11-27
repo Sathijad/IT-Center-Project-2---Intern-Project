@@ -22,9 +22,10 @@ public class DailyReminderWorker(
             return;
         }
 
-        var tomorrow = DateTimeOffset.UtcNow.Date.AddDays(1);
+        var start = new DateTimeOffset(DateTime.UtcNow.Date.AddDays(1), TimeSpan.Zero);
+        var end = start.AddDays(1);
         var dueTasks = await dbContext.Tasks
-            .Where(t => t.DueDate >= tomorrow && t.DueDate < tomorrow.AddDays(1))
+            .Where(t => t.DueDate >= start && t.DueDate < end)
             .ToListAsync(cancellationToken);
 
         foreach (var task in dueTasks)

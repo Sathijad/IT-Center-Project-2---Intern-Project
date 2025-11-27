@@ -2,7 +2,11 @@ import { WebDriver, By, until, Key } from 'selenium-webdriver';
 import { getBaseUrl } from '../helpers/test-base.js';
 
 export class UsersPage {
-  constructor(private driver: WebDriver) {}
+  private driver: WebDriver
+
+  constructor(driver: WebDriver) {
+    this.driver = driver
+  }
 
   async open(): Promise<void> {
     const baseUrl = getBaseUrl();

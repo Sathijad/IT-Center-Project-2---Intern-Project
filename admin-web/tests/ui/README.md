@@ -67,6 +67,20 @@ $env:HEADFUL="true"
 $env:TEST_USER_TOKEN="your-jwt-token-here"
 ```
 
+### Phase 4 Credentials & IDs
+
+The Schedule Planner / Tasks automation (`tests/ui/phase4.schedules.tasks.spec.ts`) drives a real Cognito login. Provide the credentials and entity IDs from your environment (the values below reflect the sample account the team shared):
+
+```powershell
+$env:TEST_LOGIN_EMAIL="admin@test.com"
+$env:TEST_LOGIN_PASSWORD="Admin@123"
+$env:TEST_SCHEDULE_USER_ID="101"    # numeric user ID used when creating schedules
+$env:TEST_TASK_ASSIGNEE_ID="101"    # numeric user ID used when creating tasks (defaults to schedule user id)
+$env:TEST_TEAM_ID="45"              # optional team id for the Weekly Planner form
+```
+
+> After the script submits the Cognito form it pauses for up to 3 minutes so that you can type the verification code manually. As soon as the dashboard loads the tests resume automatically.
+
 ## 📁 Project Structure
 
 ```
@@ -83,6 +97,7 @@ tests/ui/
 ├── users.roles.spec.ts   # Role management tests
 ├── audit.spec.ts         # Audit log tests
 ├── a11y.smoke.spec.ts    # Accessibility tests
+├── phase4.schedules.tasks.spec.ts # Phase 4 (Schedules + Tasks) scenarios
 └── README.md            # This file
 ```
 
@@ -132,6 +147,17 @@ Tests accessibility compliance using axe-core.
 - Verify keyboard navigation
 - Check ARIA attributes
 - Validate color contrast
+
+### 5. Phase 4 (Schedules & Tasks) (`phase4.schedules.tasks.spec.ts`)
+
+End-to-end regression for the Phase 4 additions (Weekly Planner, My Schedule, Task Dashboard). This suite runs against a live backend and requires Cognito credentials.
+
+**Scenarios:**
+- Interactive login with real credentials (pauses for manual MFA)
+- Create Weekly Planner schedules with unique titles
+- Apply user filters on the planner table
+- View "My Schedule" cards / empty state
+- Create tasks, update status, and post comments as an admin
 
 ## 🎯 Page Object Model
 
