@@ -6,11 +6,11 @@ const logInfo = (message: string) => {
 }
 
 const toDateOnly = (date: Date) => {
-  // Format for date input (DD-MM-YYYY in local time)
+  // Format for date input (YYYY-MM-DD in local time)
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
-  const formatted = `${day}-${month}-${year}`
+  const formatted = `${year}-${month}-${day}`
   logInfo(`Formatting date: ${date.toISOString()} -> ${formatted}`)
   return formatted
 }
@@ -44,6 +44,30 @@ export class TasksPage {
       return false
     }
     return notices[0].isDisplayed()
+  }
+
+  async setStatusFilter(status: string): Promise<void> {
+    const select = await this.driver.findElement(
+      By.xpath("//section[contains(.,'Filters')]//label[contains(.,'Status')]//select"),
+    )
+    await select.sendKeys(status)
+  }
+
+  async setAssigneeFilter(value: string): Promise<void> {
+    const inputs = await this.driver.findElements(
+      By.xpath("//section[contains(.,'Filters')]//label[contains(.,'Assignee ID')]//input"),
+    )
+    if (inputs.length > 0) {
+      await inputs[0].clear()
+      await inputs[0].sendKeys(value)
+    }
+  }
+
+  async ensureFilters(status: string, assigneeId: number): Promise<void> {
+    logInfo(`Applying task filters -> status: ${status || 'All'}, assigneeId: ${assigneeId}`)
+    await this.setStatusFilter(status)
+    await this.setAssigneeFilter(String(assigneeId))
+    await this.driver.sleep(500)
   }
 
   async createTask(options: {
@@ -128,34 +152,7 @@ export class TasksPage {
 
   async waitForTask(title: string): Promise<void> {
     logInfo(`Waiting for task with title: "${title}"`)
-    
-    // First try to find the task without refreshing (it might already be visible)
-    try {
-      await this.driver.wait(
-        until.elementLocated(By.xpath(`//article[.//p[contains(normalize-space(),"${title}")]]`)),
-        10000,
-      )
-      logInfo(`Task "${title}" found immediately`)
-      return // Found it, no need to refresh
-    } catch (e) {
-      // Not found, refresh and try again
-      logInfo(`Task "${title}" not immediately visible, refreshing page...`)
-    }
-    
-    // Wait a bit more for API to complete
-    await this.driver.sleep(2000)
-    
-    // Refresh the page to ensure we see the latest data
-    await this.driver.navigate().refresh()
-    await this.driver.wait(
-      until.elementLocated(By.xpath("//h1[contains(text(),'Task Dashboard')]")),
-      20000,
-    )
-    
-    // Wait a bit after page load for data to render
-    await this.driver.sleep(2000)
-    
-    // Try multiple selectors to find the task
+
     await this.driver.wait(
       async () => {
         const selectors = [
@@ -163,27 +160,19 @@ export class TasksPage {
           By.xpath(`//article[.//*[contains(text(),"${title}")]]`),
           By.xpath(`//*[contains(text(),"${title}")]`),
         ]
-        
+
         for (const selector of selectors) {
           const elements = await this.driver.findElements(selector)
           if (elements.length > 0) {
-            logInfo(`Task "${title}" found using selector`)
+            logInfo(`Task "${title}" located`)
             return true
           }
         }
-        
-        // Debug: log what's actually visible
-        const allArticles = await this.driver.findElements(By.css('article'))
-        logInfo(`Found ${allArticles.length} task articles on page`)
-        for (let i = 0; i < Math.min(allArticles.length, 5); i++) {
-          const articleText = await allArticles[i].getText()
-          logInfo(`Article ${i}: ${articleText.substring(0, 100)}`)
-        }
-        
+
         return false
       },
-      30000,
-      `Task with title "${title}" not found after refresh`,
+      45000,
+      `Task with title "${title}" not found`,
     )
   }
 

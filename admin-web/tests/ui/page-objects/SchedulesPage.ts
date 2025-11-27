@@ -6,16 +6,24 @@ const logInfo = (message: string) => {
 }
 
 const toDateInput = (date: Date) => {
-  // Format for datetime input (DD-MM-YYYY HH:mm in local time)
-  // Ensure we're using local time, not UTC
+  // Format for datetime-local input (YYYY-MM-DDTHH:mm in local time)
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
-  const formatted = `${day}-${month}-${year} ${hours}:${minutes}`
+  const formatted = `${year}-${month}-${day}T${hours}:${minutes}`
   logInfo(`Formatting date: ${date.toISOString()} -> ${formatted}`)
   return formatted
+}
+
+const formatFilterDate = (date: Date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
 export class SchedulesPage {
@@ -122,36 +130,7 @@ export class SchedulesPage {
 
   async waitForSchedule(title: string): Promise<void> {
     logInfo(`Waiting for schedule with title: "${title}"`)
-    
-    // First try to find the schedule without refreshing (it might already be visible)
-    try {
-      await this.driver.wait(
-        until.elementLocated(
-          By.xpath(`//tbody//tr[.//td[contains(normalize-space(),"${title}")]]`),
-        ),
-        10000,
-      )
-      logInfo(`Schedule "${title}" found immediately`)
-      return // Found it, no need to refresh
-    } catch (e) {
-      // Not found, refresh and try again
-      logInfo(`Schedule "${title}" not immediately visible, refreshing page...`)
-    }
-    
-    // Wait a bit more for API to complete
-    await this.driver.sleep(2000)
-    
-    // Refresh the page to ensure we see the latest data
-    await this.driver.navigate().refresh()
-    await this.driver.wait(
-      until.elementLocated(By.xpath("//h1[contains(text(),'Weekly Schedule Planner')]")),
-      20000,
-    )
-    
-    // Wait a bit after page load for data to render
-    await this.driver.sleep(2000)
-    
-    // Try multiple selectors to find the schedule
+
     await this.driver.wait(
       async () => {
         const selectors = [
@@ -159,27 +138,19 @@ export class SchedulesPage {
           By.xpath(`//tr[.//*[contains(text(),"${title}")]]`),
           By.xpath(`//*[contains(text(),"${title}")]`),
         ]
-        
+
         for (const selector of selectors) {
           const elements = await this.driver.findElements(selector)
           if (elements.length > 0) {
-            logInfo(`Schedule "${title}" found using selector`)
+            logInfo(`Schedule "${title}" located`)
             return true
           }
         }
-        
-        // Debug: log what's actually in the table
-        const allRows = await this.driver.findElements(By.css('tbody tr'))
-        logInfo(`Found ${allRows.length} rows in table`)
-        for (let i = 0; i < Math.min(allRows.length, 5); i++) {
-          const rowText = await allRows[i].getText()
-          logInfo(`Row ${i}: ${rowText.substring(0, 100)}`)
-        }
-        
+
         return false
       },
-      30000,
-      `Schedule with title "${title}" not found after refresh`,
+      45000,
+      `Schedule with title "${title}" not found`,
     )
   }
 
@@ -202,6 +173,31 @@ export class SchedulesPage {
 
   async clearUserFilter(): Promise<void> {
     await this.filterByUser('')
+  }
+
+  async setDateRange(start: Date, end: Date): Promise<void> {
+    const formattedStart = formatFilterDate(start)
+    const formattedEnd = formatFilterDate(end)
+
+    const startInput = await this.driver.findElement(
+      By.xpath("//section[contains(.,'Filters')]//label[contains(.,'Range Start')]//input"),
+    )
+    await startInput.clear()
+    await startInput.sendKeys(formattedStart)
+
+    const endInput = await this.driver.findElement(
+      By.xpath("//section[contains(.,'Filters')]//label[contains(.,'Range End')]//input"),
+    )
+    await endInput.clear()
+    await endInput.sendKeys(formattedEnd)
+  }
+
+  async ensureFilters(userId: number, start: Date, end: Date): Promise<void> {
+    logInfo(`Applying filters -> userId: ${userId}, start: ${start.toISOString()}, end: ${end.toISOString()}`)
+    await this.filterByUser(String(userId))
+    await this.setDateRange(start, end)
+    // give React time to trigger refetch
+    await this.driver.sleep(500)
   }
 
   async getVisibleUserIds(): Promise<number[]> {

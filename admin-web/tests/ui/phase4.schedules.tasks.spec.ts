@@ -184,16 +184,21 @@ const performInteractiveLogin = async () => {
     it('loads the planner grid and creates a new schedule entry', async () => {
       await schedulesPage.openPlanner()
 
-      const initialCount = await schedulesPage.getRecordCount()
       const title = `Coverage ${Date.now()}`
 
-      // Use dates that are definitely in the future (tomorrow)
-      // Create date in local timezone to avoid UTC conversion issues
-      const now = new Date()
-      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 10, 0, 0, 0)
-      const endTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 11, 0, 0, 0)
+      // Use unique timestamps a few hours from now to avoid conflicts
+      const startTime = new Date(Date.now() + 2 * 60 * 60 * 1000)
+      startTime.setSeconds(0, 0)
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000)
       
-      logInfo(`Creating schedule with start: ${tomorrow.toISOString()} (local: ${tomorrow.toString()})`)
+      // Ensure filters cover the schedule window before we capture baseline count
+      const rangeStart = new Date(startTime.getTime() - 60 * 60 * 1000)
+      const rangeEnd = new Date(endTime.getTime() + 60 * 60 * 1000)
+      await schedulesPage.ensureFilters(scheduleUserId, rangeStart, rangeEnd)
+
+      const initialCount = await schedulesPage.getRecordCount()
+      
+      logInfo(`Creating schedule with start: ${startTime.toISOString()} (local: ${startTime.toString()})`)
       logInfo(`Creating schedule with end: ${endTime.toISOString()} (local: ${endTime.toString()})`)
       
       await schedulesPage.createSchedule({
@@ -201,7 +206,7 @@ const performInteractiveLogin = async () => {
         teamId: scheduleTeamId,
         title,
         description: 'Automated verification shift',
-        start: tomorrow,
+        start: startTime,
         end: endTime,
       })
 
@@ -238,18 +243,21 @@ const performInteractiveLogin = async () => {
       expect(await tasksPage.isAssignFormVisible()).to.eq(true)
 
       const title = `Task ${Date.now()}`
-      // Use tomorrow's date for due date (create in local timezone)
-      const now = new Date()
-      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 17, 0, 0, 0)
+      // Use due date 1 day from now to avoid reuse
+      const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
+      dueDate.setHours(17, 0, 0, 0)
       
-      logInfo(`Creating task with due date: ${tomorrow.toISOString()} (local: ${tomorrow.toString()})`)
+      // Ensure filters are scoped to the assignee before creation
+      await tasksPage.ensureFilters('', taskAssigneeId)
+      
+      logInfo(`Creating task with due date: ${dueDate.toISOString()} (local: ${dueDate.toString()})`)
       
       await tasksPage.createTask({
         title,
         description: 'Ensure Teams reminders trigger',
         assigneeId: taskAssigneeId,
         priority: 'High',
-        dueDate: tomorrow,
+        dueDate,
         tags: 'phase4,selenium',
       })
 

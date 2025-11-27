@@ -40,23 +40,29 @@ const scheduleSchema = z.object({
 
 type ScheduleForm = z.infer<typeof scheduleSchema>
 
-const defaultRange = () => {
-  const start = new Date()
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(start)
-  end.setDate(end.getDate() + 7)
+const formatDateTimeLocal = (date: Date) => date.toISOString().slice(0, 16)
+
+const getThisYearRange = () => {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0)
+  const end = new Date(now.getFullYear(), 11, 31, 23, 59, 0, 0)
   return {
-    rangeStart: start.toISOString().slice(0, 16),
-    rangeEnd: end.toISOString().slice(0, 16),
+    rangeStart: formatDateTimeLocal(start),
+    rangeEnd: formatDateTimeLocal(end),
   }
 }
 
+type RangePreset = 'all' | 'thisYear' | 'custom'
+
 const SchedulesPlannerPage = () => {
   const queryClient = useQueryClient()
+  const thisYear = getThisYearRange()
   const [filters, setFilters] = useState(() => ({
     userId: '',
     teamId: '',
-    ...defaultRange(),
+    rangePreset: 'thisYear' as RangePreset,
+    rangeStart: thisYear.rangeStart,
+    rangeEnd: thisYear.rangeEnd,
   }))
 
   const { register, handleSubmit, reset, formState, watch } = useForm<ScheduleForm>({
@@ -95,11 +101,13 @@ const SchedulesPlannerPage = () => {
           params.teamId = teamIdNum
         }
       }
-      if (filters.rangeStart && filters.rangeStart.trim() !== '') {
-        params.rangeStart = new Date(filters.rangeStart).toISOString()
-      }
-      if (filters.rangeEnd && filters.rangeEnd.trim() !== '') {
-        params.rangeEnd = new Date(filters.rangeEnd).toISOString()
+      if (filters.rangePreset !== 'all') {
+        if (filters.rangeStart && filters.rangeStart.trim() !== '') {
+          params.rangeStart = new Date(filters.rangeStart).toISOString()
+        }
+        if (filters.rangeEnd && filters.rangeEnd.trim() !== '') {
+          params.rangeEnd = new Date(filters.rangeEnd).toISOString()
+        }
       }
       
       return listSchedules(params)
@@ -297,11 +305,41 @@ const SchedulesPlannerPage = () => {
             </label>
           </div>
           <label className="flex flex-col text-sm text-gray-600">
+            Date Range Preset
+            <select
+              className="mt-1 rounded border px-3 py-2"
+              value={filters.rangePreset}
+              onChange={(e) => {
+                const preset = e.target.value as RangePreset
+                setFilters((prev) => {
+                  if (preset === 'all') {
+                    return { ...prev, rangePreset: preset, rangeStart: '', rangeEnd: '' }
+                  }
+                  if (preset === 'thisYear') {
+                    const yearRange = getThisYearRange()
+                    return {
+                      ...prev,
+                      rangePreset: preset,
+                      rangeStart: yearRange.rangeStart,
+                      rangeEnd: yearRange.rangeEnd,
+                    }
+                  }
+                  return { ...prev, rangePreset: preset }
+                })
+              }}
+            >
+              <option value="all">All</option>
+              <option value="thisYear">This Year</option>
+              <option value="custom">Custom range</option>
+            </select>
+          </label>
+          <label className="flex flex-col text-sm text-gray-600">
             Range Start
             <input
               type="datetime-local"
-              className="mt-1 rounded border px-3 py-2"
+              className="mt-1 rounded border px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
               value={filters.rangeStart}
+              disabled={filters.rangePreset !== 'custom'}
               onChange={(e) => setFilters((prev) => ({ ...prev, rangeStart: e.target.value }))}
             />
           </label>
@@ -309,8 +347,9 @@ const SchedulesPlannerPage = () => {
             Range End
             <input
               type="datetime-local"
-              className="mt-1 rounded border px-3 py-2"
+              className="mt-1 rounded border px-3 py-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
               value={filters.rangeEnd}
+              disabled={filters.rangePreset !== 'custom'}
               onChange={(e) => setFilters((prev) => ({ ...prev, rangeEnd: e.target.value }))}
             />
           </label>
