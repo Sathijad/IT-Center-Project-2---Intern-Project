@@ -1,0 +1,33 @@
+{
+  "uuid": "f4df90d3-769a-45a6-8638-f971fcc01d5b",
+  "historyId": "Schedules.Api.Tests.ValidatorTests.UpdateTaskRequestValidator_FailsWhenNoChanges",
+  "fullName": "Schedules.Api.Tests.ValidatorTests.UpdateTaskRequestValidator_FailsWhenNoChanges",
+  "name": "UpdateTaskRequestValidator_FailsWhenNoChanges",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ValidatorTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149968387,
+  "stop": 1764149968387,
+  "statusDetails": {}
+}

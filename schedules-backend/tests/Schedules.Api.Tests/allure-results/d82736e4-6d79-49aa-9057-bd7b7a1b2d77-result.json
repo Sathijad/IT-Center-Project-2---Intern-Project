@@ -1,0 +1,33 @@
+{
+  "uuid": "d82736e4-6d79-49aa-9057-bd7b7a1b2d77",
+  "historyId": "Schedules.Api.Tests.AvailabilityServiceTests.GetAsync_ReturnsLocalBusyOnlyWhenGraphDisabled",
+  "fullName": "Schedules.Api.Tests.AvailabilityServiceTests.GetAsync_ReturnsLocalBusyOnlyWhenGraphDisabled",
+  "name": "GetAsync_ReturnsLocalBusyOnlyWhenGraphDisabled",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.AvailabilityServiceTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149972166,
+  "stop": 1764149972166,
+  "statusDetails": {}
+}

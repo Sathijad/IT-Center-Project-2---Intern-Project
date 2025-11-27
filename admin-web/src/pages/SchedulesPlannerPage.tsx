@@ -21,6 +21,21 @@ const scheduleSchema = z.object({
   startTime: z.string().min(1, 'Start time is required'),
   endTime: z.string().min(1, 'End time is required'),
   isAllDay: z.boolean().optional().default(false),
+  createRecurrence: z.boolean().optional().default(false),
+  recurrencePattern: z.string().optional(),
+  recurrenceInterval: z.preprocess((val) => (val === '' || val === undefined ? undefined : Number(val)), z.number().int().positive()).optional(),
+  recurrenceByDay: z.string().optional(),
+  recurrenceByMonthDay: z.string().optional(),
+  recurrenceUntil: z.string().optional(),
+}).refine((data) => {
+  // If createRecurrence is true, pattern is required
+  if (data.createRecurrence && !data.recurrencePattern) {
+    return false
+  }
+  return true
+}, {
+  message: 'Recurrence pattern is required when creating a recurring schedule',
+  path: ['recurrencePattern'],
 })
 
 type ScheduleForm = z.infer<typeof scheduleSchema>
@@ -44,15 +59,23 @@ const SchedulesPlannerPage = () => {
     ...defaultRange(),
   }))
 
-  const { register, handleSubmit, reset, formState } = useForm<ScheduleForm>({
+  const { register, handleSubmit, reset, formState, watch } = useForm<ScheduleForm>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
       title: '',
       startTime: new Date().toISOString().slice(0, 16),
       endTime: new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16),
       isAllDay: false,
+      createRecurrence: false,
+      recurrencePattern: '',
+      recurrenceInterval: 1,
+      recurrenceByDay: '',
+      recurrenceByMonthDay: '',
+      recurrenceUntil: '',
     },
   })
+
+  const createRecurrence = watch('createRecurrence')
 
   const { data, isLoading, error } = useQuery<PagedResponse<Schedule>>({
     queryKey: ['schedules', filters],
@@ -84,8 +107,8 @@ const SchedulesPlannerPage = () => {
   })
 
   const createMutation = useMutation({
-    mutationFn: (payload: ScheduleForm) =>
-      createSchedule({
+    mutationFn: (payload: ScheduleForm) => {
+      const schedulePayload: any = {
         userId: payload.userId,
         teamId: payload.teamId,
         title: payload.title,
@@ -93,8 +116,22 @@ const SchedulesPlannerPage = () => {
         startTime: new Date(payload.startTime).toISOString(),
         endTime: new Date(payload.endTime).toISOString(),
         isAllDay: payload.isAllDay,
-        createRecurrence: false,
-      }),
+        createRecurrence: payload.createRecurrence || false,
+      }
+
+      // Add recurrence data if enabled
+      if (payload.createRecurrence && payload.recurrencePattern) {
+        schedulePayload.recurrence = {
+          pattern: payload.recurrencePattern,
+          interval: payload.recurrenceInterval || 1,
+          byDay: payload.recurrenceByDay || null,
+          byMonthDay: payload.recurrenceByMonthDay || null,
+          until: payload.recurrenceUntil ? new Date(payload.recurrenceUntil).toISOString() : null,
+        }
+      }
+
+      return createSchedule(schedulePayload)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['schedules'] })
       reset()
@@ -156,6 +193,77 @@ const SchedulesPlannerPage = () => {
             <input type="checkbox" {...register('isAllDay')} />
             <span>All day event</span>
           </label>
+
+          <div className="border-t border-gray-200 pt-4 space-y-4">
+            <label className="inline-flex items-center text-sm text-gray-600 space-x-2">
+              <input type="checkbox" {...register('createRecurrence')} />
+              <span className="font-semibold">Create recurring schedule</span>
+            </label>
+
+            {createRecurrence && (
+              <div className="ml-6 space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="flex flex-col text-sm text-gray-600">
+                    Recurrence Pattern *
+                    <select className="mt-1 rounded border px-3 py-2" {...register('recurrencePattern')}>
+                      <option value="">Select pattern</option>
+                      <option value="DAILY">Daily</option>
+                      <option value="WEEKLY">Weekly</option>
+                      <option value="MONTHLY">Monthly</option>
+                      <option value="YEARLY">Yearly</option>
+                    </select>
+                    {formState.errors.recurrencePattern && (
+                      <span className="text-xs text-red-600">{formState.errors.recurrencePattern.message}</span>
+                    )}
+                  </label>
+                  <label className="flex flex-col text-sm text-gray-600">
+                    Interval (every N)
+                    <input
+                      type="number"
+                      min="1"
+                      className="mt-1 rounded border px-3 py-2"
+                      {...register('recurrenceInterval')}
+                      defaultValue={1}
+                    />
+                  </label>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="flex flex-col text-sm text-gray-600">
+                    By Day (e.g., MO, TU, WE or MO,TU,WE)
+                    <input
+                      type="text"
+                      placeholder="MO, TU, WE"
+                      className="mt-1 rounded border px-3 py-2"
+                      {...register('recurrenceByDay')}
+                    />
+                    <span className="text-xs text-gray-500 mt-1">Comma-separated day codes (MO, TU, WE, TH, FR, SA, SU)</span>
+                  </label>
+                  <label className="flex flex-col text-sm text-gray-600">
+                    By Month Day (e.g., 1, 15, -1)
+                    <input
+                      type="text"
+                      placeholder="1, 15"
+                      className="mt-1 rounded border px-3 py-2"
+                      {...register('recurrenceByMonthDay')}
+                    />
+                    <span className="text-xs text-gray-500 mt-1">Comma-separated day numbers (1-31, negative for end of month)</span>
+                  </label>
+                </div>
+
+                <label className="flex flex-col text-sm text-gray-600">
+                  Repeat Until (optional)
+                  <input
+                    type="datetime-local"
+                    className="mt-1 rounded border px-3 py-2"
+                    {...register('recurrenceUntil')}
+                  />
+                  <span className="text-xs text-gray-500 mt-1">Leave empty for no end date</span>
+                </label>
+              </div>
+            )}
+          </div>
+
           <button
             type="submit"
             className="w-full rounded bg-blue-600 text-white py-2 font-semibold hover:bg-blue-700 transition disabled:opacity-50"
@@ -221,7 +329,7 @@ const SchedulesPlannerPage = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {['User', 'Team', 'Title', 'Start', 'End', 'Status', 'Actions'].map((header) => (
+                  {['User', 'Team', 'Title', 'Start', 'End', 'Recurrence', 'Status', 'Actions'].map((header) => (
                     <th key={header} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {header}
                     </th>
@@ -236,6 +344,24 @@ const SchedulesPlannerPage = () => {
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.title}</td>
                     <td className="px-4 py-3 text-sm text-gray-500">{new Date(item.startTime).toLocaleString()}</td>
                     <td className="px-4 py-3 text-sm text-gray-500">{new Date(item.endTime).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {item.recurrence ? (
+                        <div className="flex flex-col">
+                          <span className="font-medium">{item.recurrence.pattern}</span>
+                          {item.recurrence.interval && item.recurrence.interval > 1 && (
+                            <span className="text-xs text-gray-400">Every {item.recurrence.interval}</span>
+                          )}
+                          {item.recurrence.byDay && (
+                            <span className="text-xs text-gray-400">{item.recurrence.byDay}</span>
+                          )}
+                          {item.recurrence.until && (
+                            <span className="text-xs text-gray-400">Until {new Date(item.recurrence.until).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-sm">
                       <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                         {item.status}
@@ -254,7 +380,7 @@ const SchedulesPlannerPage = () => {
                 ))}
                 {data.items.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-6 text-center text-sm text-gray-500">
+                    <td colSpan={8} className="px-4 py-6 text-center text-sm text-gray-500">
                       No schedules in this range.
                     </td>
                   </tr>

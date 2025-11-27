@@ -1,0 +1,33 @@
+{
+  "uuid": "cd7c6968-e5c5-4fc1-b2f5-7b0ff5a524cc",
+  "historyId": "Schedules.Api.Tests.ValidatorTests.ScheduleQueryValidator_FailsWhenOnlyOneRangeBound",
+  "fullName": "Schedules.Api.Tests.ValidatorTests.ScheduleQueryValidator_FailsWhenOnlyOneRangeBound",
+  "name": "ScheduleQueryValidator_FailsWhenOnlyOneRangeBound",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ValidatorTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149968288,
+  "stop": 1764149968288,
+  "statusDetails": {}
+}

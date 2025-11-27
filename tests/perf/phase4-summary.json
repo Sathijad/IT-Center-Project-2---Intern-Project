@@ -1,0 +1,276 @@
+{
+  "timestamp": "2025-11-27T04:37:26.053Z",
+  "metrics": {
+    "http_req_duration": {
+      "contains": "time",
+      "values": {
+        "avg": 21.58576971153839,
+        "min": 0,
+        "med": 2.551,
+        "max": 272.321,
+        "p(90)": 138.6262,
+        "p(95)": 146.905065
+      },
+      "thresholds": {
+        "p(95)<350": {
+          "ok": true
+        }
+      },
+      "type": "trend"
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "passes": 1820,
+        "fails": 260,
+        "rate": 0.875
+      },
+      "thresholds": {
+        "rate<0.01": {
+          "ok": false
+        }
+      }
+    },
+    "errors": {
+      "thresholds": {
+        "rate<0.01": {
+          "ok": false
+        }
+      },
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 260,
+        "rate": 0.875,
+        "passes": 1820
+      }
+    },
+    "schedule_create_time": {
+      "values": {
+        "max": 27,
+        "p(90)": 6,
+        "p(95)": 11,
+        "avg": 3.1961538461538463,
+        "min": 0,
+        "med": 2
+      },
+      "thresholds": {
+        "p(95)<350": {
+          "ok": true
+        }
+      },
+      "type": "trend",
+      "contains": "default"
+    },
+    "schedule_list_time": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "p(95)": 12,
+        "avg": 3.276923076923077,
+        "min": 0,
+        "med": 3,
+        "max": 13,
+        "p(90)": 5
+      },
+      "thresholds": {
+        "p(95)<350": {
+          "ok": true
+        }
+      }
+    },
+    "schedule_update_time": {
+      "contains": "default",
+      "values": {
+        "med": 0,
+        "max": 0,
+        "p(90)": 0,
+        "p(95)": 0,
+        "avg": 0,
+        "min": 0
+      },
+      "thresholds": {
+        "p(95)<350": {
+          "ok": true
+        }
+      },
+      "type": "trend"
+    },
+    "task_create_time": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "p(90)": 13,
+        "p(95)": 16,
+        "avg": 4.703846153846154,
+        "min": 0,
+        "med": 3,
+        "max": 22
+      },
+      "thresholds": {
+        "p(95)<350": {
+          "ok": true
+        }
+      }
+    },
+    "task_list_time": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "max": 46,
+        "p(90)": 4,
+        "p(95)": 5,
+        "avg": 2.7807692307692307,
+        "min": 0,
+        "med": 2
+      },
+      "thresholds": {
+        "p(95)<350": {
+          "ok": true
+        }
+      }
+    },
+    "task_update_time": {
+      "thresholds": {
+        "p(95)<350": {
+          "ok": true
+        }
+      },
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "max": 0,
+        "p(90)": 0,
+        "p(95)": 0,
+        "avg": 0,
+        "min": 0,
+        "med": 0
+      }
+    },
+    "availability_time": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "min": 1,
+        "med": 3,
+        "max": 82,
+        "p(90)": 14,
+        "p(95)": 15.049999999999983,
+        "avg": 5.1038461538461535
+      },
+      "thresholds": {
+        "p(95)<350": {
+          "ok": true
+        }
+      }
+    },
+    "api_calls": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 2080,
+        "rate": 33.62063860831918
+      }
+    }
+  },
+  "thresholds": [
+    {
+      "name": "health check status 200",
+      "path": "::health check status 200",
+      "id": "8d245ecc9e058dc1468afc5d873eb8c1",
+      "passes": 260,
+      "fails": 0
+    },
+    {
+      "fails": 260,
+      "name": "schedules list status 200",
+      "path": "::schedules list status 200",
+      "id": "23548e0fcf3e7cc72335f9c92c4cb554",
+      "passes": 0
+    },
+    {
+      "fails": 260,
+      "name": "schedules list has data",
+      "path": "::schedules list has data",
+      "id": "6557b39dae39981c89506c5ee369a81d",
+      "passes": 0
+    },
+    {
+      "name": "schedule create status 201",
+      "path": "::schedule create status 201",
+      "id": "3f1c828a1f169de18cb7851e8cb85d07",
+      "passes": 0,
+      "fails": 260
+    },
+    {
+      "id": "b9de9f0013c2472944408ab2f4433733",
+      "passes": 0,
+      "fails": 260,
+      "name": "schedule create returns schedule",
+      "path": "::schedule create returns schedule"
+    },
+    {
+      "name": "tasks list status 200",
+      "path": "::tasks list status 200",
+      "id": "91946a75c226ea34888fa0ab20a6d33c",
+      "passes": 0,
+      "fails": 260
+    },
+    {
+      "name": "tasks list has data",
+      "path": "::tasks list has data",
+      "id": "d4f47f893441d651d1b3d3711191e52a",
+      "passes": 0,
+      "fails": 260
+    },
+    {
+      "name": "task create status 201",
+      "path": "::task create status 201",
+      "id": "f846ba3766fdb2c1c74e686fa328b3bb",
+      "passes": 0,
+      "fails": 260
+    },
+    {
+      "name": "task create returns task",
+      "path": "::task create returns task",
+      "id": "2c76a99c46746b2efc2c259a9ca233f6",
+      "passes": 0,
+      "fails": 260
+    },
+    {
+      "path": "::availability status 200",
+      "id": "373d6e5f4c27a9e88b1fd2da5f488c6e",
+      "passes": 0,
+      "fails": 260,
+      "name": "availability status 200"
+    },
+    {
+      "path": "::availability has data",
+      "id": "519c26ea7047087777a2e96e90d64079",
+      "passes": 0,
+      "fails": 260,
+      "name": "availability has data"
+    },
+    {
+      "name": "filtered tasks status 200",
+      "path": "::filtered tasks status 200",
+      "id": "bc056a2e06817c7bc16388aa4641d40f",
+      "passes": 0,
+      "fails": 260
+    },
+    {
+      "id": "c42008fdbb182f284c5c92338a782765",
+      "passes": 0,
+      "fails": 260,
+      "name": "ranged schedules status 200",
+      "path": "::ranged schedules status 200"
+    }
+  ],
+  "summary": {
+    "total_requests": 2080,
+    "total_duration": 4758.420223846153,
+    "p95_duration": 146.905065,
+    "error_rate": 0.875
+  }
+}

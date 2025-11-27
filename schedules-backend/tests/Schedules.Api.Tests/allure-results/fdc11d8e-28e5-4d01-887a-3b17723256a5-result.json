@@ -1,0 +1,33 @@
+{
+  "uuid": "fdc11d8e-28e5-4d01-887a-3b17723256a5",
+  "historyId": "Schedules.Api.Tests.ImportServiceTests.StartScheduleImportAsync_CreatesJobAndFiles",
+  "fullName": "Schedules.Api.Tests.ImportServiceTests.StartScheduleImportAsync_CreatesJobAndFiles",
+  "name": "StartScheduleImportAsync_CreatesJobAndFiles",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ImportServiceTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149971993,
+  "stop": 1764149971993,
+  "statusDetails": {}
+}

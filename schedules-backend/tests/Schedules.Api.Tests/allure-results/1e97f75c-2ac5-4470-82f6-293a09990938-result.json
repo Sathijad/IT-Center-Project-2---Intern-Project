@@ -1,0 +1,33 @@
+{
+  "uuid": "1e97f75c-2ac5-4470-82f6-293a09990938",
+  "historyId": "Schedules.Api.Tests.ControllerAttributeTests.SchedulesController_EnforcesPolicies",
+  "fullName": "Schedules.Api.Tests.ControllerAttributeTests.SchedulesController_EnforcesPolicies",
+  "name": "SchedulesController_EnforcesPolicies",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ControllerAttributeTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149968208,
+  "stop": 1764149968208,
+  "statusDetails": {}
+}

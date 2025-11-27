@@ -1,0 +1,33 @@
+{
+  "uuid": "21ced493-e1f7-4a61-9044-cc00701431b0",
+  "historyId": "Schedules.Api.Tests.ValidatorTests.CreateScheduleRequestValidator_FailsWhenRecurrenceMissing",
+  "fullName": "Schedules.Api.Tests.ValidatorTests.CreateScheduleRequestValidator_FailsWhenRecurrenceMissing",
+  "name": "CreateScheduleRequestValidator_FailsWhenRecurrenceMissing",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ValidatorTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149968455,
+  "stop": 1764149968455,
+  "statusDetails": {}
+}

@@ -1,0 +1,33 @@
+{
+  "uuid": "f077a69f-7c98-42d9-b32f-e3c71c099466",
+  "historyId": "Schedules.Api.Tests.WorkerTests.TaskNotificationWorker_SendsNotificationWhenEnabled",
+  "fullName": "Schedules.Api.Tests.WorkerTests.TaskNotificationWorker_SendsNotificationWhenEnabled",
+  "name": "TaskNotificationWorker_SendsNotificationWhenEnabled",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.WorkerTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149972641,
+  "stop": 1764149972641,
+  "statusDetails": {}
+}

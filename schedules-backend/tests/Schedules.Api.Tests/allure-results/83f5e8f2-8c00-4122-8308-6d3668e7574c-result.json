@@ -1,0 +1,33 @@
+{
+  "uuid": "83f5e8f2-8c00-4122-8308-6d3668e7574c",
+  "historyId": "Schedules.Api.Tests.WorkerTests.DailyReminderWorker_SendsNotificationsWhenEnabled",
+  "fullName": "Schedules.Api.Tests.WorkerTests.DailyReminderWorker_SendsNotificationsWhenEnabled",
+  "name": "DailyReminderWorker_SendsNotificationsWhenEnabled",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.WorkerTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149972543,
+  "stop": 1764149972543,
+  "statusDetails": {}
+}

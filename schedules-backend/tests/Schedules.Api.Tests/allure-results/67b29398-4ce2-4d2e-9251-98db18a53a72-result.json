@@ -1,0 +1,33 @@
+{
+  "uuid": "67b29398-4ce2-4d2e-9251-98db18a53a72",
+  "historyId": "Schedules.Api.Tests.TaskServiceTests.AddNoteAsync_TaskNotFound_ThrowsNotFound",
+  "fullName": "Schedules.Api.Tests.TaskServiceTests.AddNoteAsync_TaskNotFound_ThrowsNotFound",
+  "name": "AddNoteAsync_TaskNotFound_ThrowsNotFound",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.TaskServiceTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149972133,
+  "stop": 1764149972133,
+  "statusDetails": {}
+}

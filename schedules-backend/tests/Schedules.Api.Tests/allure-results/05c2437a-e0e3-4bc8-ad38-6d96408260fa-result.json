@@ -1,0 +1,33 @@
+{
+  "uuid": "05c2437a-e0e3-4bc8-ad38-6d96408260fa",
+  "historyId": "Schedules.Api.Tests.ValidatorTests.UpdateScheduleRequestValidator_FailsWhenNoFields",
+  "fullName": "Schedules.Api.Tests.ValidatorTests.UpdateScheduleRequestValidator_FailsWhenNoFields",
+  "name": "UpdateScheduleRequestValidator_FailsWhenNoFields",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ValidatorTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149968378,
+  "stop": 1764149968378,
+  "statusDetails": {}
+}

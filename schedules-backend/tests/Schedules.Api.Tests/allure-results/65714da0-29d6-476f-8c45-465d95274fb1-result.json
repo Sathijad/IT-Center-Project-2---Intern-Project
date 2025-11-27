@@ -1,0 +1,33 @@
+{
+  "uuid": "65714da0-29d6-476f-8c45-465d95274fb1",
+  "historyId": "Schedules.Api.Tests.AvailabilityServiceTests.GetAsync_IncludesGraphSlotsWhenEnabled",
+  "fullName": "Schedules.Api.Tests.AvailabilityServiceTests.GetAsync_IncludesGraphSlotsWhenEnabled",
+  "name": "GetAsync_IncludesGraphSlotsWhenEnabled",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.AvailabilityServiceTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149971958,
+  "stop": 1764149971958,
+  "statusDetails": {}
+}

@@ -1,0 +1,33 @@
+{
+  "uuid": "f5e18081-c81e-4526-853f-7dc0d4df3886",
+  "historyId": "Schedules.Api.Tests.ImportServiceTests.GetJobAsync_NonExisting_ThrowsNotFound",
+  "fullName": "Schedules.Api.Tests.ImportServiceTests.GetJobAsync_NonExisting_ThrowsNotFound",
+  "name": "GetJobAsync_NonExisting_ThrowsNotFound",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ImportServiceTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149972186,
+  "stop": 1764149972186,
+  "statusDetails": {}
+}

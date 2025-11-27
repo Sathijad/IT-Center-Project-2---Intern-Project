@@ -1,0 +1,33 @@
+{
+  "uuid": "eab95963-6b0f-45c5-8a08-57edb0daaa2d",
+  "historyId": "Schedules.Api.Tests.WorkerTests.TaskNotificationWorker_SkipsWhenDisabled",
+  "fullName": "Schedules.Api.Tests.WorkerTests.TaskNotificationWorker_SkipsWhenDisabled",
+  "name": "TaskNotificationWorker_SkipsWhenDisabled",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.WorkerTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149972568,
+  "stop": 1764149972568,
+  "statusDetails": {}
+}

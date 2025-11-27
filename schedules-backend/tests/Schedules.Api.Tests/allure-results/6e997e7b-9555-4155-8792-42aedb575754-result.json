@@ -1,0 +1,33 @@
+{
+  "uuid": "6e997e7b-9555-4155-8792-42aedb575754",
+  "historyId": "Schedules.Api.Tests.TaskServiceTests.GetAsync_AppliesAssigneeAndStatusFilters",
+  "fullName": "Schedules.Api.Tests.TaskServiceTests.GetAsync_AppliesAssigneeAndStatusFilters",
+  "name": "GetAsync_AppliesAssigneeAndStatusFilters",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.TaskServiceTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149973452,
+  "stop": 1764149973452,
+  "statusDetails": {}
+}

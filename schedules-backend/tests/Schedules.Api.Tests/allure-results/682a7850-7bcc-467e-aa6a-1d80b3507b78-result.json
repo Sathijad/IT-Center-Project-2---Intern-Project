@@ -1,0 +1,33 @@
+{
+  "uuid": "682a7850-7bcc-467e-aa6a-1d80b3507b78",
+  "historyId": "Schedules.Api.Tests.ValidatorTests.CreateTaskNoteRequestValidator_FailsWhenBodyEmpty",
+  "fullName": "Schedules.Api.Tests.ValidatorTests.CreateTaskNoteRequestValidator_FailsWhenBodyEmpty",
+  "name": "CreateTaskNoteRequestValidator_FailsWhenBodyEmpty",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ValidatorTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149968461,
+  "stop": 1764149968461,
+  "statusDetails": {}
+}

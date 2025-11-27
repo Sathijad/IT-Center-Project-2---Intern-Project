@@ -1,0 +1,33 @@
+{
+  "uuid": "bd030666-3c13-4623-b979-bdd21ab1fc43",
+  "historyId": "Schedules.Api.Tests.ValidatorTests.CreateTaskRequestValidator_FailsWhenTooManyTags",
+  "fullName": "Schedules.Api.Tests.ValidatorTests.CreateTaskRequestValidator_FailsWhenTooManyTags",
+  "name": "CreateTaskRequestValidator_FailsWhenTooManyTags",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ValidatorTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149968239,
+  "stop": 1764149968239,
+  "statusDetails": {}
+}

@@ -1,0 +1,33 @@
+{
+  "uuid": "3995faa6-4260-4e7f-84bd-ab787e968315",
+  "historyId": "Schedules.Api.Tests.TaskServiceTests.UpdateAsync_TaskNotFound_ThrowsNotFound",
+  "fullName": "Schedules.Api.Tests.TaskServiceTests.UpdateAsync_TaskNotFound_ThrowsNotFound",
+  "name": "UpdateAsync_TaskNotFound_ThrowsNotFound",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.TaskServiceTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149973229,
+  "stop": 1764149973229,
+  "statusDetails": {}
+}

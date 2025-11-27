@@ -1,0 +1,33 @@
+{
+  "uuid": "eb6776de-70ca-4978-9b82-214883054642",
+  "historyId": "Schedules.Api.Tests.ScheduleServiceTests.CreateAsync_WhenScheduleOverlaps_ThrowsConflict",
+  "fullName": "Schedules.Api.Tests.ScheduleServiceTests.CreateAsync_WhenScheduleOverlaps_ThrowsConflict",
+  "name": "CreateAsync_WhenScheduleOverlaps_ThrowsConflict",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ScheduleServiceTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149972045,
+  "stop": 1764149972045,
+  "statusDetails": {}
+}

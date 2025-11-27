@@ -1,0 +1,33 @@
+{
+  "uuid": "65916069-6d8b-4c60-b366-f6a7a3eebe3b",
+  "historyId": "Schedules.Api.Tests.ScheduleServiceTests.GetAsync_FiltersByUserAndReturnsPagedResult",
+  "fullName": "Schedules.Api.Tests.ScheduleServiceTests.GetAsync_FiltersByUserAndReturnsPagedResult",
+  "name": "GetAsync_FiltersByUserAndReturnsPagedResult",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ScheduleServiceTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149973056,
+  "stop": 1764149973056,
+  "statusDetails": {}
+}

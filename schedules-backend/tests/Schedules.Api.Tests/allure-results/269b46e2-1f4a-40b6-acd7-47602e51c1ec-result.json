@@ -1,0 +1,33 @@
+{
+  "uuid": "269b46e2-1f4a-40b6-acd7-47602e51c1ec",
+  "historyId": "Schedules.Api.Tests.WorkerTests.CalendarSyncWorker_SkipsWhenGraphSyncDisabled",
+  "fullName": "Schedules.Api.Tests.WorkerTests.CalendarSyncWorker_SkipsWhenGraphSyncDisabled",
+  "name": "CalendarSyncWorker_SkipsWhenGraphSyncDisabled",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.WorkerTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149972577,
+  "stop": 1764149972577,
+  "statusDetails": {}
+}

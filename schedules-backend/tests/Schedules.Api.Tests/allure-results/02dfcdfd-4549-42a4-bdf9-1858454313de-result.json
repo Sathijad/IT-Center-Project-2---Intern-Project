@@ -1,0 +1,33 @@
+{
+  "uuid": "02dfcdfd-4549-42a4-bdf9-1858454313de",
+  "historyId": "Schedules.Api.Tests.ControllerAttributeTests.ImportsController_RequiresAdminPolicy",
+  "fullName": "Schedules.Api.Tests.ControllerAttributeTests.ImportsController_RequiresAdminPolicy",
+  "name": "ImportsController_RequiresAdminPolicy",
+  "status": "passed",
+  "stage": "finished",
+  "labels": [
+    {
+      "name": "package",
+      "value": "Schedules.Api.Tests"
+    },
+    {
+      "name": "testClass",
+      "value": "Schedules.Api.Tests.ControllerAttributeTests"
+    },
+    {
+      "name": "language",
+      "value": "csharp"
+    },
+    {
+      "name": "framework",
+      "value": "xunit"
+    }
+  ],
+  "parameters": [],
+  "steps": [],
+  "links": [],
+  "attachments": [],
+  "start": 1764149968209,
+  "stop": 1764149968209,
+  "statusDetails": {}
+}
