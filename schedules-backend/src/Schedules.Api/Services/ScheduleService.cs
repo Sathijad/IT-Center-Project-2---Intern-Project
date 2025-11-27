@@ -140,8 +140,14 @@ public class ScheduleService(SchedulesDbContext dbContext, IMapper mapper) : ISc
 
     public async Task<ScheduleResponse> UpdateAsync(Guid scheduleId, UpdateScheduleRequest request, CancellationToken cancellationToken)
     {
-        var schedule = await dbContext.Schedules
-            .Include(s => s.Recurrence)
+        // Optimized: Only include Recurrence if we're actually updating it
+        var query = dbContext.Schedules.AsQueryable();
+        if (request.Recurrence is not null)
+        {
+            query = query.Include(s => s.Recurrence);
+        }
+        
+        var schedule = await query
             .FirstOrDefaultAsync(s => s.ScheduleId == scheduleId, cancellationToken);
 
         if (schedule is null)
@@ -214,22 +220,18 @@ public class ScheduleService(SchedulesDbContext dbContext, IMapper mapper) : ISc
 
     private async Task EnsureNoConflicts(long userId, DateTimeOffset start, DateTimeOffset end, CancellationToken cancellationToken, Guid? excludeId = null)
     {
-        var conflictingSchedules = await dbContext.Schedules
+        // Optimized: Use AnyAsync with AsNoTracking - only checks existence, doesn't load or track entities
+        // This is much faster than loading all schedules into memory
+        var hasConflict = await dbContext.Schedules
+            .AsNoTracking()
             .Where(s => s.UserId == userId && (excludeId == null || s.ScheduleId != excludeId))
             .Where(s => s.StartTime < end && start < s.EndTime)
-            .ToListAsync(cancellationToken);
+            .AnyAsync(cancellationToken);
 
-        if (conflictingSchedules.Any())
+        if (hasConflict)
         {
-            Console.WriteLine($"[ScheduleService] ⚠️ Found {conflictingSchedules.Count} conflicting schedule(s):");
-            foreach (var conflict in conflictingSchedules)
-            {
-                Console.WriteLine($"[ScheduleService]   - ScheduleId: {conflict.ScheduleId}, Title: {conflict.Title}, Start: {conflict.StartTime}, End: {conflict.EndTime}");
-            }
             throw new ConflictException("Schedule overlaps with an existing entry.");
         }
-        
-        Console.WriteLine($"[ScheduleService] ✅ No conflicts found for userId={userId}, start={start}, end={end}");
     }
 }
 

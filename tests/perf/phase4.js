@@ -53,16 +53,38 @@ function getHeaders() {
 // Helper function to generate test data
 function generateScheduleData() {
   const now = new Date();
-  // Generate a random time slot between 7-30 days in the future to avoid conflicts
-  const daysAhead = 7 + Math.floor(Math.random() * 23); // 7-30 days
-  const hoursOffset = Math.floor(Math.random() * 20); // 0-19 hours
+  // Generate a random time slot between 30-90 days in the future to avoid conflicts
+  // Use milliseconds since epoch to ensure uniqueness
+  const daysAhead = 30 + Math.floor(Math.random() * 60); // 30-90 days
+  const hoursOffset = Math.floor(Math.random() * 24); // 0-23 hours
   const minutesOffset = Math.floor(Math.random() * 60); // 0-59 minutes
+  const secondsOffset = Math.floor(Math.random() * 60); // 0-59 seconds for more uniqueness
+  
+  // Add unique timestamp component to avoid conflicts
+  const uniqueOffset = Math.floor(Math.random() * 1000); // 0-999 milliseconds
   
   const startTime = new Date(now.getTime() + 
     (daysAhead * 24 * 60 * 60 * 1000) + 
     (hoursOffset * 60 * 60 * 1000) + 
-    (minutesOffset * 60 * 1000));
+    (minutesOffset * 60 * 1000) +
+    (secondsOffset * 1000) +
+    uniqueOffset);
   const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000); // 1 hour duration
+  
+  // Randomly decide whether to create recurrence (20% chance to reduce conflicts)
+  const createRecurrence = Math.random() < 0.2;
+  let recurrence = null;
+  
+  if (createRecurrence) {
+    const until = new Date(startTime.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from start
+    recurrence = {
+      pattern: 'DAILY',
+      interval: 1,
+      byDay: null,
+      byMonthDay: null,
+      until: until.toISOString(),
+    };
+  }
   
   return {
     userId: TEST_USER_ID,
@@ -71,9 +93,9 @@ function generateScheduleData() {
     startTime: startTime.toISOString(),
     endTime: endTime.toISOString(),
     isAllDay: false,
-    createRecurrence: false,
+    createRecurrence: createRecurrence,
     teamId: null,
-    recurrence: null,
+    recurrence: recurrence,
   };
 }
 

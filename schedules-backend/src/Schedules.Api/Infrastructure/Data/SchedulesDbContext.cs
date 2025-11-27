@@ -48,6 +48,7 @@ public class SchedulesDbContext(DbContextOptions<SchedulesDbContext> options) : 
         entity.Property(x => x.UpdatedAt).HasColumnName("updated_at");
         entity.Property(x => x.RecurrenceId).HasColumnName("recurrence_id");
         entity.HasIndex(x => new { x.UserId, x.StartTime }).HasDatabaseName("idx_schedules_user_start");
+        // Unique index also optimizes conflict detection queries (overlap checks)
         entity.HasIndex(x => new { x.UserId, x.StartTime, x.EndTime }).IsUnique();
 
         entity.HasOne(x => x.Recurrence)

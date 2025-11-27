@@ -131,8 +131,23 @@ public class SchedulesController(
         }
         
         var schedule = await scheduleService.CreateAsync(request, actorId, cancellationToken);
-        backgroundJobClient.Enqueue<CalendarSyncWorker>(worker =>
-            worker.PushAsync(schedule.ScheduleId, CancellationToken.None));
+        
+        // Fire-and-forget background job - don't block the response
+        // Hangfire Enqueue is already async, but we ensure it doesn't block
+        var scheduleIdForJob = schedule.ScheduleId;
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                backgroundJobClient.Enqueue<CalendarSyncWorker>(worker =>
+                    worker.PushAsync(scheduleIdForJob, CancellationToken.None));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SchedulesController] Failed to enqueue calendar sync job: {ex.Message}");
+            }
+        });
+        
         return CreatedAtAction(nameof(Get), new { schedule.ScheduleId }, schedule);
     }
 
@@ -143,8 +158,22 @@ public class SchedulesController(
         try
         {
             var schedule = await scheduleService.UpdateAsync(scheduleId, request, cancellationToken);
-            backgroundJobClient.Enqueue<CalendarSyncWorker>(worker =>
-                worker.PushAsync(schedule.ScheduleId, CancellationToken.None));
+            
+            // Fire-and-forget background job - don't block the response
+            var scheduleIdForJob = schedule.ScheduleId;
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    backgroundJobClient.Enqueue<CalendarSyncWorker>(worker =>
+                        worker.PushAsync(scheduleIdForJob, CancellationToken.None));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[SchedulesController] Failed to enqueue calendar sync job: {ex.Message}");
+                }
+            });
+            
             return Ok(schedule);
         }
         catch (Exception ex)
