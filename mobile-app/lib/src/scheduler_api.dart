@@ -17,10 +17,11 @@ class SchedulerApi {
   }) async {
     // Use /my endpoint for employees to view their own schedules
     // Use schedules backend (port 5166) instead of auth backend (port 8080)
+    final now = DateTime.now();
     final query = Uri.parse('${ApiBase.schedulesBase}/api/v1/schedules/my')
         .replace(queryParameters: {
-      'rangeStart': DateTime.now().toIso8601String(),
-      'rangeEnd': DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+      'rangeStart': now.toIso8601String(),
+      'rangeEnd': now.add(const Duration(days: 90)).toIso8601String(),
     });
     final response = await http.get(query, headers: await _headers());
     if (response.statusCode != 200) {
