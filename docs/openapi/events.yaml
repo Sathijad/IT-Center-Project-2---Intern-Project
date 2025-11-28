@@ -1,0 +1,363 @@
+openapi: 3.0.3
+info:
+  title: IT Center Events API
+  version: 1.0.0
+  description: >
+    Phase 5 service powering events, announcements, moderation, and broadcast fan-out.
+servers:
+  - url: https://events.api.itcenter.local
+    description: Production
+  - url: http://localhost:8085
+    description: Local development
+tags:
+  - name: Events
+  - name: Moderation
+  - name: Broadcast
+paths:
+  /api/v1/events:
+    get:
+      tags: [Events]
+      summary: List events
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - in: query
+          name: status
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/EventStatus'
+          style: form
+          explode: true
+        - in: query
+          name: tags
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
+        - in: query
+          name: channel
+          schema: { type: string }
+        - in: header
+          name: If-None-Match
+          schema: { type: string }
+          description: ETag to leverage feed caching
+      responses:
+        '200':
+          description: Paginated events
+          headers:
+            ETag:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventPage'
+        '304':
+          description: Not modified
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      tags: [Events]
+      summary: Create event (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventMutation'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        default:
+          $ref: '#/components/responses/Error'
+  /api/v1/events/{event_id}:
+    get:
+      tags: [Events]
+      summary: Fetch event with body
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+        - in: header
+          name: If-None-Match
+          schema: { type: string }
+      responses:
+        '200':
+          description: Event details
+          headers:
+            ETag:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event:
+                    $ref: '#/components/schemas/Event'
+                  body:
+                    $ref: '#/components/schemas/EventBody'
+        '304':
+          description: Not modified
+        default:
+          $ref: '#/components/responses/Error'
+    patch:
+      tags: [Events]
+      summary: Update event (admin)
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventMutation'
+      responses:
+        '200':
+          description: Event updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        default:
+          $ref: '#/components/responses/Error'
+  /api/v1/events/{event_id}/moderate:
+    post:
+      tags: [Moderation]
+      summary: Moderate event
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [APPROVE, REJECT]
+                notes:
+                  type: string
+      responses:
+        '202':
+          description: Moderation accepted
+        default:
+          $ref: '#/components/responses/Error'
+  /api/v1/events/{event_id}/broadcast:
+    post:
+      tags: [Broadcast]
+      summary: Request broadcast fan-out
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+        - in: header
+          name: Idempotency-Key
+          schema: { type: string }
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channels:
+                  type: array
+                  items:
+                    type: string
+                    enum: [PUSH, EMAIL, TEAMS]
+                idempotencyKey:
+                  type: string
+      responses:
+        '202':
+          description: Broadcast enqueued
+        default:
+          $ref: '#/components/responses/Error'
+  /api/v1/events/tag-suggest:
+    post:
+      tags: [Events]
+      summary: Suggest tags
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query: { type: string }
+                limit: { type: integer, default: 5 }
+      responses:
+        '200':
+          description: Suggested tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /api/v1/events/{event_id}/audit:
+    get:
+      tags: [Broadcast]
+      summary: List broadcast audit rows
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Audit list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  audits:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublishAudit'
+        default:
+          $ref: '#/components/responses/Error'
+  /api/v1/tags:
+    get:
+      tags: [Events]
+      summary: Search tag library
+      parameters:
+        - in: query
+          name: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items: { type: string }
+        default:
+          $ref: '#/components/responses/Error'
+  /healthz:
+    get:
+      summary: Liveness probe
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+components:
+  parameters:
+    EventId:
+      in: path
+      name: event_id
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    Error:
+      description: Error payload
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code: { type: string }
+              message: { type: string }
+              requestId: { type: string, format: uuid }
+  schemas:
+    EventStatus:
+      type: string
+      enum: [DRAFT, PENDING_MODERATION, SCHEDULED, APPROVED, REJECTED, PUBLISHED, ARCHIVED]
+    Attachment:
+      type: object
+      properties:
+        name: { type: string }
+        url: { type: string, format: uri }
+        type: { type: string }
+    Event:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        summary: { type: string }
+        status:
+          $ref: '#/components/schemas/EventStatus'
+        channel: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        rsvpRequired: { type: boolean }
+        scheduledFor: { type: string, format: date-time }
+        publishedAt: { type: string, format: date-time }
+        broadcastAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        etag: { type: string }
+    EventBody:
+      type: object
+      properties:
+        html: { type: string }
+        sanitized: { type: string }
+        plainText: { type: string }
+    EventMutation:
+      type: object
+      required: [title, summary, body, channel]
+      properties:
+        title: { type: string, maxLength: 180 }
+        summary: { type: string, maxLength: 500 }
+        body: { type: string }
+        channel: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        rsvpRequired: { type: boolean }
+        scheduledFor: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+    EventPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+        page: { type: integer }
+        size: { type: integer }
+        total: { type: integer }
+        hasNext: { type: boolean }
+    PublishAudit:
+      type: object
+      properties:
+        id: { type: integer }
+        eventId: { type: string, format: uuid }
+        channel: { type: string }
+        status: { type: string }
+        message: { type: string }
+        deliveryCount: { type: integer }
+        errorDetails: { type: string }
+        createdAt: { type: string, format: date-time }
+

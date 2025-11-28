@@ -1,0 +1,184 @@
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate, useParams } from 'react-router-dom'
+import { createEvent, updateEvent, getEvent, suggestTags, EventMutationPayload } from '../../lib/eventsApi'
+
+const schema = z.object({
+  title: z.string().min(4, 'Title required'),
+  summary: z.string().min(10, 'Summary required'),
+  body: z.string().min(20, 'Body required'),
+  channel: z.string().min(2),
+  tags: z.array(z.string()).default([]),
+  rsvpRequired: z.boolean().default(false),
+  scheduledFor: z.string().optional().nullable(),
+  expiresAt: z.string().optional().nullable(),
+})
+
+export default function EventFormPage() {
+  const { id } = useParams()
+  const isEdit = Boolean(id)
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [tagInput, setTagInput] = useState('')
+  const [suggestions, setSuggestions] = useState<string[]>([])
+
+  const { data: existing } = useQuery({
+    enabled: isEdit,
+    queryKey: ['events.detail', id],
+    queryFn: async () => {
+      const result = await getEvent(id!)
+      if (result.status !== 200) throw new Error('Not found')
+      return result.data
+    },
+  })
+
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      title: '',
+      summary: '',
+      body: '',
+      channel: 'INTERNAL',
+      tags: [],
+      rsvpRequired: false,
+    },
+  })
+
+  useEffect(() => {
+    if (existing?.event) {
+      const event = existing.event
+      setValue('title', event.title)
+      setValue('summary', event.summary)
+      setValue('body', existing.body?.html ?? '')
+      setValue('channel', event.channel)
+      setValue('tags', event.tags)
+      setValue('rsvpRequired', event.rsvpRequired)
+      setValue('scheduledFor', event.scheduledFor ?? '')
+      setValue('expiresAt', event.expiresAt ?? '')
+    }
+  }, [existing, setValue])
+
+  const mutation = useMutation({
+    mutationFn: async (data: z.infer<typeof schema>) => {
+      const payload: EventMutationPayload = {
+        ...data,
+        attachments: [],
+        scheduledFor: data.scheduledFor || undefined,
+        expiresAt: data.expiresAt || undefined,
+      }
+      if (isEdit) {
+        return updateEvent(id!, payload)
+      }
+      return createEvent(payload)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events.list'] })
+      navigate('/events')
+    },
+  })
+
+  const tags = watch('tags')
+
+  function addTag(tag: string) {
+    const normalized = tag.trim().toLowerCase()
+    if (!normalized) return
+    if (tags.includes(normalized)) return
+    setValue('tags', [...tags, normalized])
+    setTagInput('')
+  }
+
+  function removeTag(tag: string) {
+    setValue('tags', tags.filter((t) => t !== tag))
+  }
+
+  async function loadSuggestions() {
+    if (!tagInput.trim()) return
+    const results = await suggestTags(tagInput.trim())
+    setSuggestions(results)
+  }
+
+  return (
+    <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-semibold text-slate-900">{isEdit ? 'Edit Event' : 'Create Event'}</h1>
+        <p className="text-sm text-slate-500">{isEdit ? 'Update the announcement content and scheduling' : 'Add a new announcement for employees'}</p>
+      </header>
+      <div className="grid gap-4">
+        <label className="space-y-1 text-sm">
+          <span className="font-medium text-slate-700">Title</span>
+          <input {...register('title')} className="w-full rounded border border-slate-300 px-3 py-2" />
+          {errors.title && <p className="text-xs text-red-600">{errors.title.message}</p>}
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="font-medium text-slate-700">Summary</span>
+          <textarea {...register('summary')} rows={2} className="w-full rounded border border-slate-300 px-3 py-2" />
+          {errors.summary && <p className="text-xs text-red-600">{errors.summary.message}</p>}
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="font-medium text-slate-700">Body</span>
+          <textarea {...register('body')} rows={6} className="w-full rounded border border-slate-300 px-3 py-2 font-mono" />
+          {errors.body && <p className="text-xs text-red-600">{errors.body.message}</p>}
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="font-medium text-slate-700">Channel</span>
+          <select {...register('channel')} className="w-full rounded border border-slate-300 px-3 py-2">
+            <option value="INTERNAL">Internal</option>
+            <option value="TEAMS">Teams Only</option>
+            <option value="PUSH">Mobile Push</option>
+          </select>
+        </label>
+        <div>
+          <span className="text-sm font-medium text-slate-700">Tags</span>
+          <div className="mt-2 flex gap-2">
+            <input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag(tagInput))} className="flex-1 rounded border border-slate-300 px-3 py-2 text-sm" placeholder="Add tag" />
+            <button type="button" onClick={() => addTag(tagInput)} className="rounded bg-slate-200 px-3 py-2 text-sm">Add</button>
+            <button type="button" onClick={loadSuggestions} className="rounded bg-indigo-50 px-3 py-2 text-sm text-indigo-700">Suggest</button>
+          </div>
+          {suggestions.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              {suggestions.map((tag) => (
+                <button key={tag} type="button" onClick={() => addTag(tag)} className="rounded-full bg-indigo-100 px-3 py-1 text-indigo-800">
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <span key={tag} className="flex items-center gap-1 rounded-full bg-slate-200 px-3 py-1 text-xs">
+                {tag}
+                <button type="button" onClick={() => removeTag(tag)} aria-label={`Remove ${tag}`}>
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" {...register('rsvpRequired')} />
+          <span>Require RSVP</span>
+        </label>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="space-y-1 text-sm">
+            <span className="font-medium text-slate-700">Schedule Time</span>
+            <input type="datetime-local" {...register('scheduledFor')} className="w-full rounded border border-slate-300 px-3 py-2" />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="font-medium text-slate-700">Expires At</span>
+            <input type="datetime-local" {...register('expiresAt')} className="w-full rounded border border-slate-300 px-3 py-2" />
+          </label>
+        </div>
+      </div>
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={() => navigate(-1)} className="rounded border border-slate-300 px-4 py-2 text-sm">Cancel</button>
+        <button type="submit" disabled={mutation.isPending} className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60">
+          {mutation.isPending ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Event'}
+        </button>
+      </div>
+    </form>
+  )
+}
+

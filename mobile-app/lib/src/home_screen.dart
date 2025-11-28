@@ -11,6 +11,7 @@ import '../screens/BookingSearchScreen.dart';
 import '../screens/MyBookingsScreen.dart';
 import '../screens/ScheduleOverviewScreen.dart';
 import '../screens/MyTasksScreen.dart';
+import 'events/event_feed_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -215,6 +216,21 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 12),
+                      _buildActionCard(
+                        context,
+                        key: const ValueKey('events_feed_action_card'),
+                        icon: Icons.campaign_outlined,
+                        title: 'Announcements',
+                        subtitle: 'View latest events',
+                        color: Colors.deepOrange,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const EventFeedScreen()),
+                          );
+                        },
                       ),
                       const SizedBox(height: 12),
                       // Second row: Clock In/Out and Leave Balance

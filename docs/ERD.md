@@ -221,6 +221,97 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## Phase 5 Schema Additions
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                          events                             │
+├─────────────────────────────────────────────────────────────┤
+│ event_id        UUID PK                                     │
+│ title           VARCHAR(180) NOT NULL                       │
+│ summary         VARCHAR(500)                                │
+│ status          VARCHAR(32) CHECK (enum)                    │
+│ channel         VARCHAR(30) DEFAULT 'INTERNAL'              │
+│ tags            TEXT[] DEFAULT '{}'                         │
+│ attachments     JSONB                                      │
+│ rsvp_required   BOOLEAN DEFAULT FALSE                       │
+│ scheduled_for   TIMESTAMPTZ                                 │
+│ published_at    TIMESTAMPTZ                                 │
+│ broadcast_at    TIMESTAMPTZ                                 │
+│ expires_at      TIMESTAMPTZ                                 │
+│ created_by      BIGINT FK → app_users.id                    │
+│ moderated_by    BIGINT FK → app_users.id                    │
+│ moderated_at    TIMESTAMPTZ                                 │
+│ etag            VARCHAR(64) NOT NULL                        │
+│ created_at      TIMESTAMPTZ DEFAULT NOW()                   │
+│ updated_at      TIMESTAMPTZ DEFAULT NOW()                   │
+└─────────────────────────────────────────────────────────────┘
+              │
+              │ 1:1
+              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  announcement_bodies                        │
+├─────────────────────────────────────────────────────────────┤
+│ body_id         UUID PK                                     │
+│ event_id        UUID FK → events.event_id                   │
+│ raw_html        TEXT NOT NULL                               │
+│ sanitized_html  TEXT NOT NULL                               │
+│ plain_text      TEXT NOT NULL                               │
+│ created_at      TIMESTAMPTZ DEFAULT NOW()                   │
+│ updated_at      TIMESTAMPTZ DEFAULT NOW()                   │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                         event_tags                          │
+├─────────────────────────────────────────────────────────────┤
+│ event_id        UUID FK → events.event_id                   │
+│ tag             VARCHAR(50)                                 │
+│ created_at      TIMESTAMPTZ DEFAULT NOW()                   │
+│ PRIMARY KEY (event_id, tag)                                 │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                        tag_library                          │
+├─────────────────────────────────────────────────────────────┤
+│ tag_id          BIGSERIAL PK                                │
+│ tag             VARCHAR(50) UNIQUE                          │
+│ usage_count     INTEGER DEFAULT 0                           │
+│ created_at      TIMESTAMPTZ DEFAULT NOW()                   │
+│ updated_at      TIMESTAMPTZ DEFAULT NOW()                   │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                      publish_audit                          │
+├─────────────────────────────────────────────────────────────┤
+│ audit_id        BIGSERIAL PK                                │
+│ event_id        UUID FK → events.event_id                   │
+│ channel         VARCHAR(30)                                 │
+│ status          VARCHAR(30)                                 │
+│ message         TEXT                                        │
+│ delivery_count  INTEGER DEFAULT 0                           │
+│ error_details   TEXT                                        │
+│ request_id      UUID                                        │
+│ idempotency_key VARCHAR(64)                                 │
+│ metadata        JSONB                                       │
+│ created_at      TIMESTAMPTZ DEFAULT NOW()                   │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                      feature_flags                          │
+├─────────────────────────────────────────────────────────────┤
+│ flag_key        VARCHAR(100) PK                             │
+│ flag_value      BOOLEAN DEFAULT FALSE                       │
+│ description     TEXT                                        │
+│ updated_at      TIMESTAMPTZ DEFAULT NOW()                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Relationships:
+- `events.created_by` and `events.moderated_by` reference `app_users`.
+- `announcement_bodies`, `event_tags`, and `publish_audit` all cascade on `events`.
+- `tag_library` stores aggregated tag heuristics for ML/suggestion worker.
+- `feature_flags` toggles (`events.push_enabled`, etc.) are consumed by the Go backend.
+
 ## Indexes
 
 - `idx_users_email` on `app_users(email)`

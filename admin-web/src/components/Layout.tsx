@@ -20,6 +20,9 @@ import {
   ClipboardList,
   UploadCloud,
   PieChart,
+  Megaphone,
+  ShieldCheck,
+  Radio,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -46,6 +49,13 @@ const Layout: React.FC = () => {
           { name: 'My Schedule', href: '/schedules/my', icon: CalendarRange },
         ]),
     { name: 'Tasks', href: '/tasks', icon: ClipboardList },
+    ...(isAdmin
+      ? [
+          { name: 'Events', href: '/events', icon: Megaphone },
+          { name: 'Moderation', href: '/moderation', icon: ShieldCheck },
+          { name: 'Broadcast Audit', href: '/events/audit', icon: FileText },
+        ]
+      : [{ name: 'Feed', href: '/feed', icon: Radio }]),
     ...(isAdmin
       ? [
           { name: 'Users', href: '/users', icon: Users },

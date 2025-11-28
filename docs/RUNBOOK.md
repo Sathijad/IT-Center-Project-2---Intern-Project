@@ -220,6 +220,28 @@ flutter build ios --release   # iOS
 - **Health & Monitoring:** New `/healthz` endpoint plus OpenTelemetry traces (export to Grafana/Tempo). Alerts: API p95 > 500 ms, Hangfire job failure ratio > 5%, mobile task API failure > 1%.
 - **Rollback:** Disable feature flags, pause Hangfire jobs, revert DB via backups (no destructive migrations). Redeploy last stable container if new API errors spike.
 
+## Phase 5 Addendum — Events & Announcements
+
+- **Service:** `events-backend` (Go 1.22 + Gin). Runs on port `8085` locally. Deploy as container with access to shared Postgres (`itcenter_auth`) plus AWS SQS/SES/FCM/Teams credentials.
+- **Config (env vars):**
+  - `EVENTS_DB_URL` Postgres URL (same DB as earlier phases)
+  - `EVENTS_JWKS_URL`, `EVENTS_JWT_ISSUER`, `EVENTS_JWT_AUDIENCE`
+  - `EVENTS_ALLOWED_ORIGINS`, `EVENTS_CORRELATION_HEADER`
+  - `EVENTS_SQS_QUEUE_URL`, `AWS_REGION` for workers
+  - Feature toggles: `EVENTS_PUSH_ENABLED`, `EVENTS_EMAIL_ENABLED`, `EVENTS_TEAMS_ENABLED`
+  - Worker timing: `EVENTS_WORKER_INTERVAL`, `EVENTS_BROADCAST_TIMEOUT`
+- **Migrations:** Execute `events-backend/migrations/20251201_events.sql` using psql. Script is idempotent and sets up tables, triggers, default tag records, and feature flags.
+- **OpenAPI:** `docs/openapi/events.yaml` (must be attached to release). CI enforces spec + migrations present in PRs.
+- **Background Workers:**
+  - `cmd/broadcast-worker` consumes SQS fan-out messages, calls notification providers, updates `publish_audit`.
+  - `cmd/tag-worker` periodically refreshes `tag_library` using heuristics from recent `event_tags`.
+  - `cmd/scheduler-worker` auto-broadcasts events whose `scheduled_for` <= now (guarded by feature flags).
+- **Admin UI:** new routes `/events`, `/events/new`, `/events/:id/edit`, `/moderation`, `/events/audit`, `/feed`. Ensure `VITE_EVENTS_API_BASE_URL` points to Go service.
+- **Mobile:** Home screen exposes "Announcements" card opening `EventFeedScreen`, pulling `/api/v1/events` with ETag caching.
+- **Observability:** Structured logs include `correlation_id`, `user_id`, `event_id`. Prometheus metrics (latency, queue depth) exposed at `/metrics` (via Gin middleware if enabled). Traces named `feed_list`, `event_detail`, `broadcast_fanout`.
+- **Deployment Order:** run SQL migration → deploy Go API → deploy workers → deploy admin/mobile clients. Toggle feature flags gradually (start with push only, enable email/Teams after smoke tests).
+- **Rollback:** Disable `events.*` feature flags, stop workers, redeploy previous container. Since migrations are additive, rollback relies on DB snapshot restore if necessary.
+
 ## Support Contacts
 
 - Backend Issues: backend-team@itcenter.com

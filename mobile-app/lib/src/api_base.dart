@@ -31,5 +31,15 @@ class ApiBase {
     // For iOS simulator, Windows, Linux, macOS: use localhost
     return 'http://localhost:5166';
   }
+
+  static String get eventsBase {
+    if (kIsWeb) {
+      return 'http://localhost:8085';
+    }
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8085';
+    }
+    return 'http://localhost:8085';
+  }
 }
 

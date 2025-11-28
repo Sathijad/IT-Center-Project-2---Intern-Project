@@ -24,6 +24,11 @@ import MySchedulePage from './pages/MySchedulePage'
 import TasksDashboardPage from './pages/TasksDashboardPage'
 import CsvImportPage from './pages/CsvImportPage'
 import ScheduleReportsPage from './pages/ScheduleReportsPage'
+import EventListPage from './pages/events/EventList'
+import EventFormPage from './pages/events/EventForm'
+import ModerationDashboard from './pages/events/ModerationDashboard'
+import BroadcastAuditPage from './pages/events/BroadcastAudit'
+import EventFeedPage from './pages/events/EventFeed'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,6 +53,54 @@ function App() {
                   <Dashboard />
                 </ProtectedRoute>
               } />
+              <Route
+                path="events"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <EventListPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="events/new"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <EventFormPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="events/:id/edit"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <EventFormPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="moderation"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <ModerationDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="events/audit"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <BroadcastAuditPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="feed"
+                element={
+                  <ProtectedRoute>
+                    <EventFeedPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="users"
                 element={

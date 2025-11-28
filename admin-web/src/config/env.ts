@@ -1,6 +1,7 @@
 const rawApiBaseUrl = (import.meta as any).env.VITE_API_BASE_URL
 const rawLeaveApiBaseUrl = (import.meta as any).env.VITE_LEAVE_API_BASE_URL
 const rawBookingApiBaseUrl = (import.meta as any).env.VITE_BOOKING_API_BASE_URL
+const rawEventsApiBaseUrl = (import.meta as any).env.VITE_EVENTS_API_BASE_URL
 const rawSchedulesApiBaseUrl = (import.meta as any).env.VITE_SCHEDULES_API_BASE_URL
 const useLocalPhase2 = String((import.meta as any).env.VITE_USE_LOCAL_PHASE2 || '').toLowerCase() === 'true'
 
@@ -11,6 +12,7 @@ const apiBaseUrl = rawApiBaseUrl || 'http://localhost:8080'
 const leaveApiBaseUrl = rawLeaveApiBaseUrl || (useLocalPhase2 ? 'http://localhost:3000' : defaultLeaveApiBaseUrl)
 const bookingApiBaseUrl = rawBookingApiBaseUrl || defaultBookingApiBaseUrl
 const schedulesApiBaseUrl = rawSchedulesApiBaseUrl || 'http://localhost:5166'
+const eventsApiBaseUrl = rawEventsApiBaseUrl || 'http://localhost:8085'
 
 export const config = {
   // Phase 1 Backend (Spring Boot) - Auth, Users, Audit
@@ -21,6 +23,8 @@ export const config = {
   BOOKING_API_BASE_URL: bookingApiBaseUrl,
   // Phase 4 Backend (ASP.NET Core) - Schedules, Tasks
   SCHEDULES_API_BASE_URL: schedulesApiBaseUrl,
+  // Phase 5 Backend (Go) - Events & Announcements
+  EVENTS_API_BASE_URL: eventsApiBaseUrl,
   COGNITO_USER_POOL_ID: 'ap-southeast-2_hTAYJId8y',
   COGNITO_CLIENT_ID: '3rdnl5ind8guti89jrbob85r4i',
   COGNITO_DOMAIN: 'itcenter-auth.auth.ap-southeast-2.amazoncognito.com',
