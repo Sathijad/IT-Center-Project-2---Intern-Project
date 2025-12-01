@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
-import { createEvent, updateEvent, getEvent, suggestTags, EventMutationPayload } from '../../lib/eventsApi'
+import { createEvent, updateEvent, getEvent, suggestTags, broadcastEvent, EventMutationPayload } from '../../lib/eventsApi'
 
 const schema = z.object({
   title: z.string().min(4, 'Title required'),
@@ -24,6 +24,8 @@ export default function EventFormPage() {
   const queryClient = useQueryClient()
   const [tagInput, setTagInput] = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])
+  const [showBroadcastDialog, setShowBroadcastDialog] = useState(false)
+  const [selectedChannels, setSelectedChannels] = useState<string[]>(['EMAIL', 'PUSH'])
 
   const { data: existing } = useQuery({
     enabled: isEdit,
@@ -105,6 +107,56 @@ export default function EventFormPage() {
     if (!tagInput.trim()) return
     const results = await suggestTags(tagInput.trim())
     setSuggestions(results)
+  }
+
+  const broadcastMutation = useMutation({
+    mutationFn: async (channels: string[]) => {
+      if (!id) throw new Error('Event ID is required')
+      return broadcastEvent(id, { channels })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events.list'] })
+      queryClient.invalidateQueries({ queryKey: ['events.detail', id] })
+      setShowBroadcastDialog(false)
+      alert('Event broadcasted successfully! Users will receive emails and mobile notifications.')
+    },
+    onError: (error: any) => {
+      console.error('[EventForm] Broadcast error:', error)
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to broadcast event'
+      alert(`Error: ${errorMessage}`)
+    },
+  })
+
+  function handleBroadcast() {
+    if (!id) {
+      alert('Please save the event first before broadcasting')
+      return
+    }
+    if (!existing?.event) {
+      alert('Event not loaded')
+      return
+    }
+    if (existing.event.status !== 'APPROVED') {
+      alert('Only approved events can be broadcasted. Please approve the event first in the Moderation page.')
+      return
+    }
+    setShowBroadcastDialog(true)
+  }
+
+  function toggleChannel(channel: string) {
+    setSelectedChannels(prev => 
+      prev.includes(channel) 
+        ? prev.filter(c => c !== channel)
+        : [...prev, channel]
+    )
+  }
+
+  function confirmBroadcast() {
+    if (selectedChannels.length === 0) {
+      alert('Please select at least one channel')
+      return
+    }
+    broadcastMutation.mutate(selectedChannels)
   }
 
   return (
@@ -189,11 +241,88 @@ export default function EventFormPage() {
           </p>
         </div>
       )}
-      <div className="flex justify-end gap-2">
-        <button type="button" onClick={() => navigate(-1)} className="rounded border border-slate-300 px-4 py-2 text-sm">Cancel</button>
-        <button type="submit" disabled={mutation.isPending} className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60">
-          {mutation.isPending ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Event'}
-        </button>
+      
+      {/* Broadcast Dialog */}
+      {showBroadcastDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-semibold text-slate-900 mb-4">Broadcast Event</h2>
+            <p className="text-sm text-slate-600 mb-4">
+              Select channels to broadcast this event. Users will receive emails and mobile notifications.
+            </p>
+            
+            <div className="space-y-2 mb-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedChannels.includes('EMAIL')}
+                  onChange={() => toggleChannel('EMAIL')}
+                  className="rounded"
+                />
+                <span className="text-sm">📧 Email - Send event details via email to all users</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedChannels.includes('PUSH')}
+                  onChange={() => toggleChannel('PUSH')}
+                  className="rounded"
+                />
+                <span className="text-sm">📱 Push Notification - Send notification to mobile app users</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedChannels.includes('TEAMS')}
+                  onChange={() => toggleChannel('TEAMS')}
+                  className="rounded"
+                />
+                <span className="text-sm">💬 Teams - Post to Microsoft Teams channel</span>
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowBroadcastDialog(false)}
+                className="rounded border border-slate-300 px-4 py-2 text-sm"
+                disabled={broadcastMutation.isPending}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmBroadcast}
+                disabled={broadcastMutation.isPending || selectedChannels.length === 0}
+                className="rounded bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60"
+              >
+                {broadcastMutation.isPending ? 'Broadcasting…' : 'Broadcast'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-between items-center">
+        <div>
+          {isEdit && existing?.event && (
+            <button
+              type="button"
+              onClick={handleBroadcast}
+              disabled={existing.event.status !== 'APPROVED'}
+              className="rounded bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={existing.event.status !== 'APPROVED' ? 'Event must be approved before broadcasting' : 'Broadcast event to users via email and mobile notifications'}
+            >
+              📢 Broadcast Event
+            </button>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => navigate(-1)} className="rounded border border-slate-300 px-4 py-2 text-sm">Cancel</button>
+          <button type="submit" disabled={mutation.isPending} className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60">
+            {mutation.isPending ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Event'}
+          </button>
+        </div>
       </div>
     </form>
   )
