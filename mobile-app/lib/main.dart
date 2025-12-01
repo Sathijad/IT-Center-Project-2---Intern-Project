@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'src/auth_service.dart';
 import 'src/api_client.dart';
 import 'src/home_screen.dart';
@@ -7,6 +9,7 @@ import 'src/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   await AuthService.instance.init(); // Amplify init
   runApp(const MyApp());
 }
@@ -52,9 +55,10 @@ class _AuthGateState extends State<AuthGate> {
       final previousUser = user;
       user = await Amplify.Auth.getCurrentUser();
       
-      // If user just signed in (was null, now has user), mark login
+      // If user just signed in (was null, now has user), mark login and send FCM token
       if (previousUser == null && user != null && !_hasMarkedLogin) {
         await _markLoginOnce();
+        await _sendFCMToken();
         _hasMarkedLogin = true;
       }
     } catch (_) {
@@ -70,6 +74,19 @@ class _AuthGateState extends State<AuthGate> {
     } catch (e) {
       // Log but don't fail the auth flow
       debugPrint('Failed to mark login: $e');
+    }
+  }
+
+  Future<void> _sendFCMToken() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        debugPrint('FCM Token obtained: $token');
+        await ApiClient().sendFCMToken(token);
+      }
+    } catch (e) {
+      // Log but don't fail the auth flow
+      debugPrint('Failed to send FCM token: $e');
     }
   }
 

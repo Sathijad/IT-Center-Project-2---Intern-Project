@@ -53,6 +53,46 @@ class ApiClient {
     return UserProfile.fromJson(json.decode(r.body));
   }
 
+  /// Send FCM token to backend for push notifications
+  Future<void> sendFCMToken(String token) async {
+    developer.log('[FCM-TOKEN] Sending token to backend');
+    
+    final accessToken = await AuthService.instance.getAccessToken();
+    if (accessToken == null || accessToken.isEmpty) {
+      developer.log('[FCM-TOKEN] ERROR: No access token available, skipping');
+      return;
+    }
+
+    final url = '${ApiBase.base}/api/v1/fcm-token';
+    developer.log('[FCM-TOKEN] URL: $url');
+
+    try {
+      final r = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'token': token,
+        }),
+      );
+      
+      developer.log('[FCM-TOKEN] Response status: ${r.statusCode}');
+      developer.log('[FCM-TOKEN] Response body: ${r.body}');
+      
+      if (r.statusCode != 200 && r.statusCode != 201 && r.statusCode != 204) {
+        developer.log('[FCM-TOKEN] WARNING: Unexpected status code: ${r.statusCode}');
+      } else {
+        developer.log('[FCM-TOKEN] SUCCESS: Token sent successfully');
+      }
+    } catch (e, stackTrace) {
+      developer.log('[FCM-TOKEN] ERROR: Failed to send token: $e');
+      developer.log('[FCM-TOKEN] Stack trace: $stackTrace');
+      // Don't fail the app flow if this fails
+    }
+  }
+
   /// Mark login for this session (idempotent per JWT token)
   /// Call this once after successful sign-in to record login in audit log
   Future<void> markLoginOnce() async {

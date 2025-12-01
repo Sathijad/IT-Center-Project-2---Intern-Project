@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "336245785604",
+    "project_id": "it-center-events",
+    "storage_bucket": "it-center-events.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:336245785604:android:0b19003f1df1fd6594e151",
+        "android_client_info": {
+          "package_name": "com.example.itcenter_auth"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2UN1NNrgO97Xbpwp5LDb372FS0oLy2S4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
