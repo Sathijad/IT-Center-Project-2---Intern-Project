@@ -14,6 +14,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/microcosm-cc/bluemonday v1.0.26
+	github.com/stretchr/testify v1.9.0
 )
 
 require (
