@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultPort             = 8085
+	defaultPort             = 8080
 	defaultCacheTTLSeconds  = 30
 	defaultPageSize         = 20
 	defaultMaxPageSize      = 100

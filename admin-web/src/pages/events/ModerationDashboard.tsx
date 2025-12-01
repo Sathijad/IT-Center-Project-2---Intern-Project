@@ -6,7 +6,7 @@ export default function ModerationDashboard() {
   const [notes, setNotes] = useState('')
   const queryClient = useQueryClient()
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['events.list', 'moderation'],
     queryFn: () => listEvents({ page: 1, size: 10, status: ['PENDING_MODERATION'] }),
   })
@@ -34,8 +34,22 @@ export default function ModerationDashboard() {
 
       <div className="space-y-3">
         {isLoading && <p className="text-sm text-slate-500">Loading pending events…</p>}
-        {!isLoading && data?.items?.length === 0 && <p className="text-sm text-slate-500">No events awaiting moderation 🎉</p>}
-        {data?.items?.map((event) => (
+        {error && (
+          <div className="rounded border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-semibold text-red-800">Failed to load events</p>
+            <p className="mt-1 text-xs text-red-600">
+              {error instanceof Error ? error.message : 'Unknown error occurred'}
+            </p>
+            <button
+              onClick={() => refetch()}
+              className="mt-2 text-xs text-blue-600 hover:underline"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+        {!isLoading && !error && data?.items?.length === 0 && <p className="text-sm text-slate-500">No events awaiting moderation 🎉</p>}
+        {!isLoading && !error && data?.items?.map((event) => (
           <div key={event.id} className="rounded border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-4">
               <div>

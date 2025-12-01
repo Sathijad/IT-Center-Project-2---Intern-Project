@@ -66,9 +66,11 @@ export default function EventFormPage() {
       const payload: EventMutationPayload = {
         ...data,
         attachments: [],
-        scheduledFor: data.scheduledFor || undefined,
-        expiresAt: data.expiresAt || undefined,
+        // Convert datetime-local format to ISO 8601 for backend
+        scheduledFor: data.scheduledFor ? new Date(data.scheduledFor).toISOString() : undefined,
+        expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined,
       }
+      console.log('[EventForm] Submitting payload:', payload)
       if (isEdit) {
         return updateEvent(id!, payload)
       }
@@ -77,6 +79,11 @@ export default function EventFormPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events.list'] })
       navigate('/events')
+    },
+    onError: (error: any) => {
+      console.error('[EventForm] Mutation error:', error)
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to save event'
+      alert(`Error: ${errorMessage}`)
     },
   })
 
@@ -172,6 +179,16 @@ export default function EventFormPage() {
           </label>
         </div>
       </div>
+      {mutation.error && (
+        <div className="rounded border border-red-200 bg-red-50 p-4">
+          <p className="text-sm font-semibold text-red-800">Error saving event</p>
+          <p className="mt-1 text-xs text-red-600">
+            {mutation.error instanceof Error 
+              ? mutation.error.message 
+              : (mutation.error as any)?.response?.data?.message || 'Unknown error occurred'}
+          </p>
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         <button type="button" onClick={() => navigate(-1)} className="rounded border border-slate-300 px-4 py-2 text-sm">Cancel</button>
         <button type="submit" disabled={mutation.isPending} className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60">

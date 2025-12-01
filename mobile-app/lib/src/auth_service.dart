@@ -364,6 +364,29 @@ class AuthService {
   }
 
   // --- Tokens for backend calls ---
+  /// Get the ID token (preferred for events backend)
+  Future<String?> getIdToken({bool forceRefresh = false}) async {
+    try {
+      final session = await Amplify.Auth.fetchAuthSession(
+        options: FetchAuthSessionOptions(forceRefresh: forceRefresh),
+      );
+      
+      if (session is CognitoAuthSession) {
+        // Get tokens safely
+        final tokens = session.userPoolTokensResult.valueOrNull;
+        if (tokens == null) return null;
+
+        // Return ID token (events backend requires this)
+        final idToken = tokens.idToken.raw;
+        return idToken.isNotEmpty ? idToken : null;
+      }
+      return null;
+    } catch (e) {
+      log('Failed to get ID token: $e');
+      return null;
+    }
+  }
+
   Future<String?> getAccessToken({bool forceRefresh = false}) async {
     try {
       final session = await Amplify.Auth.fetchAuthSession(

@@ -12,7 +12,11 @@ class EventRepository {
   EventRepository({http.Client? client}) : _client = client ?? http.Client();
 
   Future<List<EventItem>> fetchFeed() async {
-    final token = await AuthService.instance.getAccessToken();
+    // Events backend requires id_token, not access_token
+    final token = await AuthService.instance.getIdToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Not authenticated - ID token not available');
+    }
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',

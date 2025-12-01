@@ -18,9 +18,9 @@ import (
 
 // Verifier validates Cognito JWTs using JWKS cache.
 type Verifier struct {
-	jwksURL  string
-	issuer   string
-	audience string
+	jwksURL   string
+	issuer    string
+	audiences []string
 
 	client    *http.Client
 	mu        sync.RWMutex
@@ -35,13 +35,20 @@ type Claims struct {
 }
 
 func NewVerifier(jwksURL, issuer, audience string) *Verifier {
+	var audiences []string
+	for _, aud := range strings.Split(strings.TrimSpace(audience), ",") {
+		aud = strings.TrimSpace(aud)
+		if aud != "" {
+			audiences = append(audiences, aud)
+		}
+	}
 	return &Verifier{
-		jwksURL:  jwksURL,
-		issuer:   issuer,
-		audience: audience,
-		client:   &http.Client{Timeout: 5 * time.Second},
-		keys:     map[string]*rsa.PublicKey{},
-		ttl:      6 * time.Hour,
+		jwksURL:   jwksURL,
+		issuer:    issuer,
+		audiences: audiences,
+		client:    &http.Client{Timeout: 5 * time.Second},
+		keys:      map[string]*rsa.PublicKey{},
+		ttl:       6 * time.Hour,
 	}
 }
 
@@ -53,7 +60,13 @@ func (v *Verifier) Verify(ctx context.Context, tokenString string) (*Claims, err
 	}
 
 	claims := &Claims{}
-	parser := jwt.NewParser(jwt.WithAudience(v.audience), jwt.WithIssuedAt())
+	opts := []jwt.ParserOption{jwt.WithIssuedAt()}
+	if len(v.audiences) > 0 {
+		// opts = append(opts, jwt.WithAudience(v.audiences...))
+		// WithAudience now takes a single string, not ...string
+		opts = append(opts, jwt.WithAudience(v.audiences[0]))
+	}
+	parser := jwt.NewParser(opts...)
 
 	token, err := parser.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
 		kid, _ := token.Header["kid"].(string)

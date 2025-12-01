@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { listEvents, Event } from '../../lib/eventsApi'
@@ -45,10 +45,25 @@ export default function EventListPage() {
   const [status, setStatus] = useState<string | undefined>(undefined)
   const navigate = useNavigate()
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['events.list', status],
-    queryFn: () => listEvents({ page: 1, size: 20, status: status ? [status] : undefined }),
+    queryFn: () => {
+      const params = { page: 1, size: 20, status: status ? [status] : undefined }
+      console.log('[EventList] Fetching events with filter:', { status, params })
+      return listEvents(params)
+    },
   })
+
+  // Debug: Log when data changes
+  useEffect(() => {
+    if (data) {
+      console.log('[EventList] Events loaded:', {
+        filter: status || 'All',
+        count: data.items?.length || 0,
+        statuses: data.items?.map(e => e.status) || [],
+      })
+    }
+  }, [data, status])
 
   return (
     <div className="space-y-6">
@@ -94,14 +109,32 @@ export default function EventListPage() {
                 </td>
               </tr>
             )}
-            {!isLoading && data?.items?.length === 0 && (
+            {error && (
+              <tr>
+                <td colSpan={5} className="py-6 text-center">
+                  <div className="text-sm text-red-600">
+                    <p className="font-semibold">Failed to load events</p>
+                    <p className="mt-1 text-xs text-red-500">
+                      {error instanceof Error ? error.message : 'Unknown error occurred'}
+                    </p>
+                    <button
+                      onClick={() => refetch()}
+                      className="mt-2 text-xs text-blue-600 hover:underline"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )}
+            {!isLoading && !error && data?.items?.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-6 text-center text-sm text-slate-500">
                   No events found.
                 </td>
               </tr>
             )}
-            {!isLoading && data?.items?.map((event) => (
+            {!isLoading && !error && data?.items?.map((event) => (
               <EventRow key={event.id} event={event} onEdit={() => navigate(`/events/${event.id}/edit`)} />
             ))}
           </tbody>

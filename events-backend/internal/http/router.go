@@ -23,6 +23,7 @@ func NewRouter(cfg config.Config, repo *repository.Repository, events *service.E
 	router.Use(gin.Recovery())
 	router.Use(middleware.RequestLogger())
 	router.Use(middleware.Correlation(cfg.CorrelationHeaderKey))
+	router.Use(middleware.CORS(cfg.AllowedOrigins))
 
 	router.GET("/healthz", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "time": time.Now().UTC()})
