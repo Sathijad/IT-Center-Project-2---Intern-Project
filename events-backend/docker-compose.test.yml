@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    volumes:
+      - .:/app
+      - go-mod-cache:/go/pkg/mod
+    working_dir: /app
+    command: go test -v -coverprofile=coverage.out ./...
+    environment:
+      - CGO_ENABLED=0
+    networks:
+      - test_network
+
+volumes:
+  go-mod-cache:
+
+networks:
+  test_network:
+    driver: bridge
+
+

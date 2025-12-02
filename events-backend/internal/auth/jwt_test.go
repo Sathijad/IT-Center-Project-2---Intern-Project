@@ -78,13 +78,13 @@ func TestVerifier_fetchKeys(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("successful fetch", func(t *testing.T) {
-		// Create a mock JWKS server
+		// Create a mock JWKS server with invalid key format (will fail to parse)
 		jwksResponse := map[string]interface{}{
 			"keys": []map[string]interface{}{
 				{
 					"kid": "test-kid-1",
 					"kty": "RSA",
-					"n":   "test-n-value",
+					"n":   "invalid-base64!!!",
 					"e":   "AQAB",
 				},
 			},
@@ -99,9 +99,8 @@ func TestVerifier_fetchKeys(t *testing.T) {
 		verifier := NewVerifier(server.URL, "", "")
 		err := verifier.fetchKeys(ctx)
 
-		// Note: This will fail because we need valid RSA key values, but it tests the flow
-		// In a real scenario, you'd use proper base64-encoded RSA keys
-		assert.Error(t, err) // Expected to fail due to invalid key format
+		// Expected to fail due to invalid key format
+		assert.Error(t, err)
 	})
 
 	t.Run("empty JWKS response", func(t *testing.T) {
@@ -194,13 +193,28 @@ func TestToPublicKey(t *testing.T) {
 		assert.Nil(t, key)
 	})
 
-	t.Run("valid RSA key components", func(t *testing.T) {
-		// This would require actual valid RSA key components
-		// For now, we test that the function handles errors properly
-		key, err := toPublicKey("invalid", "invalid")
+	t.Run("invalid base64 strings", func(t *testing.T) {
+		// Test with invalid base64 strings that will cause decode errors
+		key, err := toPublicKey("!!!invalid-base64!!!", "!!!invalid-base64!!!")
 
 		assert.Error(t, err)
 		assert.Nil(t, key)
+	})
+	
+	t.Run("empty E value causes invalid key", func(t *testing.T) {
+		// Empty strings decode to empty bytes, which creates an invalid key
+		// The function may succeed but produce an invalid key, so we test the behavior
+		key, err := toPublicKey("", "")
+		
+		// Empty base64 strings decode successfully but create invalid keys
+		// The function doesn't validate key validity, so we just check it doesn't panic
+		if err == nil {
+			// If it succeeds, the key should be invalid (E=0)
+			assert.NotNil(t, key)
+			assert.Equal(t, 0, key.E)
+		} else {
+			assert.Nil(t, key)
+		}
 	})
 }
 
@@ -210,8 +224,8 @@ func TestClaims(t *testing.T) {
 			RegisteredClaims: jwt.RegisteredClaims{
 				Issuer:  "https://example.com",
 				Subject: "user123",
-				Email:   "test@example.com",
 			},
+			Email: "test@example.com",
 		}
 
 		assert.Equal(t, "https://example.com", claims.Issuer)

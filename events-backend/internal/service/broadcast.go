@@ -22,12 +22,12 @@ type BroadcastConfig struct {
 }
 
 type BroadcastService struct {
-	repo  *repository.Repository
+	repo  repository.BroadcastRepository
 	queue clients.Queue
 	cfg   BroadcastConfig
 }
 
-func NewBroadcastService(repo *repository.Repository, queue clients.Queue, cfg BroadcastConfig) *BroadcastService {
+func NewBroadcastService(repo repository.BroadcastRepository, queue clients.Queue, cfg BroadcastConfig) *BroadcastService {
 	return &BroadcastService{repo: repo, queue: queue, cfg: cfg}
 }
 

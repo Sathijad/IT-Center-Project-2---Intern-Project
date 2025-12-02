@@ -23,13 +23,13 @@ var (
 )
 
 type EventService struct {
-	repo       *repository.Repository
+	repo       repository.EventRepository
 	sanitizer  *bluemonday.Policy
 	validate   *validator.Validate
 	defaultTag string
 }
 
-func NewEventService(repo *repository.Repository) *EventService {
+func NewEventService(repo repository.EventRepository) *EventService {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 	sanitizer := bluemonday.UGCPolicy()
 	return &EventService{

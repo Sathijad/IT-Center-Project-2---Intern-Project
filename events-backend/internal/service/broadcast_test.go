@@ -26,9 +26,10 @@ func (m *MockQueue) Enqueue(ctx context.Context, message clients.BroadcastMessag
 	return args.Error(0)
 }
 
-// MockBroadcastRepository extends MockRepository for broadcast-specific methods
+// MockBroadcastRepository is a mock implementation of broadcast repository methods
+// It implements repository.BroadcastRepository interface
 type MockBroadcastRepository struct {
-	MockRepository
+	mock.Mock
 }
 
 func (m *MockBroadcastRepository) GetAuditByKey(ctx context.Context, key string) (*models.PublishAudit, error) {
@@ -47,6 +48,12 @@ func (m *MockBroadcastRepository) RecordBroadcastAudit(ctx context.Context, para
 func (m *MockBroadcastRepository) MarkBroadcast(ctx context.Context, id uuid.UUID, ts time.Time) error {
 	args := m.Called(ctx, id, ts)
 	return args.Error(0)
+}
+
+// Add GetUserBySub to MockRepository for EventService tests
+func (m *MockRepository) GetUserBySub(ctx context.Context, sub string) (int64, []string, error) {
+	args := m.Called(ctx, sub)
+	return args.Get(0).(int64), args.Get(1).([]string), args.Error(2)
 }
 
 func TestBroadcastService_Broadcast(t *testing.T) {
@@ -68,7 +75,7 @@ func TestBroadcastService_Broadcast(t *testing.T) {
 		requester := int64(1)
 
 		// First check for existing audit (should not exist)
-		mockRepo.On("GetAuditByKey", ctx, idempotencyKey).Return(nil, errors.New("not found"))
+		mockRepo.On("GetAuditByKey", ctx, idempotencyKey).Return(nil, errors.New("not found")).Once()
 
 		// Enqueue message
 		mockQueue.On("Enqueue", ctx, mock.MatchedBy(func(msg clients.BroadcastMessage) bool {
@@ -83,14 +90,14 @@ func TestBroadcastService_Broadcast(t *testing.T) {
 		// Mark broadcast
 		mockRepo.On("MarkBroadcast", ctx, eventID, mock.AnythingOfType("time.Time")).Return(nil)
 
-		// Get audit by key
+		// Get audit by key (second call - after creation)
 		expectedAudit := &models.PublishAudit{
 			ID:             1,
 			EventID:        eventID,
 			IdempotencyKey: idempotencyKey,
 			Status:         "QUEUED",
 		}
-		mockRepo.On("GetAuditByKey", ctx, idempotencyKey).Return(expectedAudit, nil)
+		mockRepo.On("GetAuditByKey", ctx, idempotencyKey).Return(expectedAudit, nil).Once()
 
 		audit, err := service.Broadcast(ctx, eventID, channels, idempotencyKey, requester)
 
@@ -163,7 +170,7 @@ func TestBroadcastService_Broadcast(t *testing.T) {
 
 		eventID := uuid.New()
 
-		mockRepo.On("GetAuditByKey", ctx, mock.AnythingOfType("string")).Return(nil, errors.New("not found"))
+		mockRepo.On("GetAuditByKey", ctx, mock.AnythingOfType("string")).Return(nil, errors.New("not found")).Once()
 
 		mockQueue.On("Enqueue", ctx, mock.MatchedBy(func(msg clients.BroadcastMessage) bool {
 			return len(msg.Channels) == 2 &&
@@ -175,7 +182,7 @@ func TestBroadcastService_Broadcast(t *testing.T) {
 		mockRepo.On("MarkBroadcast", ctx, eventID, mock.AnythingOfType("time.Time")).Return(nil)
 
 		expectedAudit := &models.PublishAudit{ID: 1, EventID: eventID}
-		mockRepo.On("GetAuditByKey", ctx, mock.AnythingOfType("string")).Return(expectedAudit, nil)
+		mockRepo.On("GetAuditByKey", ctx, mock.AnythingOfType("string")).Return(expectedAudit, nil).Once()
 
 		audit, err := service.Broadcast(ctx, eventID, []string{}, "", 1)
 

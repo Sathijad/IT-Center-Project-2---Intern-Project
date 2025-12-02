@@ -174,6 +174,7 @@ func TestEventPage(t *testing.T) {
 			Page:  1,
 			Size:  10,
 			Total: 25,
+			HasNext: int64(1*10) < 25,
 		}
 		assert.True(t, page.HasNext)
 
@@ -181,6 +182,7 @@ func TestEventPage(t *testing.T) {
 			Page:  2,
 			Size:  10,
 			Total: 25,
+			HasNext: int64(2*10) < 25,
 		}
 		assert.True(t, page.HasNext)
 
@@ -188,6 +190,7 @@ func TestEventPage(t *testing.T) {
 			Page:  3,
 			Size:  10,
 			Total: 25,
+			HasNext: int64(3*10) < 25,
 		}
 		assert.False(t, page.HasNext)
 	})

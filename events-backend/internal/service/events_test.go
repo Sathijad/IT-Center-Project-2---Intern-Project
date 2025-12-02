@@ -2,9 +2,7 @@ package service
 
 import (
 	"context"
-	"errors"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -16,6 +14,7 @@ import (
 )
 
 // MockRepository is a mock implementation of repository methods
+// It implements repository.EventRepository interface
 type MockRepository struct {
 	mock.Mock
 }
@@ -521,6 +520,212 @@ func TestEventService_ListAudits(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, expectedAudits, audits)
+		mockRepo.AssertExpectations(t)
+	})
+}
+
+func TestEventService_ListEvents(t *testing.T) {
+	ctx := context.Background()
+	mockRepo := new(MockRepository)
+	service := NewEventService(mockRepo)
+
+	t.Run("successful list with default filter", func(t *testing.T) {
+		filter := models.ListFilter{
+			Page: 1,
+			Size: 20,
+		}
+		expectedPage := models.EventPage{
+			Items: []models.Event{
+				{ID: uuid.New(), Title: "Event 1"},
+				{ID: uuid.New(), Title: "Event 2"},
+			},
+			Page:    1,
+			Size:    20,
+			Total:   2,
+			HasNext: false,
+		}
+
+		mockRepo.On("ListEvents", ctx, filter).Return(expectedPage, nil)
+
+		page, err := service.ListEvents(ctx, filter)
+
+		require.NoError(t, err)
+		assert.Equal(t, expectedPage, page)
+		assert.Len(t, page.Items, 2)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("list with status filter", func(t *testing.T) {
+		filter := models.ListFilter{
+			Page:   1,
+			Size:   10,
+			Status: []models.EventStatus{models.StatusPending, models.StatusApproved},
+		}
+		expectedPage := models.EventPage{
+			Items: []models.Event{
+				{ID: uuid.New(), Title: "Pending Event", Status: models.StatusPending},
+			},
+			Page:    1,
+			Size:    10,
+			Total:   1,
+			HasNext: false,
+		}
+
+		mockRepo.On("ListEvents", ctx, filter).Return(expectedPage, nil)
+
+		page, err := service.ListEvents(ctx, filter)
+
+		require.NoError(t, err)
+		assert.Len(t, page.Items, 1)
+		assert.Equal(t, models.StatusPending, page.Items[0].Status)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("list with channel filter", func(t *testing.T) {
+		filter := models.ListFilter{
+			Page:    1,
+			Size:    10,
+			Channel: "EMAIL",
+		}
+		expectedPage := models.EventPage{
+			Items: []models.Event{
+				{ID: uuid.New(), Title: "Email Event", Channel: "EMAIL"},
+			},
+			Page:    1,
+			Size:    10,
+			Total:   1,
+			HasNext: false,
+		}
+
+		mockRepo.On("ListEvents", ctx, filter).Return(expectedPage, nil)
+
+		page, err := service.ListEvents(ctx, filter)
+
+		require.NoError(t, err)
+		assert.Len(t, page.Items, 1)
+		assert.Equal(t, "EMAIL", page.Items[0].Channel)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("list with tags filter", func(t *testing.T) {
+		filter := models.ListFilter{
+			Page: 1,
+			Size: 10,
+			Tags: []string{"hr", "announcement"},
+		}
+		expectedPage := models.EventPage{
+			Items: []models.Event{
+				{ID: uuid.New(), Title: "HR Event", Tags: []string{"hr", "announcement"}},
+			},
+			Page:    1,
+			Size:    10,
+			Total:   1,
+			HasNext: false,
+		}
+
+		mockRepo.On("ListEvents", ctx, filter).Return(expectedPage, nil)
+
+		page, err := service.ListEvents(ctx, filter)
+
+		require.NoError(t, err)
+		assert.Len(t, page.Items, 1)
+		assert.Contains(t, page.Items[0].Tags, "hr")
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("list with search term", func(t *testing.T) {
+		filter := models.ListFilter{
+			Page:       1,
+			Size:       10,
+			SearchTerm: "meeting",
+		}
+		expectedPage := models.EventPage{
+			Items: []models.Event{
+				{ID: uuid.New(), Title: "Team Meeting", Summary: "Monthly team meeting"},
+			},
+			Page:    1,
+			Size:    10,
+			Total:   1,
+			HasNext: false,
+		}
+
+		mockRepo.On("ListEvents", ctx, filter).Return(expectedPage, nil)
+
+		page, err := service.ListEvents(ctx, filter)
+
+		require.NoError(t, err)
+		assert.Len(t, page.Items, 1)
+		assert.Contains(t, page.Items[0].Title, "Meeting")
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("pagination with has next", func(t *testing.T) {
+		filter := models.ListFilter{
+			Page: 1,
+			Size: 10,
+		}
+		expectedPage := models.EventPage{
+			Items: make([]models.Event, 10),
+			Page:    1,
+			Size:    10,
+			Total:   25,
+			HasNext: true,
+		}
+
+		mockRepo.On("ListEvents", ctx, filter).Return(expectedPage, nil)
+
+		page, err := service.ListEvents(ctx, filter)
+
+		require.NoError(t, err)
+		assert.True(t, page.HasNext)
+		assert.Equal(t, int64(25), page.Total)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("repository error handling", func(t *testing.T) {
+		mockRepo := new(MockRepository)
+		service := NewEventService(mockRepo)
+		
+		filter := models.ListFilter{
+			Page: 1,
+			Size: 20,
+		}
+		emptyPage := models.EventPage{}
+
+		mockRepo.On("ListEvents", ctx, filter).Return(emptyPage, assert.AnError)
+
+		page, err := service.ListEvents(ctx, filter)
+
+		assert.Error(t, err)
+		assert.Equal(t, emptyPage, page)
+		assert.Empty(t, page.Items)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("empty results", func(t *testing.T) {
+		mockRepo := new(MockRepository)
+		service := NewEventService(mockRepo)
+		
+		filter := models.ListFilter{
+			Page: 1,
+			Size: 20,
+		}
+		expectedPage := models.EventPage{
+			Items:  []models.Event{},
+			Page:    1,
+			Size:    20,
+			Total:   0,
+			HasNext: false,
+		}
+
+		mockRepo.On("ListEvents", ctx, filter).Return(expectedPage, nil)
+
+		page, err := service.ListEvents(ctx, filter)
+
+		require.NoError(t, err)
+		assert.Empty(t, page.Items)
+		assert.Equal(t, int64(0), page.Total)
+		assert.False(t, page.HasNext)
 		mockRepo.AssertExpectations(t)
 	})
 }
