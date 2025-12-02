@@ -142,6 +142,20 @@ func NewRouter(cfg config.Config, repo *repository.Repository, events *service.E
 				c.JSON(http.StatusBadRequest, gin.H{"message": "invalid id"})
 				return
 			}
+			// Validate event exists and is APPROVED
+			event, _, err := events.GetEvent(c.Request.Context(), id)
+			if err != nil {
+				if err == service.ErrNotFound {
+					c.JSON(http.StatusNotFound, gin.H{"message": "event not found"})
+					return
+				}
+				c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+				return
+			}
+			if event.Status != models.StatusApproved {
+				c.JSON(http.StatusBadRequest, gin.H{"message": "event must be approved before broadcasting"})
+				return
+			}
 			var req struct {
 				IdempotencyKey string   `json:"idempotencyKey"`
 				Channels       []string `json:"channels"`

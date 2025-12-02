@@ -25,16 +25,13 @@ func main() {
 	}
 	defer repo.Close()
 
-	var queue clients.Queue
-	if cfg.SQSQueueURL != "" {
-		if q, err := clients.NewSQSQueue(ctx, cfg.SQSQueueURL, cfg.Region); err == nil {
-			queue = q
-		} else {
-			log.Printf("warn: sqs queue unavailable, falling back to logger queue: %v", err)
-		}
+	// SQS queue is required for broadcasting events
+	if cfg.SQSQueueURL == "" {
+		log.Fatal("EVENTS_SQS_QUEUE_URL is required for broadcast functionality")
 	}
-	if queue == nil {
-		queue = clients.LoggerQueue{}
+	queue, err := clients.NewSQSQueue(ctx, cfg.SQSQueueURL, cfg.Region)
+	if err != nil {
+		log.Fatalf("failed to initialize SQS queue: %v", err)
 	}
 
 	eventSvc := service.NewEventService(repo)
