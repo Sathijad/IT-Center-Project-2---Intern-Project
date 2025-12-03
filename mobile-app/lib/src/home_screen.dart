@@ -11,6 +11,8 @@ import '../screens/BookingSearchScreen.dart';
 import '../screens/MyBookingsScreen.dart';
 import '../screens/ScheduleOverviewScreen.dart';
 import '../screens/MyTasksScreen.dart';
+import '../screens/KpiDashboardScreen.dart';
+import '../screens/TrainingOverviewScreen.dart';
 import 'events/event_feed_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -355,6 +357,50 @@ class _HomeScreenState extends State<HomeScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => MyTasksScreen(assigneeId: userData!['id'] as int),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              key: const ValueKey('kpi_dashboard_action_card'),
+                              icon: Icons.trending_up,
+                              title: 'KPI Dashboard',
+                              subtitle: 'View performance',
+                              color: Colors.purple,
+                              onTap: () {
+                                if (userData?['id'] == null) return;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => KpiDashboardScreen(userId: userData!['id'] as int),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              key: const ValueKey('training_action_card'),
+                              icon: Icons.school,
+                              title: 'Training',
+                              subtitle: 'My courses',
+                              color: Colors.deepPurple,
+                              onTap: () {
+                                if (userData?['id'] == null) return;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TrainingOverviewScreen(userId: userData!['id'] as int),
                                   ),
                                 );
                               },

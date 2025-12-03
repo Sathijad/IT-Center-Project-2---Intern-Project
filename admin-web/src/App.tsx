@@ -29,6 +29,10 @@ import EventFormPage from './pages/events/EventForm'
 import ModerationDashboard from './pages/events/ModerationDashboard'
 import BroadcastAuditPage from './pages/events/BroadcastAudit'
 import EventFeedPage from './pages/events/EventFeed'
+import KpiReportsPage from './pages/KpiReportsPage'
+import TrainingCoursesPage from './pages/TrainingCoursesPage'
+import TrainingAssignmentsPage from './pages/TrainingAssignmentsPage'
+import KpiImportPage from './pages/KpiImportPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -235,6 +239,38 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="ADMIN">
                     <ScheduleReportsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="performance/reports"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <KpiReportsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="performance/import"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <KpiImportPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="training/courses"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <TrainingCoursesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="training/assignments"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <TrainingAssignmentsPage />
                   </ProtectedRoute>
                 }
               />

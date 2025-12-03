@@ -41,5 +41,16 @@ class ApiBase {
     }
     return 'http://localhost:8085';
   }
+
+  // Performance backend (port 5167)
+  static String get performanceBase {
+    if (kIsWeb) {
+      return 'http://localhost:5167';
+    }
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:5167';
+    }
+    return 'http://localhost:5167';
+  }
 }
 
