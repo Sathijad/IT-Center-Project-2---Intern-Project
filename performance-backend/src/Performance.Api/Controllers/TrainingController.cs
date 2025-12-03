@@ -23,7 +23,7 @@ public class TrainingController(
         [FromQuery(Name = "query")] string? query,
         [FromQuery(Name = "page")] int page = 1,
         [FromQuery(Name = "size")] int size = 20,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var courseQuery = new CourseQuery(query, page, size);
         var result = await courseService.SearchAsync(courseQuery, cancellationToken);
