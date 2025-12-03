@@ -36,16 +36,19 @@ export const handler = createHandler(async ({ event, user }) => {
     throw new ForbiddenError('You can only view your own bookings');
   }
 
-  // Default to current user's ID when no user_id is provided (even for admins)
-  // Admins can explicitly provide user_id to view another user's bookings
-  const targetUserId = query.user_id ?? numericUserId;
+  // For admins: show all bookings when no user_id is provided
+  // For non-admins: always filter by their own user_id
+  // When user_id is explicitly provided, use it (admins viewing specific user)
+  const targetUserId = isAdmin 
+    ? query.user_id  // Admins: undefined means show all, or specific user_id
+    : (query.user_id ?? numericUserId);  // Non-admins: always their own id
 
   const filters = {
-    userId: targetUserId,
-    roomId: query.room_id,
-    startDate: query.start_date,
-    endDate: query.end_date,
-    status: query.status,
+    ...(targetUserId !== undefined ? { userId: targetUserId } : {}),  // Only set userId if provided
+    ...(query.room_id !== undefined ? { roomId: query.room_id } : {}),
+    ...(query.start_date ? { startDate: query.start_date } : {}),
+    ...(query.end_date ? { endDate: query.end_date } : {}),
+    ...(query.status ? { status: query.status } : {}),
   };
 
   const bookings = await service.listBookings(filters);

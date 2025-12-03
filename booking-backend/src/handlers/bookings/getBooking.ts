@@ -21,6 +21,10 @@ export const handler = createHandler(async ({ event, user }) => {
   const isAdmin = user.roles.includes('ADMIN');
   const booking = await service.getBooking(params.id, user.userId, isAdmin);
 
+  if (!booking) {
+    throw new Error('Booking not found');
+  }
+
   // Enhance booking with room information
   const bookingWithRoom = booking as typeof booking & { roomName?: string | null; roomCapacity?: number | null; roomLocation?: string | null };
   const enhancedBooking = {

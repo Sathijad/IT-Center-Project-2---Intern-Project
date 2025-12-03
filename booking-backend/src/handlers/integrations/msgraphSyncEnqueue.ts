@@ -28,7 +28,7 @@ export const handler = createHandler(
       throw new ForbiddenError('Only administrators can trigger sync jobs');
     }
 
-    if (body.booking_id && body.action) {
+    if (body.booking_id && body.action && body.action !== 'full_sync') {
       // Sync specific booking
       const booking = await bookingRepository.findById(body.booking_id);
       if (!booking) {

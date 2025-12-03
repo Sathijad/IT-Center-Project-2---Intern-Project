@@ -111,3 +111,13 @@ WHERE recurrence_id NOT IN (
   'bc968ce1-1bf9-478b-a8d3-3e2f3c825975'
 );
 
+
+
+SELECT *
+FROM app_users
+WHERE id = 3;
+
+
+DELETE FROM app_users
+WHERE id = 37;
+

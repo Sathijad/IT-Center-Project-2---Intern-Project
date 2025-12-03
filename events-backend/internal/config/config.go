@@ -28,6 +28,7 @@ type Config struct {
 	SQSQueueURL          string
 	SNSTopicARN          string
 	SESEndpoint          string
+	SESSenderEmail       string
 	TeamsWebhookURL      string
 	FeatureFlagPrefix    string
 	CacheTTL             time.Duration
@@ -65,6 +66,7 @@ func Load() Config {
 		SQSQueueURL:          os.Getenv("EVENTS_SQS_QUEUE_URL"),
 		SNSTopicARN:          os.Getenv("EVENTS_SNS_TOPIC_ARN"),
 		SESEndpoint:          os.Getenv("EVENTS_SES_ENDPOINT"),
+		SESSenderEmail:       os.Getenv("EVENTS_SES_SENDER_EMAIL"),
 		TeamsWebhookURL:      os.Getenv("EVENTS_TEAMS_WEBHOOK_URL"),
 		FeatureFlagPrefix:    envOrDefault("EVENTS_FEATURE_FLAG_PREFIX", "events."),
 		CacheTTL:             time.Duration(intFromEnv("EVENTS_CACHE_TTL_SECONDS", defaultCacheTTLSeconds)) * time.Second,

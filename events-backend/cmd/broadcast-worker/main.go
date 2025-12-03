@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"os/signal"
 	"syscall"
 
@@ -33,12 +34,73 @@ func main() {
 	if err != nil {
 		log.Fatalf("aws config: %v", err)
 	}
-	client := sqs.NewFromConfig(awsCfg)
-	notifier := clients.LoggerNotifier{}
-	worker := worker.NewBroadcastWorker(client, cfg.SQSQueueURL, repo, notifier)
+	sqsClient := sqs.NewFromConfig(awsCfg)
+
+	// Initialize notifiers based on configuration
+	var emailSender *clients.SESEmailSender
+	var pushSender *clients.FCMPushSender
+	var teamsSender *clients.TeamsWebhookSender
+
+	// Initialize SES email sender if enabled
+	if cfg.EnableEmail {
+		if cfg.SESSenderEmail == "" {
+			log.Fatal("EVENTS_SES_SENDER_EMAIL is required when email is enabled")
+		}
+		emailSender, err = clients.NewSESEmailSender(ctx, cfg.Region, cfg.SESSenderEmail)
+		if err != nil {
+			log.Fatalf("failed to initialize SES sender: %v", err)
+		}
+		log.Printf("SES email sender initialized with sender: %s", cfg.SESSenderEmail)
+	}
+
+	// Initialize FCM push sender if enabled
+	if cfg.EnablePush {
+		fcmServerKey := os.Getenv("FCM_SERVER_KEY")
+		if fcmServerKey != "" {
+			pushSender, err = clients.NewFCMPushSender(fcmServerKey)
+			if err != nil {
+				log.Printf("warning: failed to initialize FCM sender: %v (continuing without push)", err)
+			} else {
+				log.Println("FCM push sender initialized")
+			}
+		} else {
+			log.Println("warning: FCM_SERVER_KEY not set, push notifications disabled")
+		}
+	}
+
+	// Initialize Teams webhook sender if enabled
+	if cfg.EnableTeams {
+		if cfg.TeamsWebhookURL == "" {
+			log.Println("warning: EVENTS_TEAMS_WEBHOOK_URL not set, Teams notifications disabled")
+		} else {
+			teamsSender, err = clients.NewTeamsWebhookSender(cfg.TeamsWebhookURL)
+			if err != nil {
+				log.Printf("warning: failed to initialize Teams sender: %v (continuing without Teams)", err)
+			} else {
+				log.Println("Teams webhook sender initialized")
+			}
+		}
+	}
+
+	// Create repository adapter for notifier
+	repoAdapter := clients.NewRepositoryAdapter(repo)
+
+	// Create composite notifier
+	notifier := clients.NewCompositeNotifier(
+		emailSender,
+		pushSender,
+		teamsSender,
+		repoAdapter,
+		cfg.EnableEmail,
+		cfg.EnablePush,
+		cfg.EnableTeams,
+	)
+
+	broadcastWorker := worker.NewBroadcastWorker(sqsClient, cfg.SQSQueueURL, repo, notifier)
 
 	log.Println("broadcast worker started")
-	if err := worker.Run(ctx); err != nil {
+	log.Printf("Configuration: Email=%v, Push=%v, Teams=%v", cfg.EnableEmail, cfg.EnablePush, cfg.EnableTeams)
+	if err := broadcastWorker.Run(ctx); err != nil {
 		log.Fatalf("worker exit: %v", err)
 	}
 }

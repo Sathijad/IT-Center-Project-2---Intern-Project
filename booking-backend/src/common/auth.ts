@@ -159,6 +159,34 @@ export const authenticateRequest = async (event: APIGatewayProxyEventV2): Promis
     throw new UnauthorizedError('User not found in database');
   }
 
+  // Fetch roles from database (most up-to-date source of truth)
+  // If database has roles, use them; otherwise fall back to JWT token roles
+  let finalRoles: UserRole[] = [];
+  
+  if (userRecord.roles && userRecord.roles.length > 0) {
+    // Normalize database roles
+    const normalizeRole = (role: string): UserRole => {
+      const upper = role.trim().toUpperCase();
+      return upper.includes('ADMIN') ? 'ADMIN' : 'EMPLOYEE';
+    };
+    
+    finalRoles = Array.from(new Set(
+      userRecord.roles.map(normalizeRole)
+    )) as UserRole[];
+    
+    logger.debug('Using roles from database', { userId: userRecord.userId, roles: finalRoles });
+  } else {
+    // Fall back to JWT token roles if database roles not available
+    finalRoles = normalizedRoles;
+    logger.debug('Using roles from JWT token (database roles not available)', { userId: userRecord.userId, roles: finalRoles });
+  }
+
+  // Ensure at least one role is assigned
+  if (finalRoles.length === 0) {
+    finalRoles = ['EMPLOYEE'];
+    logger.debug('No roles found, defaulting to EMPLOYEE', { userId: userRecord.userId });
+  }
+
   const resolvedTeamId = teamIdFromClaims ?? null;
   const resolvedEmail = userRecord.email ?? emailClaim ?? undefined;
   const resolvedDisplayName = userRecord.displayName ?? displayName ?? resolvedEmail;
@@ -168,11 +196,11 @@ export const authenticateRequest = async (event: APIGatewayProxyEventV2): Promis
     email: resolvedEmail ?? payload.sub,
     displayName: resolvedDisplayName,
     teamId: resolvedTeamId,
-    roles: normalizedRoles,
+    roles: finalRoles,
     sub: payload.sub,
   };
 
-  logger.debug('User roles resolved', { userId: user.userId, roles: user.roles });
+  logger.debug('User roles resolved', { userId: user.userId, roles: user.roles, source: 'database' });
 
   return user;
 };

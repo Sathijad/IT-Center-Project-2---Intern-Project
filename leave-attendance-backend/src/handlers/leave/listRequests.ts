@@ -25,23 +25,28 @@ export const handler = createHandler(async ({ event, user }) => {
   const origin = event.headers?.origin || event.headers?.Origin;
   const query = parseQuery(querySchema, event.queryStringParameters);
 
-  if (query.user_id && !user.roles.includes('ADMIN') && Number(query.user_id) !== user.userId) {
+  const isAdmin = user.roles.includes('ADMIN');
+  
+  if (query.user_id && !isAdmin && Number(query.user_id) !== user.userId) {
     throw new ForbiddenError('Only administrators can view leave requests for other users');
   }
 
-  // Default to current user's ID when no user_id is provided (even for admins)
-  // Admins can explicitly provide user_id to view another user's requests
+  // For admins: show all requests when no user_id is provided
+  // For non-admins: always filter by their own user_id
+  // When user_id is explicitly provided, use it (admins viewing specific user)
   const numericUserId = typeof user.userId === 'number' ? user.userId : Number(user.userId);
-  const targetUserId = query.user_id ? Number(query.user_id) : numericUserId;
+  const targetUserId = isAdmin
+    ? (query.user_id ? Number(query.user_id) : undefined)  // Admins: undefined means show all
+    : numericUserId;  // Non-admins: always their own id
 
   const filters = {
-    userId: targetUserId,
-    status: query.status,
-    startDate: query.from,
-    endDate: query.to,
-    page: query.page ? Number(query.page) : undefined,
-    size: query.size ? Number(query.size) : undefined,
-    sort: query.sort,
+    ...(targetUserId !== undefined ? { userId: targetUserId } : {}),  // Only set userId if provided
+    ...(query.status ? { status: query.status } : {}),
+    ...(query.from ? { startDate: query.from } : {}),
+    ...(query.to ? { endDate: query.to } : {}),
+    ...(query.page ? { page: Number(query.page) } : {}),
+    ...(query.size ? { size: Number(query.size) } : {}),
+    ...(query.sort ? { sort: query.sort } : {}),
   };
 
   const result = await service.listRequests(user, filters);

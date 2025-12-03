@@ -510,6 +510,36 @@ LIMIT $1`
 }
 
 // GetUserBySub resolves a Cognito subject to the local user id + roles.
+// GetAllUserEmails returns all user email addresses from the database
+func (r *Repository) GetAllUserEmails(ctx context.Context) ([]string, error) {
+	const query = `
+		SELECT email 
+		FROM app_users 
+		WHERE email IS NOT NULL AND email != ''
+		ORDER BY email
+	`
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query user emails: %w", err)
+	}
+	defer rows.Close()
+
+	var emails []string
+	for rows.Next() {
+		var email string
+		if err := rows.Scan(&email); err != nil {
+			continue // Skip invalid rows
+		}
+		emails = append(emails, email)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error reading user emails: %w", err)
+	}
+
+	return emails, nil
+}
+
 func (r *Repository) GetUserBySub(ctx context.Context, sub string) (int64, []string, error) {
 	const query = `
 SELECT au.id,

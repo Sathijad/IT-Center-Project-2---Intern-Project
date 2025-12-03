@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,7 +10,15 @@ import 'src/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  // Only initialize Firebase on mobile platforms (Android/iOS), not on web
+  if (!kIsWeb) {
+    // Use conditional import - dart:io is not available on web
+    try {
+      await Firebase.initializeApp();
+    } catch (e) {
+      debugPrint('Firebase initialization skipped: $e');
+    }
+  }
   await AuthService.instance.init(); // Amplify init
   runApp(const MyApp());
 }
@@ -78,6 +87,11 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _sendFCMToken() async {
+    // Only send FCM token on mobile platforms, not on web
+    if (kIsWeb) {
+      debugPrint('FCM token not supported on web platform');
+      return;
+    }
     try {
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) {

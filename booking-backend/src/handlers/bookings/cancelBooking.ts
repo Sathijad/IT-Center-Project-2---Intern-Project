@@ -7,10 +7,7 @@ import { successResponse } from '../../common/response';
 const service = new BookingService();
 
 const pathSchema = z.object({
-  id: z
-    .string()
-    .regex(/^\d+$/)
-    .transform((value) => Number(value)),
+  id: z.coerce.number().int().positive(),
 });
 
 export const handler = createHandler(async ({ event, user }) => {
@@ -19,12 +16,7 @@ export const handler = createHandler(async ({ event, user }) => {
   }
 
   const origin = event.headers?.origin || event.headers?.Origin;
-  const params = parsePathParameters(
-    z.object({
-      id: z.coerce.number().int().positive(),
-    }),
-    event.pathParameters,
-  );
+  const params = parsePathParameters(pathSchema, event.pathParameters);
 
   const numericUserId =
     typeof user.userId === 'number' ? user.userId : Number(user.userId);

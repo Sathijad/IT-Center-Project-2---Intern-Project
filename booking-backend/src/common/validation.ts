@@ -1,7 +1,7 @@
-import { ZodSchema, ZodError } from 'zod';
+import { ZodType, ZodError } from 'zod';
 import { ValidationError } from './errors';
 
-const parseWithSchema = <T>(schema: ZodSchema<T>, payload: unknown): T => {
+const parseWithSchema = <TInput, TOutput>(schema: ZodType<TOutput, any, TInput>, payload: TInput): TOutput => {
   try {
     return schema.parse(payload);
   } catch (error) {
@@ -13,7 +13,7 @@ const parseWithSchema = <T>(schema: ZodSchema<T>, payload: unknown): T => {
   }
 };
 
-export const parseBody = <T>(schema: ZodSchema<T>, body: string | null | undefined): T => {
+export const parseBody = <T>(schema: ZodType<T>, body: string | null | undefined): T => {
   if (!body) {
     throw new ValidationError('Request body is required');
   }
@@ -29,14 +29,14 @@ export const parseBody = <T>(schema: ZodSchema<T>, body: string | null | undefin
 };
 
 export const parseQuery = <T>(
-  schema: ZodSchema<T>,
+  schema: ZodType<T, any, any>,
   queryParams: Record<string, string | undefined> | undefined,
 ): T => {
   return parseWithSchema(schema, queryParams ?? {});
 };
 
 export const parsePathParameters = <T>(
-  schema: ZodSchema<T>,
+  schema: ZodType<T, any, any>,
   params: Record<string, string | undefined> | undefined,
 ): T => {
   return parseWithSchema(schema, params ?? {});
