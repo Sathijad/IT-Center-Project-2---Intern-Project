@@ -12,8 +12,9 @@ const KpiImportPage = () => {
     queryKey: ['import-job', importJobId],
     queryFn: () => performanceApi.getImportJob(importJobId!),
     enabled: !!importJobId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Poll every 2 seconds if job is still processing
+      const data = query.state.data
       if (data?.status === 'QUEUED' || data?.status === 'PROCESSING') {
         return 2000
       }
@@ -112,7 +113,7 @@ const KpiImportPage = () => {
                 <li><code>kpi_code</code> - KPI code (string)</li>
                 <li><code>user_id</code> - User ID (number, optional)</li>
                 <li><code>measured_at</code> - Measurement timestamp (ISO 8601 format)</li>
-                <li><code>value</code> - KPI value (decimal number)</li>
+                <li><code>value</code> -  <strong>The actual measured value</strong> (decimal number) - This becomes the "Current Value" in reports</li>
               </ul>
               <p className="mt-3 font-medium">Example (IT Center KPIs):</p>
               <pre className="mt-1 bg-white p-2 rounded border text-xs overflow-x-auto">

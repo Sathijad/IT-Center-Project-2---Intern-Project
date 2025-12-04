@@ -219,6 +219,7 @@ builder.Services.AddHttpClient("TeamsWebhook")
 builder.Services.AddScoped<IMetricsService, MetricsService>();
 builder.Services.AddScoped<IKpiService, KpiService>();
 builder.Services.AddScoped<IKpiTargetService, KpiTargetService>();
+builder.Services.AddScoped<IKpiActualService, KpiActualService>();
 builder.Services.AddScoped<IImportService, ImportService>();
 builder.Services.AddScoped<ITrainingCourseService, TrainingCourseService>();
 builder.Services.AddScoped<ITrainingAssignmentService, TrainingAssignmentService>();

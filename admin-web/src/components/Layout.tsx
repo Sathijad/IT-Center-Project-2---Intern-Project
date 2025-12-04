@@ -74,6 +74,7 @@ const Layout: React.FC = () => {
           { name: 'Scheduler Reports', href: '/reports', icon: PieChart },
           { name: 'KPI Reports', href: '/performance/reports', icon: Target },
           { name: 'KPI Targets', href: '/performance/targets', icon: TrendingUp },
+          { name: 'KPI Actuals', href: '/performance/actuals', icon: BarChart3 },
           { name: 'Training Courses', href: '/training/courses', icon: GraduationCap },
           { name: 'Training Assignments', href: '/training/assignments', icon: UserCheck },
           { name: 'KPI Import', href: '/performance/import', icon: FileSpreadsheet },

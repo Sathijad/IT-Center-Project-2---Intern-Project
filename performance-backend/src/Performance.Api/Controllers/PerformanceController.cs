@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Performance.Contracts.Performance;
+using Performance.Errors;
 using Performance.Extensions;
 using Performance.Infrastructure.Data;
 using Performance.Services.Interfaces;
@@ -14,6 +15,7 @@ public class PerformanceController(
     IMetricsService metricsService,
     IKpiTargetService kpiTargetService,
     IKpiService kpiService,
+    IKpiActualService kpiActualService,
     IDbContextFactory<PerformanceDbContext> dbContextFactory) : ControllerBase
 {
     [HttpGet("metrics")]
@@ -160,6 +162,59 @@ public class PerformanceController(
             return NotFound($"KPI {kpiId} not found");
         }
         return Ok(kpi);
+    }
+
+    [HttpPost("actuals")]
+    [Authorize]
+    [ProducesResponseType(typeof(KpiActualResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<KpiActualResponse>> CreateActual(
+        [FromBody] CreateKpiActualRequest request,
+        CancellationToken cancellationToken)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var actorId = await User.GetActorIdAsync(dbContext, cancellationToken);
+
+        if (actorId == 0)
+        {
+            return Unauthorized("Unable to determine user ID from token.");
+        }
+
+        // If no user ID specified, use the authenticated user's ID (for employees submitting their own data)
+        var actualRequest = request;
+        if (!request.UserId.HasValue)
+        {
+            actualRequest = request with { UserId = actorId };
+        }
+
+        try
+        {
+            var actual = await kpiActualService.CreateAsync(actualRequest, actorId, cancellationToken);
+            return CreatedAtAction(nameof(CreateActual), new { actualId = actual.ActualId }, actual);
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
+    [HttpGet("actuals/my")]
+    [Authorize]
+    [ProducesResponseType(typeof(IReadOnlyCollection<KpiActualResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<KpiActualResponse>>> GetMyActuals(
+        CancellationToken cancellationToken)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var actorId = await User.GetActorIdAsync(dbContext, cancellationToken);
+
+        if (actorId == 0)
+        {
+            return Unauthorized("Unable to determine user ID from token.");
+        }
+
+        var actuals = await kpiActualService.GetByUserAsync(actorId, cancellationToken);
+        return Ok(actuals);
     }
 }
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { performanceApi, type KpiResponse, type KpiTarget } from '../lib/performanceApi'
+import { performanceApi, type KpiResponse } from '../lib/performanceApi'
 import { Target, Plus, Calendar, FileText } from 'lucide-react'
 
 const KpiTargetsPage = () => {
@@ -23,6 +23,11 @@ const KpiTargetsPage = () => {
     unit: '',
     category: '',
     calculationHint: '',
+    // Optional initial actual value
+    includeInitialValue: false,
+    initialValue: '',
+    initialMeasuredAt: new Date().toISOString().slice(0, 16),
+    initialUserId: '',
   })
 
   // Fetch all KPIs
@@ -35,16 +40,45 @@ const KpiTargetsPage = () => {
 
   // Create KPI mutation
   const createKpiMutation = useMutation({
-    mutationFn: (kpiData: {
-      code: string
-      name: string
-      description?: string
-      unit?: string
-      category?: string
-      calculationHint?: string
-    }) => performanceApi.createKpi(kpiData),
-    onSuccess: () => {
+    mutationFn: async (data: {
+      kpiData: {
+        code: string
+        name: string
+        description?: string
+        unit?: string
+        category?: string
+        calculationHint?: string
+      }
+      includeInitialValue?: boolean
+      initialValue?: string
+      initialMeasuredAt?: string
+      initialUserId?: string
+    }) => {
+      // First create the KPI
+      const kpi = await performanceApi.createKpi(data.kpiData)
+      
+      // If initial value is provided, create an actual
+      let hadInitialValue = false
+      if (data.includeInitialValue && data.initialValue && data.initialMeasuredAt) {
+        try {
+          await performanceApi.createActual({
+            kpiId: kpi.kpiId,
+            userId: data.initialUserId ? Number(data.initialUserId) : undefined,
+            measuredAt: new Date(data.initialMeasuredAt).toISOString(),
+            value: Number(data.initialValue),
+          })
+          hadInitialValue = true
+        } catch (error) {
+          // Log error but don't fail the KPI creation
+          console.error('Failed to create initial actual:', error)
+        }
+      }
+      
+      return { kpi, hadInitialValue }
+    },
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['kpis-all'] })
+      queryClient.invalidateQueries({ queryKey: ['kpi-metrics'] })
       setShowCreateKpiModal(false)
       setNewKpi({
         code: '',
@@ -53,8 +87,14 @@ const KpiTargetsPage = () => {
         unit: '',
         category: '',
         calculationHint: '',
+        includeInitialValue: false,
+        initialValue: '',
+        initialMeasuredAt: new Date().toISOString().slice(0, 16),
+        initialUserId: '',
       })
-      alert('KPI created successfully!')
+      alert(result.hadInitialValue 
+        ? 'KPI created successfully! Initial value recorded.' 
+        : 'KPI created successfully!')
     },
     onError: (error: any) => {
       alert(`Failed to create KPI: ${error.response?.data?.error || error.message || 'Unknown error'}`)
@@ -78,13 +118,31 @@ const KpiTargetsPage = () => {
       return
     }
 
+    // Validate initial value if included
+    if (newKpi.includeInitialValue) {
+      if (!newKpi.initialValue.trim()) {
+        alert('Please enter an initial value or uncheck "Include Initial Value"')
+        return
+      }
+      if (!newKpi.initialMeasuredAt) {
+        alert('Please select a measurement date for the initial value')
+        return
+      }
+    }
+
     createKpiMutation.mutate({
-      code: newKpi.code.trim().toUpperCase(),
-      name: newKpi.name.trim(),
-      description: newKpi.description.trim() || undefined,
-      unit: newKpi.unit.trim() || undefined,
-      category: newKpi.category.trim() || undefined,
-      calculationHint: newKpi.calculationHint.trim() || undefined,
+      kpiData: {
+        code: newKpi.code.trim().toUpperCase(),
+        name: newKpi.name.trim(),
+        description: newKpi.description.trim() || undefined,
+        unit: newKpi.unit.trim() || undefined,
+        category: newKpi.category.trim() || undefined,
+        calculationHint: newKpi.calculationHint.trim() || undefined,
+      },
+      includeInitialValue: newKpi.includeInitialValue,
+      initialValue: newKpi.includeInitialValue ? newKpi.initialValue.trim() : undefined,
+      initialMeasuredAt: newKpi.includeInitialValue ? newKpi.initialMeasuredAt : undefined,
+      initialUserId: newKpi.includeInitialValue && newKpi.initialUserId ? newKpi.initialUserId.trim() : undefined,
     })
   }
 
@@ -223,19 +281,28 @@ const KpiTargetsPage = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-gray-600">
             <Target className="w-5 h-5" />
-            <p className="font-medium">What are KPI Targets?</p>
+            <p className="font-medium">Understanding KPIs, Actuals, and Targets</p>
           </div>
-          <p className="text-sm text-gray-600 ml-7">
-            KPI Targets define the goals you want to achieve for each KPI over a specific time period.
-            For example, you might set a target of "24 hours" for Ticket Resolution Time in January 2025.
-          </p>
-          <div className="ml-7 space-y-2 text-sm text-gray-600">
-            <p><strong>How it works:</strong></p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li><strong>Create KPIs:</strong> Use the "Create KPI" button to define new KPIs manually, or they will be auto-created during CSV import</li>
-              <li><strong>Create Targets:</strong> Select a KPI, choose a period (Monthly, Quarterly, etc.), and set the target value</li>
-              <li><strong>View Reports:</strong> The system compares actual values against targets in KPI Reports</li>
-            </ul>
+          <div className="ml-7 space-y-3 text-sm text-gray-600">
+            <div>
+              <p className="font-semibold text-gray-900 mb-1">1. KPI Definition (What you're measuring)</p>
+              <p>KPIs are just definitions - they don't have values. They define what you're tracking (e.g., "Ticket Resolution Time", "System Uptime").</p>
+              <p className="text-xs text-gray-500 mt-1">✅ Create manually OR auto-created during CSV import</p>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 mb-1">2. KPI Actuals (Current Values - what happened)</p>
+              <p>These are the <strong>measured values</strong> - the actual performance data. This is what shows as "Current Value" in reports.</p>
+              <p className="text-xs text-gray-500 mt-1">✅ Created via CSV Import (upload actual measured values)</p>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 mb-1">3. KPI Targets (Goals - what you want)</p>
+              <p>These are the <strong>goals/targets</strong> you want to achieve. This is what shows as "Target Value" in reports.</p>
+              <p className="text-xs text-gray-500 mt-1">✅ Created manually using "Create Target" button</p>
+            </div>
+            <div className="border-t border-gray-200 pt-2 mt-2">
+              <p className="font-semibold text-gray-900 mb-1">In KPI Reports:</p>
+              <p>Current Value = Latest actual (from import) | Target Value = Goal (from targets) | Variance = Current - Target</p>
+            </div>
           </div>
         </div>
       </div>
@@ -473,6 +540,70 @@ const KpiTargetsPage = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
                 <p className="mt-1 text-xs text-gray-500">Optional hint about how this KPI is calculated.</p>
+              </div>
+
+              {/* Optional Initial Actual Value */}
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="checkbox"
+                    id="includeInitialValue"
+                    checked={newKpi.includeInitialValue}
+                    onChange={(e) => setNewKpi({ ...newKpi, includeInitialValue: e.target.checked })}
+                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <label htmlFor="includeInitialValue" className="text-sm font-medium text-gray-700">
+                    Include Initial Actual Value (Optional)
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 mb-3 ml-6">
+                  Record the first measured value for this KPI when creating it. This is useful when you already have data.
+                </p>
+
+                {newKpi.includeInitialValue && (
+                  <div className="ml-6 space-y-3 bg-gray-50 p-4 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Initial Value *</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={newKpi.initialValue}
+                          onChange={(e) => setNewKpi({ ...newKpi, initialValue: e.target.value })}
+                          placeholder="e.g., 18.5"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                        {newKpi.unit && (
+                          <span className="text-sm text-gray-500 whitespace-nowrap">{newKpi.unit}</span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">Enter the actual measured value (e.g., 18.5 hours, 99.7%, 245 tickets)</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Measurement Date & Time *</label>
+                      <input
+                        type="datetime-local"
+                        value={newKpi.initialMeasuredAt}
+                        onChange={(e) => setNewKpi({ ...newKpi, initialMeasuredAt: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">User ID (Optional)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={newKpi.initialUserId}
+                        onChange={(e) => setNewKpi({ ...newKpi, initialUserId: e.target.value })}
+                        placeholder="Leave empty for organization-wide"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Leave empty to record organization-wide, or specify user ID for user-specific value</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

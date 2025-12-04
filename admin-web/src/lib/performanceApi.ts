@@ -82,6 +82,21 @@ export interface KpiTarget {
   updatedAt: string
 }
 
+export interface KpiActual {
+  actualId: string
+  kpiId: string
+  kpiCode: string
+  kpiName: string
+  userId?: number
+  teamId?: number
+  measuredAt: string
+  periodStart?: string
+  periodEnd?: string
+  value: number
+  sourceType: string
+  createdAt: string
+}
+
 export interface TrainingCourse {
   courseId: string
   title: string
@@ -188,6 +203,25 @@ export const performanceApi = {
     targetValue: number
   }): Promise<KpiTarget> {
     const response = await performanceApiClient.post('/api/v1/perf/targets', target)
+    return response.data
+  },
+
+  // KPI Actuals
+  async createActual(actual: {
+    kpiId: string
+    userId?: number
+    teamId?: number
+    measuredAt: string
+    value: number
+    periodStart?: string
+    periodEnd?: string
+  }): Promise<KpiActual> {
+    const response = await performanceApiClient.post('/api/v1/perf/actuals', actual)
+    return response.data
+  },
+
+  async getMyActuals(): Promise<KpiActual[]> {
+    const response = await performanceApiClient.get('/api/v1/perf/actuals/my')
     return response.data
   },
 

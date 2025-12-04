@@ -31,6 +31,7 @@ import BroadcastAuditPage from './pages/events/BroadcastAudit'
 import EventFeedPage from './pages/events/EventFeed'
 import KpiReportsPage from './pages/KpiReportsPage'
 import KpiTargetsPage from './pages/KpiTargetsPage'
+import KpiActualsPage from './pages/KpiActualsPage'
 import TrainingCoursesPage from './pages/TrainingCoursesPage'
 import TrainingAssignmentsPage from './pages/TrainingAssignmentsPage'
 import KpiImportPage from './pages/KpiImportPage'
@@ -256,6 +257,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="ADMIN">
                     <KpiTargetsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="performance/actuals"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <KpiActualsPage />
                   </ProtectedRoute>
                 }
               />
