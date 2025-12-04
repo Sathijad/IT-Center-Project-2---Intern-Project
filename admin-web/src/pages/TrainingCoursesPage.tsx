@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { performanceApi, type TrainingCourse } from '../lib/performanceApi'
-import { BookOpen, Plus, ExternalLink } from 'lucide-react'
+import { BookOpen, Plus, ExternalLink, Edit } from 'lucide-react'
 
 const TrainingCoursesPage = () => {
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [page, setPage] = useState(1)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingCourse, setEditingCourse] = useState<TrainingCourse | null>(null)
   const [newCourse, setNewCourse] = useState({
     title: '',
     description: '',
@@ -56,12 +57,51 @@ const TrainingCoursesPage = () => {
     },
   })
 
+  const updateMutation = useMutation({
+    mutationFn: ({ courseId, update }: { courseId: string; update: any }) =>
+      performanceApi.updateCourse(courseId, update),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['training-courses'] })
+      setEditingCourse(null)
+      alert('Course updated successfully!')
+    },
+    onError: (error: any) => {
+      alert(`Failed to update course: ${error.message}`)
+    },
+  })
+
   const handleCreate = () => {
     if (!newCourse.title.trim()) {
       alert('Title is required')
       return
     }
     createMutation.mutate(newCourse)
+  }
+
+  const handleEdit = (course: TrainingCourse) => {
+    setEditingCourse(course)
+  }
+
+  const handleUpdate = () => {
+    if (!editingCourse) return
+    if (!editingCourse.title.trim()) {
+      alert('Title is required')
+      return
+    }
+    updateMutation.mutate({
+      courseId: editingCourse.courseId,
+      update: {
+        title: editingCourse.title,
+        description: editingCourse.description || undefined,
+        provider: editingCourse.provider || undefined,
+        modality: editingCourse.modality,
+        teamsMeetingUrl: editingCourse.teamsMeetingUrl || undefined,
+        sharepointUrl: editingCourse.sharepointUrl || undefined,
+        onedriveUrl: editingCourse.onedriveUrl || undefined,
+        durationMinutes: editingCourse.durationMinutes || undefined,
+        isActive: editingCourse.isActive,
+      },
+    })
   }
 
   const courses = data?.items || []
@@ -128,6 +168,9 @@ const TrainingCoursesPage = () => {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -201,6 +244,15 @@ const TrainingCoursesPage = () => {
                         >
                           {course.isActive ? 'Active' : 'Inactive'}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleEdit(course)}
+                          className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        >
+                          <Edit className="w-4 h-4" />
+                          Edit
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -344,6 +396,132 @@ const TrainingCoursesPage = () => {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {createMutation.isPending ? 'Creating...' : 'Create Course'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingCourse && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Edit Training Course</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <input
+                  type="text"
+                  value={editingCourse.title}
+                  onChange={(e) => setEditingCourse({ ...editingCourse, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={editingCourse.description || ''}
+                  onChange={(e) => setEditingCourse({ ...editingCourse, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Provider</label>
+                  <input
+                    type="text"
+                    value={editingCourse.provider || ''}
+                    onChange={(e) => setEditingCourse({ ...editingCourse, provider: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Modality</label>
+                  <select
+                    value={editingCourse.modality}
+                    onChange={(e) => setEditingCourse({ ...editingCourse, modality: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="ONLINE">Online</option>
+                    <option value="IN_PERSON">In Person</option>
+                    <option value="HYBRID">Hybrid</option>
+                    <option value="SELF_PACED">Self Paced</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                <input
+                  type="number"
+                  value={editingCourse.durationMinutes || ''}
+                  onChange={(e) => setEditingCourse({ ...editingCourse, durationMinutes: e.target.value ? Number(e.target.value) : undefined })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teams Meeting URL</label>
+                <input
+                  type="url"
+                  value={editingCourse.teamsMeetingUrl || ''}
+                  onChange={(e) => setEditingCourse({ ...editingCourse, teamsMeetingUrl: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SharePoint URL</label>
+                <input
+                  type="url"
+                  value={editingCourse.sharepointUrl || ''}
+                  onChange={(e) => setEditingCourse({ ...editingCourse, sharepointUrl: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">OneDrive URL</label>
+                <input
+                  type="url"
+                  value={editingCourse.onedriveUrl || ''}
+                  onChange={(e) => setEditingCourse({ ...editingCourse, onedriveUrl: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={editingCourse.isActive}
+                    onChange={(e) => setEditingCourse({ ...editingCourse, isActive: e.target.checked })}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Active</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setEditingCourse(null)}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdate}
+                disabled={updateMutation.isPending}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {updateMutation.isPending ? 'Updating...' : 'Update Course'}
               </button>
             </div>
           </div>

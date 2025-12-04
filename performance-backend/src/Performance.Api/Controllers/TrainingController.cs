@@ -96,6 +96,27 @@ public class TrainingController(
         return CreatedAtAction(nameof(AssignTraining), assignments);
     }
 
+    [HttpGet("assignments")]
+    [Authorize]
+    [ProducesResponseType(typeof(IReadOnlyCollection<AssignmentResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<AssignmentResponse>>> GetAssignments(
+        [FromQuery(Name = "user_id")] long? userId,
+        CancellationToken cancellationToken)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var actorId = await User.GetActorIdAsync(dbContext, cancellationToken);
+
+        if (actorId == 0)
+        {
+            return Unauthorized("Unable to determine user ID from token.");
+        }
+
+        // Use provided userId or fall back to authenticated user
+        var targetUserId = userId ?? actorId;
+        var assignments = await assignmentService.GetByUserAsync(targetUserId, cancellationToken);
+        return Ok(assignments);
+    }
+
     [HttpPatch("assignments/{assignmentId:guid}")]
     [Authorize]
     [ProducesResponseType(typeof(AssignmentResponse), StatusCodes.Status200OK)]

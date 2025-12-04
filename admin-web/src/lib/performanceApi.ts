@@ -180,6 +180,11 @@ export const performanceApi = {
     return response.data
   },
 
+  async getCourse(courseId: string): Promise<TrainingCourse> {
+    const response = await performanceApiClient.get(`/api/v1/training/courses/${courseId}`)
+    return response.data
+  },
+
   async createCourse(course: {
     title: string
     description?: string
@@ -191,6 +196,24 @@ export const performanceApi = {
     durationMinutes?: number
   }): Promise<TrainingCourse> {
     const response = await performanceApiClient.post('/api/v1/training/courses', course)
+    return response.data
+  },
+
+  async updateCourse(
+    courseId: string,
+    update: {
+      title?: string
+      description?: string
+      provider?: string
+      modality?: string
+      teamsMeetingUrl?: string
+      sharepointUrl?: string
+      onedriveUrl?: string
+      durationMinutes?: number
+      isActive?: boolean
+    }
+  ): Promise<TrainingCourse> {
+    const response = await performanceApiClient.patch(`/api/v1/training/courses/${courseId}`, update)
     return response.data
   },
 
