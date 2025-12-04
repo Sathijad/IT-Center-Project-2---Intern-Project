@@ -12,8 +12,8 @@ const KpiReportsPage = () => {
   })
   const [viewMode, setViewMode] = useState<'snapshot' | 'timeseries'>('snapshot')
 
-  const { data: snapshotData, isLoading: isLoadingSnapshot } = useQuery<KpiSnapshot[]>({
-    queryKey: ['kpi-metrics', filters, 'snapshot'],
+  const { data: snapshotData, isLoading: isLoadingSnapshot, error: snapshotError } = useQuery<KpiSnapshot[]>({
+    queryKey: ['kpi-metrics', filters.userId, filters.teamId, filters.kpi, filters.range, 'snapshot'],
     queryFn: () =>
       performanceApi.getMetrics({
         userId: filters.userId ? Number(filters.userId) : undefined,
@@ -22,10 +22,12 @@ const KpiReportsPage = () => {
         range: filters.range,
       }),
     enabled: viewMode === 'snapshot',
+    retry: 1,
+    refetchOnWindowFocus: false,
   })
 
-  const { data: timeSeriesData, isLoading: isLoadingTimeSeries } = useQuery<KpiTimeSeries[]>({
-    queryKey: ['kpi-metrics', filters, 'timeseries'],
+  const { data: timeSeriesData, isLoading: isLoadingTimeSeries, error: timeSeriesError } = useQuery<KpiTimeSeries[]>({
+    queryKey: ['kpi-metrics', filters.userId, filters.teamId, filters.kpi, filters.range, 'timeseries'],
     queryFn: () =>
       performanceApi.getTimeSeries({
         userId: filters.userId ? Number(filters.userId) : undefined,
@@ -34,13 +36,22 @@ const KpiReportsPage = () => {
         range: filters.range,
       }),
     enabled: viewMode === 'timeseries',
+    retry: 1,
+    refetchOnWindowFocus: false,
   })
+
+  // Safety check: ensure snapshotData is an array
+  const safeSnapshotData = Array.isArray(snapshotData) ? snapshotData : []
+  const safeTimeSeriesData = Array.isArray(timeSeriesData) ? timeSeriesData : []
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">KPI Reports</h1>
-        <p className="mt-2 text-gray-600">View performance metrics and trends</p>
+        <p className="mt-2 text-gray-600">View IT Center performance metrics and trends</p>
+        <p className="mt-1 text-sm text-gray-500">
+          Track service desk metrics, system availability, security incidents, and customer satisfaction
+        </p>
       </div>
 
       {/* Filters */}
@@ -116,6 +127,56 @@ const KpiReportsPage = () => {
         </div>
       </div>
 
+      {/* KPI Summary Cards */}
+      {viewMode === 'snapshot' && safeSnapshotData.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {safeSnapshotData.slice(0, 3).map((kpi) => (
+            <div key={kpi?.kpiCode || `kpi-${Math.random()}`} className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{kpi?.kpiName || 'Unknown KPI'}</h3>
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{kpi?.kpiCode || 'N/A'}</span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Current</span>
+                  <span className="text-lg font-bold text-gray-900">
+                    {kpi?.currentValue != null && typeof kpi.currentValue === 'number'
+                      ? `${kpi.currentValue.toFixed(2)}${kpi?.unit ? ` ${kpi.unit}` : ''}`
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Target</span>
+                  <span className="text-lg font-semibold text-blue-600">
+                    {kpi?.targetValue != null && typeof kpi.targetValue === 'number'
+                      ? `${kpi.targetValue.toFixed(2)}${kpi?.unit ? ` ${kpi.unit}` : ''}`
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="pt-2 border-t border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Variance</span>
+                    <span
+                      className={`text-sm font-semibold ${
+                        kpi?.variance != null && typeof kpi.variance === 'number'
+                          ? kpi.variance >= 0
+                            ? 'text-green-600'
+                            : 'text-red-600'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      {kpi?.variance != null && typeof kpi.variance === 'number'
+                        ? `${kpi.variance >= 0 ? '+' : ''}${kpi.variance.toFixed(2)}${kpi?.unit ? ` ${kpi.unit}` : ''}`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Snapshot View */}
       {viewMode === 'snapshot' && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -123,7 +184,14 @@ const KpiReportsPage = () => {
             <div className="p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             </div>
-          ) : snapshotData && snapshotData.length > 0 ? (
+          ) : snapshotError ? (
+            <div className="p-8 text-center">
+              <p className="text-red-600 mb-2">Error loading KPI data</p>
+              <p className="text-sm text-gray-600">
+                {snapshotError instanceof Error ? snapshotError.message : 'Unknown error occurred'}
+              </p>
+            </div>
+          ) : safeSnapshotData.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -146,45 +214,45 @@ const KpiReportsPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {snapshotData.map((kpi) => (
-                    <tr key={kpi.kpiCode}>
+                  {safeSnapshotData.map((kpi, index) => (
+                    <tr key={kpi?.kpiCode || `kpi-${index}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{kpi.kpiName}</div>
-                          <div className="text-sm text-gray-500">{kpi.kpiCode}</div>
+                          <div className="text-sm font-medium text-gray-900">{kpi?.kpiName || 'Unknown'}</div>
+                          <div className="text-sm text-gray-500">{kpi?.kpiCode || 'N/A'}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {kpi.currentValue !== undefined
-                            ? `${kpi.currentValue.toFixed(2)}${kpi.unit ? ` ${kpi.unit}` : ''}`
+                          {kpi?.currentValue != null && typeof kpi.currentValue === 'number'
+                            ? `${kpi.currentValue.toFixed(2)}${kpi?.unit ? ` ${kpi.unit}` : ''}`
                             : 'N/A'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {kpi.targetValue !== undefined
-                            ? `${kpi.targetValue.toFixed(2)}${kpi.unit ? ` ${kpi.unit}` : ''}`
+                          {kpi?.targetValue != null && typeof kpi.targetValue === 'number'
+                            ? `${kpi.targetValue.toFixed(2)}${kpi?.unit ? ` ${kpi.unit}` : ''}`
                             : 'N/A'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div
                           className={`text-sm font-medium ${
-                            kpi.variance !== undefined
+                            kpi?.variance != null && typeof kpi.variance === 'number'
                               ? kpi.variance >= 0
                                 ? 'text-green-600'
                                 : 'text-red-600'
                               : 'text-gray-500'
                           }`}
                         >
-                          {kpi.variance !== undefined
-                            ? `${kpi.variance >= 0 ? '+' : ''}${kpi.variance.toFixed(2)}${kpi.unit ? ` ${kpi.unit}` : ''}`
+                          {kpi?.variance != null && typeof kpi.variance === 'number'
+                            ? `${kpi.variance >= 0 ? '+' : ''}${kpi.variance.toFixed(2)}${kpi?.unit ? ` ${kpi.unit}` : ''}`
                             : 'N/A'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {kpi.lastMeasuredAt
+                        {kpi?.lastMeasuredAt
                           ? new Date(kpi.lastMeasuredAt).toLocaleDateString()
                           : 'Never'}
                       </td>
@@ -206,8 +274,15 @@ const KpiReportsPage = () => {
             <div className="p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             </div>
-          ) : timeSeriesData && timeSeriesData.length > 0 ? (
-            timeSeriesData.map((series) => (
+          ) : timeSeriesError ? (
+            <div className="p-8 text-center">
+              <p className="text-red-600 mb-2">Error loading time series data</p>
+              <p className="text-sm text-gray-600">
+                {timeSeriesError instanceof Error ? timeSeriesError.message : 'Unknown error occurred'}
+              </p>
+            </div>
+          ) : safeTimeSeriesData.length > 0 ? (
+            safeTimeSeriesData.map((series) => (
               <div key={series.kpiCode} className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   {series.kpiName} ({series.kpiCode})
@@ -233,8 +308,9 @@ const KpiReportsPage = () => {
                               {new Date(point.timestamp).toLocaleString()}
                             </td>
                             <td className="px-4 py-2 text-sm text-gray-900">
-                              {point.value.toFixed(2)}
-                              {series.unit ? ` ${series.unit}` : ''}
+                              {point.value != null && typeof point.value === 'number'
+                                ? `${point.value.toFixed(2)}${series.unit ? ` ${series.unit}` : ''}`
+                                : 'N/A'}
                             </td>
                           </tr>
                         ))}

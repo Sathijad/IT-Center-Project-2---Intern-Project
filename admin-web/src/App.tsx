@@ -30,6 +30,7 @@ import ModerationDashboard from './pages/events/ModerationDashboard'
 import BroadcastAuditPage from './pages/events/BroadcastAudit'
 import EventFeedPage from './pages/events/EventFeed'
 import KpiReportsPage from './pages/KpiReportsPage'
+import KpiTargetsPage from './pages/KpiTargetsPage'
 import TrainingCoursesPage from './pages/TrainingCoursesPage'
 import TrainingAssignmentsPage from './pages/TrainingAssignmentsPage'
 import KpiImportPage from './pages/KpiImportPage'
@@ -247,6 +248,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="ADMIN">
                     <KpiReportsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="performance/targets"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <KpiTargetsPage />
                   </ProtectedRoute>
                 }
               />

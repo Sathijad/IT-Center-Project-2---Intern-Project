@@ -85,7 +85,16 @@ const KpiImportPage = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">KPI Actuals Import</h1>
-        <p className="mt-2 text-gray-600">Upload CSV file to import KPI actual values</p>
+        <p className="mt-2 text-gray-600">Upload CSV file to import IT Center KPI actual values</p>
+        <p className="mt-1 text-sm text-gray-500">
+          Common IT Center KPIs: Ticket Resolution Time, System Uptime, Tickets Resolved, Customer Satisfaction, etc.
+        </p>
+        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm font-medium text-green-800">✅ Auto-Create KPIs Enabled!</p>
+          <p className="text-xs text-green-700 mt-1">
+            KPIs will be automatically created during import if they don't exist. The system will infer names, units, and categories from the KPI codes.
+          </p>
+        </div>
       </div>
 
       {/* Upload Section */}
@@ -105,12 +114,18 @@ const KpiImportPage = () => {
                 <li><code>measured_at</code> - Measurement timestamp (ISO 8601 format)</li>
                 <li><code>value</code> - KPI value (decimal number)</li>
               </ul>
-              <p className="mt-3 font-medium">Example:</p>
+              <p className="mt-3 font-medium">Example (IT Center KPIs):</p>
               <pre className="mt-1 bg-white p-2 rounded border text-xs overflow-x-auto">
 {`kpi_code,user_id,measured_at,value
-SALES_TARGET,123,2025-01-15T10:00:00Z,15000.50
-CUSTOMER_SATISFACTION,123,2025-01-15T10:00:00Z,4.5`}
+TICKET_RESOLUTION_TIME,38,2025-01-15T10:00:00Z,18.5
+FIRST_RESPONSE_TIME,38,2025-01-15T10:00:00Z,90
+TICKETS_RESOLVED,38,2025-01-15T10:00:00Z,245
+SYSTEM_UPTIME,,2025-01-15T10:00:00Z,99.7
+IT_SERVICE_SATISFACTION,,2025-01-15T10:00:00Z,4.2`}
               </pre>
+              <p className="mt-2 text-xs text-gray-500">
+                Note: <code>user_id</code> is optional. Leave empty for team/organization-level KPIs.
+              </p>
             </div>
           </div>
 
@@ -177,6 +192,40 @@ CUSTOMER_SATISFACTION,123,2025-01-15T10:00:00Z,4.5`}
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-sm font-medium text-red-800 mb-1">Error Details:</p>
                 <p className="text-sm text-red-700">{jobStatus.errorDetails}</p>
+              </div>
+            )}
+
+            {jobStatus.status === 'COMPLETED' && jobStatus.failedCount > 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-yellow-800 mb-2">⚠️ Import Completed with Failures</p>
+                <p className="text-sm text-yellow-700 mb-2">
+                  {jobStatus.failedCount} row(s) failed to import. Common causes:
+                </p>
+                <ul className="text-xs text-yellow-700 list-disc list-inside space-y-1">
+                  <li>KPI codes don't exist in database (create KPIs first using POST /api/v1/perf/kpis)</li>
+                  <li>KPI codes don't match exactly (case-sensitive, must match exactly)</li>
+                  <li>Invalid date format (must be ISO 8601: 2025-01-15T10:00:00Z)</li>
+                  <li>Invalid number format (must be valid decimal number)</li>
+                </ul>
+                <p className="text-xs text-yellow-700 mt-2">
+                  Check backend logs or see <code className="bg-yellow-100 px-1 rounded">docs/KPI_IMPORT_TROUBLESHOOTING.md</code> for details.
+                </p>
+              </div>
+            )}
+
+            {jobStatus.status === 'COMPLETED' && jobStatus.processedCount === 0 && jobStatus.failedCount > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-red-800 mb-2">❌ All Rows Failed</p>
+                <p className="text-sm text-red-700 mb-2">
+                  None of the rows were imported. This usually means:
+                </p>
+                <ul className="text-xs text-red-700 list-disc list-inside space-y-1">
+                  <li><strong>KPIs don't exist:</strong> Create KPI definitions first using POST /api/v1/perf/kpis</li>
+                  <li><strong>KPI codes don't match:</strong> Check that codes in CSV match existing KPI codes exactly</li>
+                </ul>
+                <p className="text-xs text-red-700 mt-2">
+                  See <code className="bg-red-100 px-1 rounded">docs/CREATE_IT_CENTER_KPIS.md</code> to create KPIs.
+                </p>
               </div>
             )}
 

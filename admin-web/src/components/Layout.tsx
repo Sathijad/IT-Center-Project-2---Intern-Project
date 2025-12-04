@@ -27,6 +27,7 @@ import {
   GraduationCap,
   FileSpreadsheet,
   UserCheck,
+  TrendingUp,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -72,6 +73,7 @@ const Layout: React.FC = () => {
           { name: 'CSV Imports', href: '/imports', icon: UploadCloud },
           { name: 'Scheduler Reports', href: '/reports', icon: PieChart },
           { name: 'KPI Reports', href: '/performance/reports', icon: Target },
+          { name: 'KPI Targets', href: '/performance/targets', icon: TrendingUp },
           { name: 'Training Courses', href: '/training/courses', icon: GraduationCap },
           { name: 'Training Assignments', href: '/training/assignments', icon: UserCheck },
           { name: 'KPI Import', href: '/performance/import', icon: FileSpreadsheet },

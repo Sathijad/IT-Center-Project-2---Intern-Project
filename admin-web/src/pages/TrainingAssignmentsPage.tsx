@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { performanceApi, type TrainingCourse, type TrainingAssignment } from '../lib/performanceApi'
+import { performanceApi } from '../lib/performanceApi'
 import { UserCheck, Send } from 'lucide-react'
 
 const TrainingAssignmentsPage = () => {
@@ -29,14 +29,27 @@ const TrainingAssignmentsPage = () => {
   const courses = coursesData?.items || []
 
   const assignMutation = useMutation({
-    mutationFn: (assignment: typeof assignment) =>
-      performanceApi.assignTraining({
-        courseId: assignment.courseId,
-        assigneeType: assignment.assigneeType as any,
-        assigneeId: assignment.assigneeId ? Number(assignment.assigneeId) : undefined,
-        cohortId: assignment.cohortId || undefined,
-        dueDate: assignment.dueDate || undefined,
-      }),
+    mutationFn: (assignmentData: {
+      courseId: string
+      assigneeType: string
+      assigneeId: string
+      cohortId: string
+      dueDate: string
+    }) => {
+      // Convert uppercase enum values to PascalCase for backend
+      const assigneeTypeMap: Record<string, string> = {
+        'USER': 'User',
+        'TEAM': 'Team',
+        'COHORT': 'Cohort'
+      }
+      return performanceApi.assignTraining({
+        courseId: assignmentData.courseId,
+        assigneeType: assigneeTypeMap[assignmentData.assigneeType] || assignmentData.assigneeType,
+        assigneeId: assignmentData.assigneeId ? Number(assignmentData.assigneeId) : undefined,
+        cohortId: assignmentData.cohortId || undefined,
+        dueDate: assignmentData.dueDate ? new Date(assignmentData.dueDate).toISOString() : undefined,
+      })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['training-assignments'] })
       setShowAssignModal(false)

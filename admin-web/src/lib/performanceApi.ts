@@ -53,6 +53,19 @@ export interface KpiTimeSeries {
   }>
 }
 
+export interface KpiResponse {
+  kpiId: string
+  code: string  // Backend sends "code" (camelCase)
+  name: string  // Backend sends "name" (camelCase), not "kpiName"
+  description?: string
+  unit?: string
+  category?: string
+  calculationHint?: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface KpiTarget {
   targetId: string
   kpiId: string
@@ -143,6 +156,24 @@ export const performanceApi = {
     if (params.range) queryParams.append('range', params.range)
 
     const response = await performanceApiClient.get(`/api/v1/perf/metrics/timeseries?${queryParams.toString()}`)
+    return response.data
+  },
+
+  // KPIs
+  async getKpis(): Promise<KpiResponse[]> {
+    const response = await performanceApiClient.get('/api/v1/perf/kpis')
+    return response.data
+  },
+
+  async createKpi(kpi: {
+    code: string
+    name: string
+    description?: string
+    unit?: string
+    category?: string
+    calculationHint?: string
+  }): Promise<KpiResponse> {
+    const response = await performanceApiClient.post('/api/v1/perf/kpis', kpi)
     return response.data
   },
 

@@ -37,19 +37,40 @@ public class MetricsService(PerformanceDbContext dbContext) : IMetricsService
                 actualsQuery = actualsQuery.Where(a => a.TeamId == query.TeamId);
             }
 
-            if (query.RangeStart.HasValue)
+            // Apply date range filter only if both start and end are provided
+            // This allows showing latest actual even if outside the range
+            // If range is provided, filter; otherwise show the most recent actual regardless of date
+            if (query.RangeStart.HasValue && query.RangeEnd.HasValue)
             {
-                actualsQuery = actualsQuery.Where(a => a.MeasuredAt >= query.RangeStart);
-            }
-
-            if (query.RangeEnd.HasValue)
-            {
-                actualsQuery = actualsQuery.Where(a => a.MeasuredAt <= query.RangeEnd);
+                actualsQuery = actualsQuery.Where(a => 
+                    a.MeasuredAt >= query.RangeStart.Value && 
+                    a.MeasuredAt <= query.RangeEnd.Value);
             }
 
             var latestActual = await actualsQuery
                 .OrderByDescending(a => a.MeasuredAt)
                 .FirstOrDefaultAsync(cancellationToken);
+            
+            // If no actual found within range, try to get the most recent one regardless of date
+            if (latestActual == null && (query.RangeStart.HasValue || query.RangeEnd.HasValue))
+            {
+                var allActualsQuery = dbContext.KpiActuals.AsNoTracking()
+                    .Where(a => a.KpiId == kpi.KpiId);
+                
+                if (query.UserId.HasValue)
+                {
+                    allActualsQuery = allActualsQuery.Where(a => a.UserId == query.UserId);
+                }
+                
+                if (query.TeamId.HasValue)
+                {
+                    allActualsQuery = allActualsQuery.Where(a => a.TeamId == query.TeamId);
+                }
+                
+                latestActual = await allActualsQuery
+                    .OrderByDescending(a => a.MeasuredAt)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
 
             var targetQuery = dbContext.KpiTargets.AsNoTracking()
                 .Where(t => t.KpiId == kpi.KpiId);

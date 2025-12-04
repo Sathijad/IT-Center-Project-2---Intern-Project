@@ -31,7 +31,7 @@ public class PerformanceController(
 
         if (!string.IsNullOrWhiteSpace(range))
         {
-            // Parse range (e.g., "2025-01-01,2025-01-31" or "last30days")
+            // Parse range (e.g., "2025-01-01,2025-01-31" or "last30days", "last7days", "last90days")
             if (range.Contains(','))
             {
                 var parts = range.Split(',');
@@ -43,10 +43,17 @@ public class PerformanceController(
                     rangeEnd = end;
                 }
             }
-            else if (range.ToLower() == "last30days")
+            else
             {
+                var rangeLower = range.ToLower();
                 rangeEnd = DateTimeOffset.UtcNow;
-                rangeStart = rangeEnd.Value.AddDays(-30);
+                rangeStart = rangeLower switch
+                {
+                    "last7days" => rangeEnd.Value.AddDays(-7),
+                    "last30days" => rangeEnd.Value.AddDays(-30),
+                    "last90days" => rangeEnd.Value.AddDays(-90),
+                    _ => null // If unknown range, don't filter by date
+                };
             }
         }
 
@@ -81,10 +88,17 @@ public class PerformanceController(
                     rangeEnd = end;
                 }
             }
-            else if (range.ToLower() == "last30days")
+            else
             {
+                var rangeLower = range.ToLower();
                 rangeEnd = DateTimeOffset.UtcNow;
-                rangeStart = rangeEnd.Value.AddDays(-30);
+                rangeStart = rangeLower switch
+                {
+                    "last7days" => rangeEnd.Value.AddDays(-7),
+                    "last30days" => rangeEnd.Value.AddDays(-30),
+                    "last90days" => rangeEnd.Value.AddDays(-90),
+                    _ => null // If unknown range, don't filter by date
+                };
             }
         }
 

@@ -22,8 +22,13 @@ public class TrainingAssignmentService(PerformanceDbContext dbContext) : ITraini
 
         var assignments = new List<TrainingAssignment>();
 
-        if (request.AssigneeType == Domain.Enums.TrainingAssigneeType.User && request.AssigneeId.HasValue)
+        if (request.AssigneeType == Domain.Enums.TrainingAssigneeType.User)
         {
+            if (!request.AssigneeId.HasValue)
+            {
+                throw new ValidationException("AssigneeId is required when AssigneeType is User");
+            }
+
             var assignment = new TrainingAssignment
             {
                 AssignmentId = Guid.NewGuid(),
@@ -40,8 +45,13 @@ public class TrainingAssignmentService(PerformanceDbContext dbContext) : ITraini
             assignments.Add(assignment);
             dbContext.TrainingAssignments.Add(assignment);
         }
-        else if (request.AssigneeType == Domain.Enums.TrainingAssigneeType.Cohort && !string.IsNullOrWhiteSpace(request.CohortId))
+        else if (request.AssigneeType == Domain.Enums.TrainingAssigneeType.Cohort)
         {
+            if (string.IsNullOrWhiteSpace(request.CohortId))
+            {
+                throw new ValidationException("CohortId is required when AssigneeType is Cohort");
+            }
+
             // For cohort assignments, we'd need to look up users in the cohort
             // For now, create a single assignment with cohort_id
             var assignment = new TrainingAssignment
@@ -59,6 +69,19 @@ public class TrainingAssignmentService(PerformanceDbContext dbContext) : ITraini
             };
             assignments.Add(assignment);
             dbContext.TrainingAssignments.Add(assignment);
+        }
+        else if (request.AssigneeType == Domain.Enums.TrainingAssigneeType.Team)
+        {
+            throw new ValidationException("Team assignments are not yet implemented");
+        }
+        else
+        {
+            throw new ValidationException($"Invalid AssigneeType: {request.AssigneeType}");
+        }
+
+        if (assignments.Count == 0)
+        {
+            throw new ValidationException("No assignments were created. Please check your request parameters.");
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);

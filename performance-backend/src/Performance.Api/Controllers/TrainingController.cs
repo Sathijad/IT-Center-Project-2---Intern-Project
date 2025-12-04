@@ -80,6 +80,8 @@ public class TrainingController(
     [HttpPost("assign")]
     [Authorize]
     [ProducesResponseType(typeof(IReadOnlyCollection<AssignmentResponse>), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyCollection<AssignmentResponse>>> AssignTraining(
         [FromBody] AssignTrainingRequest request,
         CancellationToken cancellationToken)
@@ -92,8 +94,23 @@ public class TrainingController(
             return Unauthorized("Unable to determine user ID from token.");
         }
 
-        var assignments = await assignmentService.AssignAsync(request, actorId, cancellationToken);
-        return CreatedAtAction(nameof(AssignTraining), assignments);
+        try
+        {
+            var assignments = await assignmentService.AssignAsync(request, actorId, cancellationToken);
+            if (assignments.Count == 0)
+            {
+                return BadRequest("No assignments created. Please check assigneeType, assigneeId, or cohortId.");
+            }
+            return CreatedAtAction(nameof(AssignTraining), assignments);
+        }
+        catch (Performance.Errors.NotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Performance.Errors.ValidationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpGet("assignments")]
