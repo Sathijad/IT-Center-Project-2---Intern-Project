@@ -1,0 +1,14 @@
+# k6 test results
+*.json
+*.csv
+*.html
+results/
+summary/
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+
