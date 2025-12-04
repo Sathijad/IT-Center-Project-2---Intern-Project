@@ -46,18 +46,58 @@ class _ScheduleOverviewScreenState extends State<ScheduleOverviewScreen> {
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? _ErrorView(message: _error!, onRetry: _load)
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemBuilder: (_, index) {
-                      final item = _schedules[index] as Map<String, dynamic>;
-                      return _ScheduleCard(schedule: item);
-                    },
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemCount: _schedules.length,
-                  ),
-                ),
+              : _schedules.isEmpty
+                  ? RefreshIndicator(
+                      onRefresh: _load,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.height - 200,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_outlined,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No schedules found',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'You don\'t have any scheduled shifts at the moment.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _load,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemBuilder: (_, index) {
+                          final item = _schedules[index] as Map<String, dynamic>;
+                          return _ScheduleCard(schedule: item);
+                        },
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemCount: _schedules.length,
+                      ),
+                    ),
     );
   }
 }

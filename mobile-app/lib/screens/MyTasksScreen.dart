@@ -119,99 +119,163 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _tasks.length,
-                  itemBuilder: (context, index) {
-                    final task = _tasks[index] as Map<String, dynamic>;
-                    final id = task['taskId'] as String? ?? '';
-                    final currentStatus =
-                        task['status'] as String? ?? _statusOptions.first;
-                    final dropdownValue = _statusOptions.contains(currentStatus)
-                        ? currentStatus
-                        : _statusOptions.first;
-                    _commentControllers[id] ??= TextEditingController();
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: Padding(
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                      const SizedBox(height: 12),
+                      Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    task['title'] ?? 'Task',
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: dropdownValue,
-                                    items: _statusOptions
-                                        .map(
-                                          (status) => DropdownMenuItem(
-                                            value: status,
-                                            child: Text(status),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: _statusUpdating.contains(id)
-                                        ? null
-                                        : (value) {
-                                            if (value != null &&
-                                                value != currentStatus) {
-                                              _updateStatus(id, value);
-                                            }
-                                          },
-                                    dropdownColor: Colors.white,
-                                  ),
-                                ),
-                                if (_statusUpdating.contains(id))
-                                  const SizedBox(width: 8),
-                                if (_statusUpdating.contains(id))
-                                  const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  ),
-                              ],
-                            ),
-                            if (task['description'] != null) ...[
-                              const SizedBox(height: 8),
-                              Text(task['description'],
-                                  style: const TextStyle(
-                                      fontSize: 13, color: Colors.black54)),
-                            ],
-                            if (task['dueDate'] != null) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                  'Due ${DateTime.tryParse(task['dueDate'])?.toLocal().toString().split('.').first ?? ''}',
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Colors.black54)),
-                            ],
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: _commentControllers[id],
-                              decoration: InputDecoration(
-                                labelText: 'Add comment',
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.send),
-                                  onPressed: () => _submitComment(id),
-                                ),
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.red[700]),
                         ),
                       ),
-                    );
-                  },
-                ),
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        onPressed: _fetch,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              : _tasks.isEmpty
+                  ? RefreshIndicator(
+                      onRefresh: _fetch,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.height - 200,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.checklist_outlined,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No tasks found',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'You don\'t have any assigned tasks at the moment.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _fetch,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _tasks.length,
+                        itemBuilder: (context, index) {
+                          final task = _tasks[index] as Map<String, dynamic>;
+                          final id = task['taskId'] as String? ?? '';
+                          final currentStatus =
+                              task['status'] as String? ?? _statusOptions.first;
+                          final dropdownValue = _statusOptions.contains(currentStatus)
+                              ? currentStatus
+                              : _statusOptions.first;
+                          _commentControllers[id] ??= TextEditingController();
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          task['title'] ?? 'Task',
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: dropdownValue,
+                                          items: _statusOptions
+                                              .map(
+                                                (status) => DropdownMenuItem(
+                                                  value: status,
+                                                  child: Text(status),
+                                                ),
+                                              )
+                                              .toList(),
+                                          onChanged: _statusUpdating.contains(id)
+                                              ? null
+                                              : (value) {
+                                                  if (value != null &&
+                                                      value != currentStatus) {
+                                                    _updateStatus(id, value);
+                                                  }
+                                                },
+                                          dropdownColor: Colors.white,
+                                        ),
+                                      ),
+                                      if (_statusUpdating.contains(id))
+                                        const SizedBox(width: 8),
+                                      if (_statusUpdating.contains(id))
+                                        const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2),
+                                        ),
+                                    ],
+                                  ),
+                                  if (task['description'] != null) ...[
+                                    const SizedBox(height: 8),
+                                    Text(task['description'],
+                                        style: const TextStyle(
+                                            fontSize: 13, color: Colors.black54)),
+                                  ],
+                                  if (task['dueDate'] != null) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                        'Due ${DateTime.tryParse(task['dueDate'])?.toLocal().toString().split('.').first ?? ''}',
+                                        style: const TextStyle(
+                                            fontSize: 12, color: Colors.black54)),
+                                  ],
+                                  const SizedBox(height: 12),
+                                  TextField(
+                                    controller: _commentControllers[id],
+                                    decoration: InputDecoration(
+                                      labelText: 'Add comment',
+                                      suffixIcon: IconButton(
+                                        icon: const Icon(Icons.send),
+                                        onPressed: () => _submitComment(id),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
     );
   }
 }
