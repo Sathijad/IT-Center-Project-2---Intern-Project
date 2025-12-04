@@ -11,8 +11,8 @@ import '../screens/BookingSearchScreen.dart';
 import '../screens/MyBookingsScreen.dart';
 import '../screens/ScheduleOverviewScreen.dart';
 import '../screens/MyTasksScreen.dart';
-import '../screens/KpiDashboardScreen.dart';
-import '../screens/TrainingOverviewScreen.dart';
+import 'screens/KpiDashboardScreen.dart';
+import 'screens/TrainingOverviewScreen.dart';
 import 'events/event_feed_screen.dart';
 
 class HomeScreen extends StatefulWidget {
