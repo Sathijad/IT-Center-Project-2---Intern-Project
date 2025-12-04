@@ -296,7 +296,7 @@ CUSTOMER_SATISFACTION,1,2025-01-15T10:00:00Z,4.5
      "completedAt": null
    }
    ```
-7. **IMPORTANT:** Copy the `jobId` for Step 10!
+7. **IMPORTANT:** Copy the `jobId` for Step 10!   fa5cb29f-f94d-468e-bbd2-09638606b344
 
 **CSV Format Requirements:**
 - Header row: `kpi_code,user_id,measured_at,value`
@@ -691,3 +691,470 @@ VALUES (
 
 Happy Testing! 🚀
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Training endpoints testing guide:
+
+# Training Endpoints - Complete Swagger Testing Guide
+
+## Prerequisites
+
+1. **Backend Running**: `http://localhost:5167`
+2. **Swagger UI**: `http://localhost:5167/swagger`
+3. **JWT Token**: Get from Phase 1 auth backend (login via admin web or mobile app)
+
+---
+
+## Step 1: Authenticate in Swagger
+
+1. Open `http://localhost:5167/swagger`
+2. Click the **"Authorize"** button (🔒) at the top right
+3. In the "Value" field, enter: `Bearer <your-jwt-token>`
+   - Example: `Bearer eyJraWQiOiJcXFwiLCJhbGciOiJSUzI1NiJ9...`
+4. Click **"Authorize"**
+5. Click **"Close"**
+6. You should see a green checkmark ✅
+
+**How to get JWT Token:**
+- Login via admin web app → Open browser DevTools → Application → Local Storage → Copy `access_token`
+- Or login via mobile app and extract token from storage
+
+---
+
+## Step 2: Create a Training Course
+
+### `POST /api/v1/training/courses`
+
+**Why:** You need courses before assigning them to users
+
+1. Find `POST /api/v1/training/courses`
+2. Click **"Try it out"**
+3. Replace request body with:
+   ```json
+   {
+     "title": "Workplace Safety Training",
+     "description": "Comprehensive safety training course covering workplace hazards and safety protocols",
+     "provider": "Internal",
+     "modality": "ONLINE",
+     "teamsMeetingUrl": "https://teams.microsoft.com/l/meetup-join/...",
+     "sharepointUrl": "https://yourcompany.sharepoint.com/sites/training/...",
+     "onedriveUrl": "https://yourcompany-my.sharepoint.com/...",
+     "durationMinutes": 120
+   }
+   ```
+4. Click **"Execute"**
+5. **Expected Response (201 Created):**
+   ```json
+   {
+     "courseId": "d4e5f6a7-b8c9-0123-def4-234567890123",
+     "title": "Workplace Safety Training",
+     "description": "Comprehensive safety training course covering workplace hazards and safety protocols",
+     "provider": "Internal",
+     "modality": "ONLINE",
+     "teamsMeetingUrl": "https://teams.microsoft.com/l/meetup-join/...",
+     "sharepointUrl": "https://yourcompany.sharepoint.com/sites/training/...",
+     "onedriveUrl": "https://yourcompany-my.sharepoint.com/...",
+     "durationMinutes": 120,
+     "isActive": true,
+     "createdAt": "2025-12-03T12:15:00Z",
+     "updatedAt": "2025-12-03T12:15:00Z"
+   }
+   ```
+6. **IMPORTANT:** Copy the `courseId` - you'll need it for the next steps!     7d31d517-27ec-4810-a141-147753b58dd5
+
+**Modality Options:**
+- `ONLINE` - Online course
+- `IN_PERSON` - In-person training
+- `HYBRID` - Combination of online and in-person
+- `SELF_PACED` - Self-paced learning
+
+**Create More Courses (Optional):**
+```json
+{
+  "title": "Data Privacy & GDPR Compliance",
+  "description": "Training on data protection regulations and compliance requirements",
+  "provider": "External",
+  "modality": "HYBRID",
+  "durationMinutes": 90
+}
+```
+
+---
+
+## Step 3: List All Training Courses
+
+### `GET /api/v1/training/courses`
+
+1. Find `GET /api/v1/training/courses`
+2. Click **"Try it out"**
+3. Enter parameters:
+   - `query`: `"safety"` (optional - search term)
+   - `page`: `1` (page number)
+   - `size`: `20` (items per page)
+4. Click **"Execute"**
+5. **Expected Response (200 OK):**
+   ```json
+   {
+     "items": [
+       {
+         "courseId": "d4e5f6a7-b8c9-0123-def4-234567890123",
+         "title": "Workplace Safety Training",
+         "description": "Comprehensive safety training course...",
+         "provider": "Internal",
+         "modality": "ONLINE",
+         "teamsMeetingUrl": "https://teams.microsoft.com/...",
+         "sharepointUrl": "https://sharepoint.com/...",
+         "onedriveUrl": "https://onedrive.com/...",
+         "durationMinutes": 120,
+         "isActive": true,
+         "createdAt": "2025-12-03T12:15:00Z",
+         "updatedAt": "2025-12-03T12:15:00Z"
+       }
+     ],
+     "page": 1,
+     "size": 20,
+     "totalCount": 1
+   }
+   ```
+
+**Purpose:** Verify courses were created and search for specific courses
+
+**Note:** Only active courses are returned by default
+
+---
+
+## Step 4: Get Specific Course by ID
+
+### `GET /api/v1/training/courses/{courseId}`
+
+1. Find `GET /api/v1/training/courses/{courseId}`
+2. Click **"Try it out"**
+3. Enter the `courseId` from Step 2:
+   - Example: `d4e5f6a7-b8c9-0123-def4-234567890123`
+4. Click **"Execute"**
+5. **Expected Response (200 OK):** Same as Step 2 response, but single course object
+
+**If course not found (404):**
+```json
+{
+  "error": "Course d4e5f6a7-b8c9-0123-def4-234567890123 not found",
+  "statusCode": 404
+}
+```
+
+---
+
+## Step 5: Update a Training Course
+
+### `PATCH /api/v1/training/courses/{courseId}`
+
+**Use the `courseId` from Step 2!**
+
+1. Find `PATCH /api/v1/training/courses/{courseId}`
+2. Click **"Try it out"**
+3. Enter the `courseId` from Step 2:
+   - Example: `d4e5f6a7-b8c9-0123-def4-234567890123`
+4. Replace request body with (all fields are optional):
+   ```json
+   {
+     "title": "Workplace Safety Training - Updated",
+     "description": "Updated description with new safety protocols",
+     "durationMinutes": 150,
+     "isActive": true
+   }
+   ```
+5. Click **"Execute"**
+6. **Expected Response (200 OK):**
+   ```json
+   {
+     "courseId": "d4e5f6a7-b8c9-0123-def4-234567890123",
+     "title": "Workplace Safety Training - Updated",
+     "description": "Updated description with new safety protocols",
+     "provider": "Internal",
+     "modality": "ONLINE",
+     "teamsMeetingUrl": "https://teams.microsoft.com/...",
+     "sharepointUrl": "https://sharepoint.com/...",
+     "onedriveUrl": "https://onedrive.com/...",
+     "durationMinutes": 150,
+     "isActive": true,
+     "createdAt": "2025-12-03T12:15:00Z",
+     "updatedAt": "2025-12-03T12:20:00Z"
+   }
+   ```
+
+**To Deactivate a Course:**
+```json
+{
+  "isActive": false
+}
+```
+
+**Note:** You can update any combination of fields. Only provided fields will be updated.
+
+---
+
+## Step 6: Assign Training Course to User
+
+### `POST /api/v1/training/assign`
+
+**You need a `courseId` from Step 2!**
+
+1. Find `POST /api/v1/training/assign`
+2. Click **"Try it out"**
+3. Replace request body with:
+   ```json
+   {
+     "courseId": "d4e5f6a7-b8c9-0123-def4-234567890123",
+     "assigneeType": "USER",
+     "assigneeId": 1,
+     "cohortId": null,
+     "dueDate": "2025-02-01T23:59:59Z"
+   }
+   ```
+4. **Replace `courseId`** with actual ID from Step 2
+5. **Replace `assigneeId`** with valid user ID from your `app_users` table
+6. Click **"Execute"**
+7. **Expected Response (201 Created):**
+   ```json
+   [
+     {
+       "assignmentId": "e5f6a7b8-c9d0-1234-ef56-345678901234",
+       "courseId": "d4e5f6a7-b8c9-0123-def4-234567890123",
+       "courseTitle": "Workplace Safety Training",
+       "assigneeType": "USER",
+       "assigneeId": 1,
+       "cohortId": null,
+       "dueDate": "2025-02-01T23:59:59Z",
+       "status": "ASSIGNED",
+       "progress": 0,
+       "completedAt": null,
+       "assignedBy": 1,
+       "createdAt": "2025-12-03T12:20:00Z",
+       "updatedAt": "2025-12-03T12:20:00Z"
+     }
+   ]
+   ```
+8. **IMPORTANT:** Copy the `assignmentId` for Step 8!      ca6d746b-0cfd-4b6b-9a65-f2fa6443a44b
+
+**Assignee Types:**
+- `USER` - Assign to specific user (requires `assigneeId`)
+- `TEAM` - Assign to team (requires `teamId` - not fully implemented)
+- `COHORT` - Assign to cohort (requires `cohortId`)
+
+**Note:** If you get "Course not found", make sure you used the correct `courseId` from Step 2.
+
+---
+
+## Step 7: Get Training Assignments
+
+### `GET /api/v1/training/assignments`
+
+1. Find `GET /api/v1/training/assignments`
+2. Click **"Try it out"**
+3. Enter parameters:
+   - `user_id`: `1` (optional - if not provided, uses authenticated user's ID)
+4. Click **"Execute"**
+5. **Expected Response (200 OK):**
+   ```json
+   [
+     {
+       "assignmentId": "e5f6a7b8-c9d0-1234-ef56-345678901234",
+       "courseId": "d4e5f6a7-b8c9-0123-def4-234567890123",
+       "courseTitle": "Workplace Safety Training",
+       "assigneeType": "USER",
+       "assigneeId": 1,
+       "cohortId": null,
+       "dueDate": "2025-02-01T23:59:59Z",
+       "status": "ASSIGNED",
+       "progress": 0,
+       "completedAt": null,
+       "assignedBy": 1,
+       "createdAt": "2025-12-03T12:20:00Z",
+       "updatedAt": "2025-12-03T12:20:00Z"
+     }
+   ]
+   ```
+
+**Purpose:** Get all training assignments for a user (used by mobile app)
+
+**Note:** If no `user_id` is provided, it returns assignments for the authenticated user
+
+---
+
+## Step 8: Update Training Assignment
+
+### `PATCH /api/v1/training/assignments/{assignmentId}`
+
+**Use the `assignmentId` from Step 6!**
+
+1. Find `PATCH /api/v1/training/assignments/{assignmentId}`
+2. Click **"Try it out"**
+3. Enter the `assignmentId` from Step 6:
+   - Example: `e5f6a7b8-c9d0-1234-ef56-345678901234`
+4. Replace request body with:
+   ```json
+   {
+     "status": "IN_PROGRESS",
+     "progress": 50,
+     "completedAt": null
+   }
+   ```
+5. Click **"Execute"**
+6. **Expected Response (200 OK):**
+   ```json
+   {
+     "assignmentId": "e5f6a7b8-c9d0-1234-ef56-345678901234",
+     "courseId": "d4e5f6a7-b8c9-0123-def4-234567890123",
+     "courseTitle": "Workplace Safety Training",
+     "assigneeType": "USER",
+     "assigneeId": 1,
+     "status": "IN_PROGRESS",
+     "progress": 50,
+     "completedAt": null,
+     "assignedBy": 1,
+     "createdAt": "2025-12-03T12:20:00Z",
+     "updatedAt": "2025-12-03T12:25:00Z"
+   }
+   ```
+
+**To Mark as Completed:**
+```json
+{
+  "status": "COMPLETED",
+  "progress": 100,
+  "completedAt": "2025-12-03T12:30:00Z"
+}
+```
+
+**Status Values:**
+- `ASSIGNED` - Just assigned
+- `IN_PROGRESS` - User is working on it
+- `COMPLETED` - Finished
+- `OVERDUE` - Past due date
+- `CANCELLED` - Cancelled
+
+**Progress:** 0-100 (percentage)
+
+---
+
+## Complete Testing Workflow
+
+### Workflow 1: Full Course Management Lifecycle
+
+1. ✅ Create Course: `POST /api/v1/training/courses`
+2. ✅ List Courses: `GET /api/v1/training/courses`
+3. ✅ Get Course: `GET /api/v1/training/courses/{courseId}`
+4. ✅ Update Course: `PATCH /api/v1/training/courses/{courseId}`
+5. ✅ Assign Course: `POST /api/v1/training/assign` (use courseId from step 1)
+6. ✅ Get Assignments: `GET /api/v1/training/assignments`
+7. ✅ Update Assignment: `PATCH /api/v1/training/assignments/{assignmentId}`
+
+---
+
+## Quick Reference: All Training Endpoints
+
+| Method | Endpoint | Purpose | Auth Required |
+|--------|----------|---------|---------------|
+| GET | `/api/v1/training/courses` | List/search courses | Yes |
+| POST | `/api/v1/training/courses` | Create course | Yes |
+| GET | `/api/v1/training/courses/{id}` | Get course by ID | Yes |
+| PATCH | `/api/v1/training/courses/{id}` | Update course | Yes |
+| POST | `/api/v1/training/assign` | Assign training | Yes |
+| GET | `/api/v1/training/assignments` | Get assignments | Yes |
+| PATCH | `/api/v1/training/assignments/{id}` | Update assignment | Yes |
+
+---
+
+## Common Issues & Solutions
+
+### Issue 1: "401 Unauthorized"
+**Solution:**
+- Make sure you clicked "Authorize" in Swagger
+- Check that token starts with `Bearer ` (with space)
+- Token might be expired - get a new one
+
+### Issue 2: "404 Not Found" for Course
+**Solution:**
+- Create the course first using `POST /api/v1/training/courses`
+- Use the correct `courseId` (UUID format)
+
+### Issue 3: "404 Not Found" for Assignment
+**Solution:**
+- Assign the course first using `POST /api/v1/training/assign`
+- Use the correct `assignmentId` (UUID format)
+
+### Issue 4: Empty arrays in responses
+**Solution:**
+- For Courses: Create courses first
+- For Assignments: Assign courses to users first
+
+### Issue 5: "Unable to determine user ID from token"
+**Solution:**
+- Make sure your user exists in `app_users` table
+- Check that `cognito_sub` in `app_users` matches your JWT token's `sub` claim
+- Verify user is active: `is_active = TRUE`
+
+### Issue 6: Invalid Modality value
+**Solution:**
+- Use one of: `ONLINE`, `IN_PERSON`, `HYBRID`, `SELF_PACED`
+- Case-sensitive - must be uppercase
+
+---
+
+## Sample Data for Testing
+
+### Create Sample Course (SQL)
+```sql
+INSERT INTO training_courses (course_id, title, description, modality, is_active)
+VALUES (
+  'd4e5f6a7-b8c9-0123-def4-234567890123',
+  'Workplace Safety Training',
+  'Comprehensive safety training course',
+  'ONLINE',
+  true
+);
+```
+
+---
+
+## Testing Order Recommendation
+
+1. **Create Course** → Set up your first training course
+2. **List Courses** → Verify it was created
+3. **Get Course** → Get specific course details
+4. **Update Course** → Modify course information
+5. **Assign Training** → Assign course to a user
+6. **Get Assignments** → See user's assignments
+7. **Update Assignment** → Update progress/status
+
+---
+
+## Tips
+
+- **Save your IDs**: Keep track of `courseId`, `assignmentId` as you create them
+- **Use Swagger's "Try it out"**: It's the easiest way to test
+- **Check responses**: Look at the response body to see what data was created
+- **Test incrementally**: Create data first, then query it
+- **Use valid user IDs**: Make sure user IDs exist in your `app_users` table
+- **Modality is case-sensitive**: Must be uppercase (ONLINE, not Online)
+
+Happy Testing! 🚀
+
+---
+
+Should I save this as a separate document file, or do you want to test these endpoints now?

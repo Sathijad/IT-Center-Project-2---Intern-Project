@@ -120,13 +120,21 @@ public class TrainingController(
     [HttpPatch("assignments/{assignmentId:guid}")]
     [Authorize]
     [ProducesResponseType(typeof(AssignmentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AssignmentResponse>> UpdateAssignment(
         Guid assignmentId,
         [FromBody] UpdateAssignmentRequest request,
         CancellationToken cancellationToken)
     {
-        var assignment = await assignmentService.UpdateAsync(assignmentId, request, cancellationToken);
-        return Ok(assignment);
+        try
+        {
+            var assignment = await assignmentService.UpdateAsync(assignmentId, request, cancellationToken);
+            return Ok(assignment);
+        }
+        catch (Performance.Errors.NotFoundException)
+        {
+            return NotFound($"Assignment {assignmentId} not found");
+        }
     }
 }
 

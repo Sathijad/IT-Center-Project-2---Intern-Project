@@ -80,6 +80,7 @@ public class TrainingAssignmentService(PerformanceDbContext dbContext) : ITraini
             throw new NotFoundException($"Assignment {assignmentId} not found");
         }
 
+        // Update status first if explicitly provided
         if (request.Status.HasValue)
         {
             assignment.Status = request.Status.Value;
@@ -90,10 +91,13 @@ public class TrainingAssignmentService(PerformanceDbContext dbContext) : ITraini
             assignment.Progress = Math.Clamp(request.Progress.Value, 0, 100);
         }
 
+        // Update completedAt if provided
         if (request.CompletedAt.HasValue)
         {
             assignment.CompletedAt = request.CompletedAt;
-            if (assignment.Status != Domain.Enums.TrainingAssignmentStatus.Completed)
+            // Only auto-set status to Completed if status was not explicitly provided
+            // This allows users to set completedAt without forcing status to Completed
+            if (!request.Status.HasValue && assignment.Status != Domain.Enums.TrainingAssignmentStatus.Completed)
             {
                 assignment.Status = Domain.Enums.TrainingAssignmentStatus.Completed;
             }

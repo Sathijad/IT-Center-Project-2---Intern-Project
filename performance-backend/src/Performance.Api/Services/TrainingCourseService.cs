@@ -19,10 +19,10 @@ public class TrainingCourseService(PerformanceDbContext dbContext) : ITrainingCo
 
         if (!string.IsNullOrWhiteSpace(query.Query))
         {
-            var searchTerm = query.Query.ToLower();
+            var searchTerm = query.Query.Trim();
             coursesQuery = coursesQuery.Where(c =>
-                c.Title.ToLower().Contains(searchTerm) ||
-                (c.Description != null && c.Description.ToLower().Contains(searchTerm)));
+                EF.Functions.ILike(c.Title, $"%{searchTerm}%") ||
+                (c.Description != null && EF.Functions.ILike(c.Description, $"%{searchTerm}%")));
         }
 
         var total = await coursesQuery.CountAsync(cancellationToken);
