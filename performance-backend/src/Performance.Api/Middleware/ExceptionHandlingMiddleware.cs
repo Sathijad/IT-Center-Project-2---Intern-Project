@@ -32,10 +32,18 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
 
+        // Include inner exception details for database errors
+        var errorMessage = exception.Message;
+        if (exception.InnerException != null)
+        {
+            errorMessage += $" Inner: {exception.InnerException.Message}";
+        }
+
         var response = new
         {
-            error = exception.Message,
-            statusCode = (int)statusCode
+            error = errorMessage,
+            statusCode = (int)statusCode,
+            details = exception.InnerException?.Message
         };
 
         return context.Response.WriteAsync(JsonSerializer.Serialize(response));

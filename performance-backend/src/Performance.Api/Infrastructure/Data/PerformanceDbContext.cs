@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Performance.Domain.Entities;
@@ -53,9 +54,20 @@ public class PerformanceDbContext(DbContextOptions<PerformanceDbContext> options
         entity.Property(x => x.KpiId).HasColumnName("kpi_id").IsRequired();
         entity.Property(x => x.UserId).HasColumnName("user_id");
         entity.Property(x => x.TeamId).HasColumnName("team_id");
-        entity.Property(x => x.PeriodType).HasColumnName("period_type").HasConversion<string>().HasMaxLength(30);
-        entity.Property(x => x.PeriodStart).HasColumnName("period_start").HasConversion<DateOnlyConverter>();
-        entity.Property(x => x.PeriodEnd).HasColumnName("period_end").HasConversion<DateOnlyConverter>();
+        entity.Property(x => x.PeriodType)
+            .HasColumnName("period_type")
+            .HasConversion(
+                v => v.ToString().ToUpperInvariant(),
+                v => Enum.Parse<Domain.Enums.KpiPeriodType>(v, true))
+            .HasMaxLength(30);
+        entity.Property(x => x.PeriodStart)
+            .HasColumnName("period_start")
+            .HasConversion<DateOnlyConverter>()
+            .HasColumnType("date");
+        entity.Property(x => x.PeriodEnd)
+            .HasColumnName("period_end")
+            .HasConversion<DateOnlyConverter>()
+            .HasColumnType("date");
         entity.Property(x => x.TargetValue).HasColumnName("target_value").HasPrecision(18, 4);
         entity.Property(x => x.CreatedBy).HasColumnName("created_by");
         entity.Property(x => x.CreatedAt).HasColumnName("created_at");
@@ -76,10 +88,21 @@ public class PerformanceDbContext(DbContextOptions<PerformanceDbContext> options
         entity.Property(x => x.UserId).HasColumnName("user_id");
         entity.Property(x => x.TeamId).HasColumnName("team_id");
         entity.Property(x => x.MeasuredAt).HasColumnName("measured_at");
-        entity.Property(x => x.PeriodStart).HasColumnName("period_start").HasConversion<DateOnlyConverter>();
-        entity.Property(x => x.PeriodEnd).HasColumnName("period_end").HasConversion<DateOnlyConverter>();
+        entity.Property(x => x.PeriodStart)
+            .HasColumnName("period_start")
+            .HasConversion<DateOnlyConverter>()
+            .HasColumnType("date");
+        entity.Property(x => x.PeriodEnd)
+            .HasColumnName("period_end")
+            .HasConversion<DateOnlyConverter>()
+            .HasColumnType("date");
         entity.Property(x => x.Value).HasColumnName("value").HasPrecision(18, 4);
-        entity.Property(x => x.SourceType).HasColumnName("source_type").HasConversion<string>().HasMaxLength(30);
+        entity.Property(x => x.SourceType)
+            .HasColumnName("source_type")
+            .HasConversion(
+                v => v.ToString().ToUpperInvariant(),
+                v => Enum.Parse<Domain.Enums.KpiSourceType>(v, true))
+            .HasMaxLength(30);
         entity.Property(x => x.ImportJobId).HasColumnName("import_job_id");
         entity.Property(x => x.CreatedAt).HasColumnName("created_at");
         entity.HasOne(x => x.Kpi).WithMany(k => k.Actuals).HasForeignKey(x => x.KpiId);
@@ -100,7 +123,12 @@ public class PerformanceDbContext(DbContextOptions<PerformanceDbContext> options
         entity.Property(x => x.Title).HasColumnName("title").HasMaxLength(300).IsRequired();
         entity.Property(x => x.Description).HasColumnName("description");
         entity.Property(x => x.Provider).HasColumnName("provider").HasMaxLength(200);
-        entity.Property(x => x.Modality).HasColumnName("modality").HasConversion<string>().HasMaxLength(50);
+        entity.Property(x => x.Modality)
+            .HasColumnName("modality")
+            .HasConversion(
+                v => ConvertEnumToDbFormat(v.ToString()),
+                v => Enum.Parse<Domain.Enums.TrainingModality>(v.Replace("_", ""), true))
+            .HasMaxLength(50);
         entity.Property(x => x.TeamsMeetingUrl).HasColumnName("teams_meeting_url");
         entity.Property(x => x.SharePointUrl).HasColumnName("sharepoint_url");
         entity.Property(x => x.OneDriveUrl).HasColumnName("onedrive_url");
@@ -118,11 +146,21 @@ public class PerformanceDbContext(DbContextOptions<PerformanceDbContext> options
         entity.HasKey(x => x.AssignmentId);
         entity.Property(x => x.AssignmentId).HasColumnName("assignment_id");
         entity.Property(x => x.CourseId).HasColumnName("course_id").IsRequired();
-        entity.Property(x => x.AssigneeType).HasColumnName("assignee_type").HasConversion<string>().HasMaxLength(30);
+        entity.Property(x => x.AssigneeType)
+            .HasColumnName("assignee_type")
+            .HasConversion(
+                v => v.ToString().ToUpperInvariant(),
+                v => Enum.Parse<Domain.Enums.TrainingAssigneeType>(v, true))
+            .HasMaxLength(30);
         entity.Property(x => x.AssigneeId).HasColumnName("assignee_id");
         entity.Property(x => x.CohortId).HasColumnName("cohort_id").HasMaxLength(100);
         entity.Property(x => x.DueDate).HasColumnName("due_date");
-        entity.Property(x => x.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(30);
+        entity.Property(x => x.Status)
+            .HasColumnName("status")
+            .HasConversion(
+                v => ConvertEnumToDbFormat(v.ToString()),
+                v => Enum.Parse<Domain.Enums.TrainingAssignmentStatus>(v.Replace("_", ""), true))
+            .HasMaxLength(30);
         entity.Property(x => x.Progress).HasColumnName("progress");
         entity.Property(x => x.CompletedAt).HasColumnName("completed_at");
         entity.Property(x => x.AssignedBy).HasColumnName("assigned_by");
@@ -143,7 +181,12 @@ public class PerformanceDbContext(DbContextOptions<PerformanceDbContext> options
         entity.Property(x => x.NoteId).HasColumnName("note_id");
         entity.Property(x => x.AssignmentId).HasColumnName("assignment_id").IsRequired();
         entity.Property(x => x.AuthorId).HasColumnName("author_id");
-        entity.Property(x => x.NoteType).HasColumnName("note_type").HasConversion<string>().HasMaxLength(30);
+        entity.Property(x => x.NoteType)
+            .HasColumnName("note_type")
+            .HasConversion(
+                v => v.ToString().ToUpperInvariant(),
+                v => Enum.Parse<Domain.Enums.TrainingNoteType>(v, true))
+            .HasMaxLength(30);
         entity.Property(x => x.Content).HasColumnName("content").IsRequired();
         entity.Property(x => x.CreatedAt).HasColumnName("created_at");
         entity.Property(x => x.UpdatedAt).HasColumnName("updated_at");
@@ -184,14 +227,22 @@ public class PerformanceDbContext(DbContextOptions<PerformanceDbContext> options
         entity.HasIndex(x => x.RequestedBy);
         entity.HasIndex(x => x.CreatedAt).IsDescending();
     }
+
+    // Helper method to convert enum names like "InPerson" to "IN_PERSON"
+    private static string ConvertEnumToDbFormat(string enumName)
+    {
+        // Insert underscore before capital letters (except the first one) and convert to uppercase
+        var result = Regex.Replace(enumName, "(?<!^)([A-Z])", "_$1").ToUpperInvariant();
+        return result;
+    }
 }
 
 // Helper converter for DateOnly (EF Core 9.0+ supports DateOnly natively, but we need explicit conversion for PostgreSQL)
 public class DateOnlyConverter : ValueConverter<DateOnly, DateTime>
 {
     public DateOnlyConverter() : base(
-        d => d.ToDateTime(TimeOnly.MinValue),
-        d => DateOnly.FromDateTime(d))
+        d => d.ToDateTime(TimeOnly.MinValue).ToUniversalTime(),
+        d => DateOnly.FromDateTime(d.Kind == DateTimeKind.Utc ? d : d.ToUniversalTime()))
     {
     }
 }

@@ -68,6 +68,8 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new Performance.Infrastructure.JsonConverters.DateOnlyJsonConverter());
+        options.JsonSerializerOptions.Converters.Add(new Performance.Infrastructure.JsonConverters.NullableDateOnlyJsonConverter());
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     })
     .ConfigureApiBehaviorOptions(options =>
@@ -197,6 +199,7 @@ builder.Services.AddHttpClient("TeamsWebhook")
 
 // Register services
 builder.Services.AddScoped<IMetricsService, MetricsService>();
+builder.Services.AddScoped<IKpiService, KpiService>();
 builder.Services.AddScoped<IKpiTargetService, KpiTargetService>();
 builder.Services.AddScoped<IImportService, ImportService>();
 builder.Services.AddScoped<ITrainingCourseService, TrainingCourseService>();

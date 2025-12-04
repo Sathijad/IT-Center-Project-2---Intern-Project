@@ -13,6 +13,7 @@ namespace Performance.Controllers;
 public class PerformanceController(
     IMetricsService metricsService,
     IKpiTargetService kpiTargetService,
+    IKpiService kpiService,
     IDbContextFactory<PerformanceDbContext> dbContextFactory) : ControllerBase
 {
     [HttpGet("metrics")]
@@ -109,6 +110,42 @@ public class PerformanceController(
 
         var target = await kpiTargetService.CreateAsync(request, actorId, cancellationToken);
         return CreatedAtAction(nameof(CreateTarget), new { targetId = target.TargetId }, target);
+    }
+
+    [HttpPost("kpis")]
+    [Authorize]
+    [ProducesResponseType(typeof(KpiResponse), StatusCodes.Status201Created)]
+    public async Task<ActionResult<KpiResponse>> CreateKpi(
+        [FromBody] CreateKpiRequest request,
+        CancellationToken cancellationToken)
+    {
+        var kpi = await kpiService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(GetKpis), new { kpiId = kpi.KpiId }, kpi);
+    }
+
+    [HttpGet("kpis")]
+    [Authorize]
+    [ProducesResponseType(typeof(IReadOnlyCollection<KpiResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<KpiResponse>>> GetKpis(
+        CancellationToken cancellationToken)
+    {
+        var kpis = await kpiService.GetAllAsync(cancellationToken);
+        return Ok(kpis);
+    }
+
+    [HttpGet("kpis/{kpiId:guid}")]
+    [Authorize]
+    [ProducesResponseType(typeof(KpiResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<KpiResponse>> GetKpi(
+        Guid kpiId,
+        CancellationToken cancellationToken)
+    {
+        var kpi = await kpiService.GetByIdAsync(kpiId, cancellationToken);
+        if (kpi == null)
+        {
+            return NotFound($"KPI {kpiId} not found");
+        }
+        return Ok(kpi);
     }
 }
 
