@@ -16,10 +16,10 @@ const KpiReportsPage = () => {
     queryKey: ['kpi-metrics', filters.userId, filters.teamId, filters.kpi, filters.range, 'snapshot'],
     queryFn: () =>
       performanceApi.getMetrics({
-        userId: filters.userId ? Number(filters.userId) : undefined,
-        teamId: filters.teamId ? Number(filters.teamId) : undefined,
-        kpi: filters.kpi || undefined,
-        range: filters.range,
+        userId: filters.userId && filters.userId.trim() !== '' ? Number(filters.userId) : undefined,
+        teamId: filters.teamId && filters.teamId.trim() !== '' ? Number(filters.teamId) : undefined,
+        kpi: filters.kpi && filters.kpi.trim() !== '' ? filters.kpi.trim().toUpperCase() : undefined,
+        range: filters.range && filters.range.trim() !== '' ? filters.range : undefined,
       }),
     enabled: viewMode === 'snapshot',
     retry: 1,
@@ -30,10 +30,10 @@ const KpiReportsPage = () => {
     queryKey: ['kpi-metrics', filters.userId, filters.teamId, filters.kpi, filters.range, 'timeseries'],
     queryFn: () =>
       performanceApi.getTimeSeries({
-        userId: filters.userId ? Number(filters.userId) : undefined,
-        teamId: filters.teamId ? Number(filters.teamId) : undefined,
-        kpi: filters.kpi || undefined,
-        range: filters.range,
+        userId: filters.userId && filters.userId.trim() !== '' ? Number(filters.userId) : undefined,
+        teamId: filters.teamId && filters.teamId.trim() !== '' ? Number(filters.teamId) : undefined,
+        kpi: filters.kpi && filters.kpi.trim() !== '' ? filters.kpi.trim().toUpperCase() : undefined,
+        range: filters.range && filters.range.trim() !== '' ? filters.range : undefined,
       }),
     enabled: viewMode === 'timeseries',
     retry: 1,
@@ -61,8 +61,18 @@ const KpiReportsPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
             <input
               type="number"
+              min="1"
               value={filters.userId}
-              onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value
+                setFilters({ ...filters, userId: value })
+              }}
+              onBlur={(e) => {
+                // Clear if invalid number
+                if (e.target.value && (isNaN(Number(e.target.value)) || Number(e.target.value) <= 0)) {
+                  setFilters({ ...filters, userId: '' })
+                }
+              }}
               placeholder="Optional"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
@@ -71,8 +81,18 @@ const KpiReportsPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Team ID</label>
             <input
               type="number"
+              min="1"
               value={filters.teamId}
-              onChange={(e) => setFilters({ ...filters, teamId: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value
+                setFilters({ ...filters, teamId: value })
+              }}
+              onBlur={(e) => {
+                // Clear if invalid number
+                if (e.target.value && (isNaN(Number(e.target.value)) || Number(e.target.value) <= 0)) {
+                  setFilters({ ...filters, teamId: '' })
+                }
+              }}
               placeholder="Optional"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
@@ -82,10 +102,11 @@ const KpiReportsPage = () => {
             <input
               type="text"
               value={filters.kpi}
-              onChange={(e) => setFilters({ ...filters, kpi: e.target.value })}
-              placeholder="Optional"
+              onChange={(e) => setFilters({ ...filters, kpi: e.target.value.toUpperCase() })}
+              placeholder="e.g., TICKET_RESOLUTION_TIME"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
+            <p className="mt-1 text-xs text-gray-500">Auto-converts to uppercase</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Time Range</label>
@@ -94,10 +115,32 @@ const KpiReportsPage = () => {
               onChange={(e) => setFilters({ ...filters, range: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="last30days">Last 30 Days</option>
+              <option value="">All Time</option>
               <option value="last7days">Last 7 Days</option>
+              <option value="last30days">Last 30 Days</option>
               <option value="last90days">Last 90 Days</option>
             </select>
+          </div>
+        </div>
+
+        <div className="mt-4 flex gap-2 items-center">
+          <button
+            onClick={() => {
+              setFilters({
+                userId: '',
+                teamId: '',
+                kpi: '',
+                range: 'last30days',
+              })
+            }}
+            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 text-sm font-medium"
+          >
+            Clear Filters
+          </button>
+          <div className="text-xs text-gray-500">
+            {filters.userId || filters.teamId || filters.kpi
+              ? `Active filters: ${filters.userId ? `User: ${filters.userId} ` : ''}${filters.teamId ? `Team: ${filters.teamId} ` : ''}${filters.kpi ? `KPI: ${filters.kpi}` : ''}`
+              : 'No filters applied'}
           </div>
         </div>
 

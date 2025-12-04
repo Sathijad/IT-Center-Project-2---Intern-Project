@@ -72,22 +72,86 @@ public class MetricsService(PerformanceDbContext dbContext) : IMetricsService
                     .FirstOrDefaultAsync(cancellationToken);
             }
 
-            var targetQuery = dbContext.KpiTargets.AsNoTracking()
-                .Where(t => t.KpiId == kpi.KpiId);
-
+            // Get target - always try to get the most relevant target
+            // Priority: user-specific > team-specific > organization-wide
+            Domain.Entities.KpiTarget? currentTarget = null;
+            
             if (query.UserId.HasValue)
             {
-                targetQuery = targetQuery.Where(t => t.UserId == query.UserId);
-            }
+                // First try user-specific target
+                var userTargetQuery = dbContext.KpiTargets.AsNoTracking()
+                    .Where(t => t.KpiId == kpi.KpiId && t.UserId == query.UserId);
 
-            if (query.TeamId.HasValue)
+                currentTarget = await userTargetQuery
+                    .OrderByDescending(t => t.PeriodEnd)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                // If no user-specific target, try team-specific (if team filter is also set)
+                if (currentTarget == null && query.TeamId.HasValue)
+                {
+                    var teamTargetQuery = dbContext.KpiTargets.AsNoTracking()
+                        .Where(t => t.KpiId == kpi.KpiId && t.TeamId == query.TeamId && t.UserId == null);
+
+                    currentTarget = await teamTargetQuery
+                        .OrderByDescending(t => t.PeriodEnd)
+                        .FirstOrDefaultAsync(cancellationToken);
+                }
+
+                // If still no target, fall back to organization-wide
+                if (currentTarget == null)
+                {
+                    var orgTargetQuery = dbContext.KpiTargets.AsNoTracking()
+                        .Where(t => t.KpiId == kpi.KpiId && t.UserId == null && t.TeamId == null);
+
+                    currentTarget = await orgTargetQuery
+                        .OrderByDescending(t => t.PeriodEnd)
+                        .FirstOrDefaultAsync(cancellationToken);
+                }
+            }
+            else if (query.TeamId.HasValue)
             {
-                targetQuery = targetQuery.Where(t => t.TeamId == query.TeamId);
-            }
+                // Team filter only (no user filter)
+                // First try team-specific target
+                var teamTargetQuery = dbContext.KpiTargets.AsNoTracking()
+                    .Where(t => t.KpiId == kpi.KpiId && t.TeamId == query.TeamId && t.UserId == null);
 
-            var currentTarget = await targetQuery
-                .OrderByDescending(t => t.PeriodEnd)
-                .FirstOrDefaultAsync(cancellationToken);
+                currentTarget = await teamTargetQuery
+                    .OrderByDescending(t => t.PeriodEnd)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                // If no team-specific target, fall back to organization-wide
+                if (currentTarget == null)
+                {
+                    var orgTargetQuery = dbContext.KpiTargets.AsNoTracking()
+                        .Where(t => t.KpiId == kpi.KpiId && t.UserId == null && t.TeamId == null);
+
+                    currentTarget = await orgTargetQuery
+                        .OrderByDescending(t => t.PeriodEnd)
+                        .FirstOrDefaultAsync(cancellationToken);
+                }
+            }
+            else
+            {
+                // No user/team filter - get organization-wide target (or any target if org-wide doesn't exist)
+                // Priority: organization-wide > any other target
+                var orgTargetQuery = dbContext.KpiTargets.AsNoTracking()
+                    .Where(t => t.KpiId == kpi.KpiId && t.UserId == null && t.TeamId == null);
+
+                currentTarget = await orgTargetQuery
+                    .OrderByDescending(t => t.PeriodEnd)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                // If no org-wide target, get any target for this KPI (for display purposes)
+                if (currentTarget == null)
+                {
+                    var anyTargetQuery = dbContext.KpiTargets.AsNoTracking()
+                        .Where(t => t.KpiId == kpi.KpiId);
+
+                    currentTarget = await anyTargetQuery
+                        .OrderByDescending(t => t.PeriodEnd)
+                        .FirstOrDefaultAsync(cancellationToken);
+                }
+            }
 
             var currentValue = latestActual?.Value;
             var targetValue = currentTarget?.TargetValue;
@@ -95,15 +159,31 @@ public class MetricsService(PerformanceDbContext dbContext) : IMetricsService
                 ? currentValue.Value - targetValue.Value
                 : (decimal?)null;
 
-            results.Add(new MetricsSnapshotResponse(
-                kpi.Code,
-                kpi.Name,
-                currentValue,
-                targetValue,
-                variance,
-                kpi.Unit,
-                latestActual?.MeasuredAt
-            ));
+            // Always include the result - show both actuals and targets when available
+            // This ensures that when filtering by user ID, you see targets even if no actuals
+            // And when filtering by KPI code, you see actuals even if no targets
+            // Only exclude if filtering by user/team AND there's absolutely no data
+            bool shouldInclude = true;
+            if (query.UserId.HasValue || query.TeamId.HasValue)
+            {
+                // When filtering by user/team, only show if there's actual data OR target data
+                // This prevents showing completely empty rows
+                shouldInclude = latestActual != null || currentTarget != null;
+            }
+            // If no user/team filter, always include (even if both are null, to show the KPI exists)
+
+            if (shouldInclude)
+            {
+                results.Add(new MetricsSnapshotResponse(
+                    kpi.Code,
+                    kpi.Name,
+                    currentValue,
+                    targetValue,
+                    variance,
+                    kpi.Unit,
+                    latestActual?.MeasuredAt
+                ));
+            }
         }
 
         return results;
