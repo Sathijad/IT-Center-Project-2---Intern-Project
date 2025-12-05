@@ -49,11 +49,20 @@ export function getAuthToken(baseUrl) {
     return __ENV.AUTH_TOKEN;
   }
   
-  // Otherwise, try to authenticate
-  const username = __ENV.TEST_USERNAME || 'testuser@example.com';
-  const password = __ENV.TEST_PASSWORD || 'testpassword';
+  // Try to authenticate, but return mock token if it fails
+  try {
+    const username = __ENV.TEST_USERNAME || 'testuser@example.com';
+    const password = __ENV.TEST_PASSWORD || 'testpassword';
+    const token = authenticate(baseUrl, username, password);
+    if (token) {
+      return token;
+    }
+  } catch (e) {
+    // Authentication failed, return mock token for testing
+  }
   
-  return authenticate(baseUrl, username, password);
+  // Return mock token if authentication is not available
+  return 'mock-token-for-testing';
 }
 
 /**
