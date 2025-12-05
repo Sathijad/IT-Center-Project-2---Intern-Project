@@ -2,8 +2,7 @@
     <application
         android:label="itcenter_auth"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -24,19 +23,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-            <!-- Deep-link for Cognito auth callback -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="myapp" android:host="auth" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="myapp" android:host="signout" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
