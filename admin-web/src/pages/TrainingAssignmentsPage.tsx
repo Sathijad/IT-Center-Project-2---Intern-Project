@@ -117,7 +117,7 @@ const TrainingAssignmentsPage = () => {
           </button>
           <button
             onClick={() => setShowNotifyModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 transition"
           >
             <Send className="w-5 h-5" />
             Send Notifications
@@ -288,7 +288,7 @@ const TrainingAssignmentsPage = () => {
               <button
                 onClick={() => notifyMutation.mutate()}
                 disabled={notifyMutation.isPending}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                className="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50"
               >
                 {notifyMutation.isPending ? 'Sending...' : 'Send Notifications'}
               </button>

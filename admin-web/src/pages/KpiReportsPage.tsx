@@ -74,7 +74,7 @@ const KpiReportsPage = () => {
                 }
               }}
               placeholder="Optional"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
             />
           </div>
           <div>
@@ -94,7 +94,7 @@ const KpiReportsPage = () => {
                 }
               }}
               placeholder="Optional"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
             />
           </div>
           <div>
@@ -104,16 +104,16 @@ const KpiReportsPage = () => {
               value={filters.kpi}
               onChange={(e) => setFilters({ ...filters, kpi: e.target.value.toUpperCase() })}
               placeholder="e.g., TICKET_RESOLUTION_TIME"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
             />
-            <p className="mt-1 text-xs text-gray-500">Auto-converts to uppercase</p>
+            <p className="mt-1 text-xs text-gray-600">Auto-converts to uppercase</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Time Range</label>
             <select
               value={filters.range}
               onChange={(e) => setFilters({ ...filters, range: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
             >
               <option value="">All Time</option>
               <option value="last7days">Last 7 Days</option>
@@ -133,11 +133,11 @@ const KpiReportsPage = () => {
                 range: 'last30days',
               })
             }}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 text-sm font-medium"
+            className="px-4 py-2 border border-gray-400 rounded-lg hover:bg-gray-50 text-gray-900 text-sm font-medium bg-white"
           >
             Clear Filters
           </button>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-600">
             {filters.userId || filters.teamId || filters.kpi
               ? `Active filters: ${filters.userId ? `User: ${filters.userId} ` : ''}${filters.teamId ? `Team: ${filters.teamId} ` : ''}${filters.kpi ? `KPI: ${filters.kpi}` : ''}`
               : 'No filters applied'}
@@ -177,7 +177,7 @@ const KpiReportsPage = () => {
             <div key={kpi?.kpiCode || `kpi-${Math.random()}`} className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">{kpi?.kpiName || 'Unknown KPI'}</h3>
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{kpi?.kpiCode || 'N/A'}</span>
+                <span className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded">{kpi?.kpiCode || 'N/A'}</span>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between">

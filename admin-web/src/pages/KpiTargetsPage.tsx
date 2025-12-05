@@ -262,7 +262,7 @@ const KpiTargetsPage = () => {
         <div className="flex gap-3">
           <button
             onClick={() => setShowCreateKpiModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 transition"
           >
             <FileText className="w-5 h-5" />
             Create KPI
@@ -617,7 +617,7 @@ const KpiTargetsPage = () => {
               <button
                 onClick={handleCreateKpi}
                 disabled={createKpiMutation.isPending}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                className="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50"
               >
                 {createKpiMutation.isPending ? 'Creating...' : 'Create KPI'}
               </button>

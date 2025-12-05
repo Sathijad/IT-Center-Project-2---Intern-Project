@@ -131,7 +131,7 @@ IT_SERVICE_SATISFACTION,,2025-01-15T10:00:00Z,4.2`}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Select File</label>
+            <label htmlFor="file-input" className="block text-sm font-medium text-gray-700 mb-2">Select File</label>
             <input
               id="file-input"
               type="file"
