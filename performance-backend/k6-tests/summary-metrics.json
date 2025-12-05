@@ -1,0 +1,272 @@
+{
+    "metrics": {
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 10
+        },
+        "data_sent": {
+            "count": 418058,
+            "rate": 1266.7629836163837
+        },
+        "iterations": {
+            "count": 45,
+            "rate": 0.13635508532963672
+        },
+        "http_req_tls_handshaking": {
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0
+        },
+        "errors": {
+            "passes": 249,
+            "fails": 54,
+            "thresholds": {
+                "rate<0.1": true
+            },
+            "value": 0.8217821782178217
+        },
+        "http_req_connecting": {
+            "avg": 0.1513516129032258,
+            "min": 0,
+            "med": 0,
+            "max": 18.9076,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_duration": {
+            "avg": 6945.276757096775,
+            "min": 132.067,
+            "med": 5506.4437,
+            "max": 60014.4706,
+            "p(90)": 7374.03115,
+            "p(95)": 38925.54288500053,
+            "thresholds": {
+                "p(95)<500": true,
+                "p(99)<1000": true
+            }
+        },
+        "vus_max": {
+            "value": 10,
+            "min": 10,
+            "max": 10
+        },
+        "http_req_waiting": {
+            "max": 60014.4706,
+            "p(90)": 7373.56909,
+            "p(95)": 38925.54288500053,
+            "avg": 6944.300245161291,
+            "min": 131.0809,
+            "med": 5506.185100000001
+        },
+        "http_req_blocked": {
+            "max": 46.9754,
+            "p(90)": 0,
+            "p(95)": 0.5401950000000004,
+            "avg": 0.32006935483870974,
+            "min": 0,
+            "med": 0
+        },
+        "iteration_duration": {
+            "avg": 41499.07724893618,
+            "min": 0,
+            "med": 34062.8984,
+            "max": 142078.9112,
+            "p(90)": 60009.61034,
+            "p(95)": 82543.98159999987
+        },
+        "http_req_duration{expected_response:true}": {
+            "med": 5470.68765,
+            "max": 13166.9668,
+            "p(90)": 7247.07201,
+            "p(95)": 7374.821775,
+            "avg": 4057.559539115646,
+            "min": 132.067
+        },
+        "http_req_failed": {
+            "passes": 16,
+            "fails": 294,
+            "thresholds": {
+                "rate<0.01": true
+            },
+            "value": 0.05161290322580645
+        },
+        "http_req_sending": {
+            "avg": 0.055631612903225804,
+            "min": 0,
+            "med": 0,
+            "max": 1.5423,
+            "p(90)": 0,
+            "p(95)": 0.5520400000000003
+        },
+        "http_req_receiving": {
+            "avg": 0.9208803225806451,
+            "min": 0,
+            "med": 0,
+            "max": 63.0336,
+            "p(90)": 1.00061,
+            "p(95)": 1.02018
+        },
+        "checks": {
+            "fails": 272,
+            "passes": 471,
+            "value": 0.6339165545087483
+        },
+        "data_received": {
+            "count": 507476,
+            "rate": 1537.709628505394
+        },
+        "http_reqs": {
+            "rate": 0.9393350322708308,
+            "count": 310
+        }
+    },
+    "setup_data": {
+        "token": "eyJraWQiOiI3a0xjVnZIXC83WFQzcmFrV1VwXC9adEpOQmZ4dmdGY2gzOENVcU1RN2dcL0g4PSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJkOWJlNzQzOC1kMDcxLTcwZmQtNDBjMS02M2U4MjJiNmJhMjYiLCJjb2duaXRvOmdyb3VwcyI6WyJBRE1JTiJdLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuYXAtc291dGhlYXN0LTIuYW1hem9uYXdzLmNvbVwvYXAtc291dGhlYXN0LTJfaFRBWUpJZDh5IiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiM3Jkbmw1aW5kOGd1dGk4OWpyYm9iODVyNGkiLCJvcmlnaW5fanRpIjoiMjgxMTliM2EtYTNjOC00OWY5LWIxNmUtY2U1YWQ0NjQ0OTM1IiwiZXZlbnRfaWQiOiI2YmIyMmQwZC0yNjZmLTQxYWYtYjk3Yi01ZDM4YjUzZTM3N2MiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwiYXV0aF90aW1lIjoxNzY0OTA1NzE2LCJleHAiOjE3NjQ5MDkzMTYsImlhdCI6MTc2NDkwNTcxNiwianRpIjoiMjExNmVjNWYtNzQyZC00ZjAzLWEyOTctNzJlZGEyYzc1M2IzIiwidXNlcm5hbWUiOiJkOWJlNzQzOC1kMDcxLTcwZmQtNDBjMS02M2U4MjJiNmJhMjYifQ.YADA6-iCZFHVsKUvsVyhdLjj5FlkG4SFepCL8gR-opXLsWsIHvaK0VI6u0OsMuALBnsRVxfL3f-fhHsc-aFga_WVEzJg09TjoLN3DiDoSYN3mx-ZnZi5IzypHkS5aVH1eqs2E_vcnV1o1HTpHIh9SS3Fh5lBPNcU94OQ3d4DSJh4xx-zJ9tAl1zvFhdLh4BjvODXw50FQ7KeBPfjQc-fy2fDFBdiWRoeExN7mTqcze8eGecIN4SbBt60kGUrTBexYuDt56QFrT0eLukIbkR7KztPbq5DvYxPscTFl9TUREhoMoQXaoaeIDs3QeluJ5zJkjWsHEdPZI9V5zyy8B-ELg"
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "setup": {
+                "name": "setup",
+                "path": "::setup",
+                "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+                "groups": {},
+                "checks": {}
+            },
+            "teardown": {
+                "groups": {},
+                "checks": {},
+                "name": "teardown",
+                "path": "::teardown",
+                "id": "a8a9942382e8ffe2e56ef29e664b8229"
+            }
+        },
+        "checks": {
+            "metrics snapshot status is 200": {
+                "fails": 4,
+                "name": "metrics snapshot status is 200",
+                "path": "::metrics snapshot status is 200",
+                "id": "5089b81d5d07f49ffd49e7afa6d68f73",
+                "passes": 46
+            },
+            "metrics snapshot has data": {
+                "name": "metrics snapshot has data",
+                "path": "::metrics snapshot has data",
+                "id": "2f985a9fafd39a51cef6a20129e640e7",
+                "passes": 46,
+                "fails": 4
+            },
+            "metrics snapshot response time < 500ms": {
+                "name": "metrics snapshot response time < 500ms",
+                "path": "::metrics snapshot response time < 500ms",
+                "id": "bf7d0dffb341b62079935effa53e37b3",
+                "passes": 0,
+                "fails": 46
+            },
+            "metrics with user filter status is 200": {
+                "name": "metrics with user filter status is 200",
+                "path": "::metrics with user filter status is 200",
+                "id": "981904ee3a279d1fd385272389700c7f",
+                "passes": 45,
+                "fails": 1
+            },
+            "metrics with user filter response time < 500ms": {
+                "fails": 46,
+                "name": "metrics with user filter response time < 500ms",
+                "path": "::metrics with user filter response time < 500ms",
+                "id": "f22a7c382a6d54869645d23ece937e7e",
+                "passes": 0
+            },
+            "metrics with team filter status is 200": {
+                "name": "metrics with team filter status is 200",
+                "path": "::metrics with team filter status is 200",
+                "id": "2ef35484f142535bd814a6cc4fda87ca",
+                "passes": 44,
+                "fails": 2
+            },
+            "metrics with team filter response time < 500ms": {
+                "passes": 0,
+                "fails": 46,
+                "name": "metrics with team filter response time < 500ms",
+                "path": "::metrics with team filter response time < 500ms",
+                "id": "e4fd637ede0e9bf5ce29eaf29199a803"
+            },
+            "metrics with KPI filter status is 200": {
+                "id": "7e0e56dbfea69def9795040b5d9aaeb0",
+                "passes": 43,
+                "fails": 2,
+                "name": "metrics with KPI filter status is 200",
+                "path": "::metrics with KPI filter status is 200"
+            },
+            "metrics with KPI filter response time < 500ms": {
+                "id": "8d7b4ca98c7832e47031e64fab203703",
+                "passes": 17,
+                "fails": 28,
+                "name": "metrics with KPI filter response time < 500ms",
+                "path": "::metrics with KPI filter response time < 500ms"
+            },
+            "metrics with date range status is 200": {
+                "passes": 39,
+                "fails": 4,
+                "name": "metrics with date range status is 200",
+                "path": "::metrics with date range status is 200",
+                "id": "464bc457a199948f98c2062614f014bc"
+            },
+            "metrics with date range response time < 500ms": {
+                "fails": 43,
+                "name": "metrics with date range response time < 500ms",
+                "path": "::metrics with date range response time < 500ms",
+                "id": "35d1b2ac73d65f2dac9dbc68a2f8f4a7",
+                "passes": 0
+            },
+            "time-series status is 200": {
+                "name": "time-series status is 200",
+                "path": "::time-series status is 200",
+                "id": "35815f6a85440fac390870d8c36285c1",
+                "passes": 39,
+                "fails": 2
+            },
+            "time-series has data": {
+                "name": "time-series has data",
+                "path": "::time-series has data",
+                "id": "a41bb8f9804598493360e0828aa7ac92",
+                "passes": 39,
+                "fails": 2
+            },
+            "time-series response time < 1000ms": {
+                "name": "time-series response time < 1000ms",
+                "path": "::time-series response time < 1000ms",
+                "id": "6fe2576a86e2f196f19fb3771b95411d",
+                "passes": 0,
+                "fails": 39
+            },
+            "get KPIs status is 200": {
+                "name": "get KPIs status is 200",
+                "path": "::get KPIs status is 200",
+                "id": "cd8991cacb70d3a4ecb890abb6c0cd7a",
+                "passes": 38,
+                "fails": 1
+            },
+            "get KPIs has data": {
+                "name": "get KPIs has data",
+                "path": "::get KPIs has data",
+                "id": "664170ce048c78e1a0a72abc078e88b0",
+                "passes": 38,
+                "fails": 1
+            },
+            "get KPIs response time < 300ms": {
+                "passes": 37,
+                "fails": 1,
+                "name": "get KPIs response time < 300ms",
+                "path": "::get KPIs response time < 300ms",
+                "id": "4f8386820aea00371c78925dcd01fb08"
+            }
+        }
+    }
+}

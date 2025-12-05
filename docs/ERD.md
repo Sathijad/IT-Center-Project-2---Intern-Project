@@ -306,11 +306,88 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## Phase 7 Schema Additions (Feedback & Issue Reporting)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         feedback                            │
+├─────────────────────────────────────────────────────────────┤
+│ feedback_id      UUID PK                                    │
+│ title            VARCHAR(200) NOT NULL                     │
+│ description      TEXT NOT NULL                             │
+│ category         VARCHAR(50) NOT NULL                      │
+│ priority         VARCHAR(20) DEFAULT 'MEDIUM'              │
+│ status           VARCHAR(30) DEFAULT 'OPEN'               │
+│ created_by       BIGINT NOT NULL → app_users.id            │
+│ assigned_to      BIGINT → app_users.id                     │
+│ labels           TEXT[] DEFAULT '{}'                       │
+│ created_at       TIMESTAMPTZ DEFAULT NOW()                  │
+│ updated_at       TIMESTAMPTZ DEFAULT NOW()                  │
+└─────────────────────────────────────────────────────────────┘
+              │
+              │ 1:N
+              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    feedback_messages                        │
+├─────────────────────────────────────────────────────────────┤
+│ message_id        UUID PK                                   │
+│ feedback_id      UUID FK → feedback.feedback_id            │
+│ user_id          BIGINT NOT NULL → app_users.id            │
+│ content          TEXT NOT NULL                             │
+│ created_at       TIMESTAMPTZ DEFAULT NOW()                  │
+└─────────────────────────────────────────────────────────────┘
+              │
+              │ 1:N
+              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  feedback_attachments                       │
+├─────────────────────────────────────────────────────────────┤
+│ attachment_id    UUID PK                                   │
+│ feedback_id      UUID FK → feedback.feedback_id            │
+│ message_id       UUID FK → feedback_messages.message_id    │
+│ s3_key           VARCHAR(500) NOT NULL                      │
+│ file_name        VARCHAR(255) NOT NULL                     │
+│ file_size        BIGINT                                     │
+│ mime_type        VARCHAR(100)                              │
+│ uploaded_by      BIGINT NOT NULL → app_users.id            │
+│ created_at       TIMESTAMPTZ DEFAULT NOW()                  │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                      feedback_audit                         │
+├─────────────────────────────────────────────────────────────┤
+│ audit_id         BIGSERIAL PK                              │
+│ feedback_id      UUID FK → feedback.feedback_id            │
+│ user_id          BIGINT → app_users.id                     │
+│ action           VARCHAR(50) NOT NULL                      │
+│ old_value        JSONB                                     │
+│ new_value        JSONB                                     │
+│ metadata         JSONB                                     │
+│ created_at       TIMESTAMPTZ DEFAULT NOW()                  │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                       nlp_analysis                          │
+├─────────────────────────────────────────────────────────────┤
+│ analysis_id      UUID PK                                   │
+│ feedback_id      UUID FK → feedback.feedback_id            │
+│ sentiment        VARCHAR(20)                               │
+│ sentiment_score  JSONB                                     │
+│ pii_entities     JSONB                                     │
+│ raw_response     JSONB                                     │
+│ analyzed_at      TIMESTAMPTZ DEFAULT NOW()                 │
+│ created_at       TIMESTAMPTZ DEFAULT NOW()                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
 Relationships:
 - `events.created_by` and `events.moderated_by` reference `app_users`.
 - `announcement_bodies`, `event_tags`, and `publish_audit` all cascade on `events`.
 - `tag_library` stores aggregated tag heuristics for ML/suggestion worker.
 - `feature_flags` toggles (`events.push_enabled`, etc.) are consumed by the Go backend.
+- `feedback.created_by` and `feedback.assigned_to` reference `app_users.id`.
+- `feedback_messages`, `feedback_attachments`, `feedback_audit`, and `nlp_analysis` all reference `feedback.feedback_id`.
+- `feedback_attachments` can optionally reference `feedback_messages.message_id` for message-specific attachments.
 
 ## Indexes
 
@@ -322,6 +399,13 @@ Relationships:
 - `idx_tasks_assignee_status` on `tasks(assignee_id, status)`
 - `idx_task_notes_task` on `task_notes(task_id)`
 - `idx_import_jobs_status` on `import_jobs(status, created_at DESC)`
+- `idx_feedback_created_by` on `feedback(created_by)`
+- `idx_feedback_assigned_to` on `feedback(assigned_to)`
+- `idx_feedback_status` on `feedback(status)`
+- `idx_feedback_messages_feedback` on `feedback_messages(feedback_id)`
+- `idx_feedback_attachments_feedback` on `feedback_attachments(feedback_id)`
+- `idx_feedback_audit_feedback` on `feedback_audit(feedback_id)`
+- `idx_nlp_analysis_feedback` on `nlp_analysis(feedback_id)`
 
 ## Data Retention
 

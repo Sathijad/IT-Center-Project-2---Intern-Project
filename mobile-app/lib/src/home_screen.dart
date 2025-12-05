@@ -14,6 +14,8 @@ import '../screens/MyTasksScreen.dart';
 import 'screens/KpiDashboardScreen.dart';
 import 'screens/TrainingOverviewScreen.dart';
 import 'events/event_feed_screen.dart';
+import '../screens/feedback/feedback_list_screen.dart';
+import '../screens/feedback/submit_feedback_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -401,6 +403,48 @@ class _HomeScreenState extends State<HomeScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => TrainingOverviewScreen(userId: userData!['id'] as int),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              key: const ValueKey('feedback_list_action_card'),
+                              icon: Icons.feedback,
+                              title: 'My Feedback',
+                              subtitle: 'View your feedback',
+                              color: Colors.blue,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const FeedbackListScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildActionCard(
+                              context,
+                              key: const ValueKey('submit_feedback_action_card'),
+                              icon: Icons.add_comment,
+                              title: 'Submit Feedback',
+                              subtitle: 'Report an issue',
+                              color: Colors.green,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const SubmitFeedbackScreen(),
                                   ),
                                 );
                               },

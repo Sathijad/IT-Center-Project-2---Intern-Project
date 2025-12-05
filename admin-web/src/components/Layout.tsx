@@ -28,6 +28,7 @@ import {
   FileSpreadsheet,
   UserCheck,
   TrendingUp,
+  MessageSquare,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -84,6 +85,9 @@ const Layout: React.FC = () => {
     { name: 'Apply Leave', href: '/leave', icon: CalendarCheck },
     { name: 'Book Room', href: '/bookings/new', icon: Building2 },
     { name: 'My Bookings', href: '/bookings/my', icon: Calendar },
+    ...(isAdmin
+      ? [{ name: 'All Feedback', href: '/feedback', icon: MessageSquare }]
+      : [{ name: 'My Feedback', href: '/feedback', icon: MessageSquare }]),
     { name: 'Profile', href: '/profile', icon: UserIcon },
   ]
 

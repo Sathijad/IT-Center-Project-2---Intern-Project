@@ -52,5 +52,16 @@ class ApiBase {
     }
     return 'http://localhost:5167';
   }
+
+  // Feedback backend (port 8086)
+  static String get feedbackBase {
+    if (kIsWeb) {
+      return 'http://localhost:8086';
+    }
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:5167';
+    }
+    return 'http://localhost:5167';
+  }
 }
 

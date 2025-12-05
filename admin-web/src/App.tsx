@@ -35,6 +35,9 @@ import KpiActualsPage from './pages/KpiActualsPage'
 import TrainingCoursesPage from './pages/TrainingCoursesPage'
 import TrainingAssignmentsPage from './pages/TrainingAssignmentsPage'
 import KpiImportPage from './pages/KpiImportPage'
+import FeedbackListPage from './pages/feedback/FeedbackListPage'
+import FeedbackDetailPage from './pages/feedback/FeedbackDetailPage'
+import SubmitFeedbackPage from './pages/feedback/SubmitFeedbackPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -289,6 +292,30 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="ADMIN">
                     <TrainingAssignmentsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="feedback"
+                element={
+                  <ProtectedRoute>
+                    <FeedbackListPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="feedback/submit"
+                element={
+                  <ProtectedRoute>
+                    <SubmitFeedbackPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="feedback/:id"
+                element={
+                  <ProtectedRoute>
+                    <FeedbackDetailPage />
                   </ProtectedRoute>
                 }
               />
