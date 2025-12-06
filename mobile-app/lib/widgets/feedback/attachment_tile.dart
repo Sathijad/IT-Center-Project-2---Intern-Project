@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../models/feedback.dart';
+import '../../models/feedback.dart' as models;
 
 class AttachmentTile extends StatelessWidget {
-  final FeedbackAttachment attachment;
+  final models.FeedbackAttachment attachment;
 
   const AttachmentTile({
     Key? key,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/feedback.dart';
+import '../../models/feedback.dart' as models;
 import '../../services/feedback_api_service.dart';
 import '../../widgets/feedback/message_bubble.dart';
 import '../../widgets/feedback/attachment_tile.dart';
@@ -18,7 +18,7 @@ class FeedbackDetailScreen extends StatefulWidget {
 
 class _FeedbackDetailScreenState extends State<FeedbackDetailScreen> {
   final FeedbackApiService _apiService = FeedbackApiService();
-  Feedback? _feedback;
+  models.Feedback? _feedback;
   bool _isLoading = true;
   String? _error;
   final TextEditingController _messageController = TextEditingController();

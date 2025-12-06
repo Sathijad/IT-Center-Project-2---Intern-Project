@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/feedback.dart';
+import '../../models/feedback.dart' as models;
 import '../../services/feedback_api_service.dart';
 import '../../widgets/feedback/feedback_card.dart';
 import 'feedback_detail_screen.dart';
@@ -14,7 +14,7 @@ class FeedbackListScreen extends StatefulWidget {
 
 class _FeedbackListScreenState extends State<FeedbackListScreen> {
   final FeedbackApiService _apiService = FeedbackApiService();
-  List<Feedback> _feedbacks = [];
+  List<models.Feedback> _feedbacks = [];
   bool _isLoading = true;
   String? _error;
   String? _selectedStatus;
@@ -47,7 +47,7 @@ class _FeedbackListScreenState extends State<FeedbackListScreen> {
       );
 
       final items = (response['items'] as List)
-          .map((item) => Feedback.fromJson(item))
+          .map((item) => models.Feedback.fromJson(item))
           .toList();
 
       setState(() {

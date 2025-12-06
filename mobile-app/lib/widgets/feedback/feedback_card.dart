@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../models/feedback.dart';
+import '../../models/feedback.dart' as models;
 
 class FeedbackCard extends StatelessWidget {
-  final Feedback feedback;
+  final models.Feedback feedback;
   final VoidCallback onTap;
 
   const FeedbackCard({

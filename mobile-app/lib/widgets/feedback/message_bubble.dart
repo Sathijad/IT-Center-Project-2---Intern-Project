@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../models/feedback.dart';
+import '../../models/feedback.dart' as models;
 
 class MessageBubble extends StatelessWidget {
-  final FeedbackMessage message;
+  final models.FeedbackMessage message;
 
   const MessageBubble({
     Key? key,

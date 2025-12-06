@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import '../models/feedback.dart';
+import '../models/feedback.dart' as models;
 import '../src/api_base.dart';
+import '../src/auth_service.dart';
 
 class FeedbackApiService {
   final Dio _dio;
@@ -19,7 +20,7 @@ class FeedbackApiService {
   }
 
   // Create feedback
-  Future<Feedback> createFeedback({
+  Future<models.Feedback> createFeedback({
     required String title,
     required String description,
     required String category,
@@ -27,7 +28,7 @@ class FeedbackApiService {
     List<String> labels = const [],
     List<File>? attachments,
   }) async {
-    final data = {
+    final data = <String, dynamic>{
       'title': title,
       'description': description,
       'category': category,
@@ -38,11 +39,11 @@ class FeedbackApiService {
     if (attachments != null && attachments.isNotEmpty) {
       // For now, we'll handle file uploads separately
       // In a real implementation, you'd upload to S3 first and get presigned URLs
-      data['attachments'] = [];
+      data['attachments'] = <Map<String, dynamic>>[];
     }
 
     final response = await _dio.post('/api/v1/feedback', data: data);
-    return Feedback.fromJson(response.data);
+    return models.Feedback.fromJson(response.data);
   }
 
   // Get my feedback list
@@ -64,46 +65,45 @@ class FeedbackApiService {
   }
 
   // Get feedback by ID
-  Future<Feedback> getFeedbackById(String id) async {
+  Future<models.Feedback> getFeedbackById(String id) async {
     final response = await _dio.get('/api/v1/feedback/$id');
-    return Feedback.fromJson(response.data);
+    return models.Feedback.fromJson(response.data);
   }
 
   // Add message to feedback
-  Future<FeedbackMessage> addMessage({
+  Future<models.FeedbackMessage> addMessage({
     required String feedbackId,
     required String content,
     List<File>? attachments,
   }) async {
-    final data = {
+    final data = <String, dynamic>{
       'content': content,
     };
 
     if (attachments != null && attachments.isNotEmpty) {
-      data['attachments'] = [];
+      data['attachments'] = <Map<String, dynamic>>[];
     }
 
     final response = await _dio.post('/api/v1/feedback/$feedbackId/messages', data: data);
-    return FeedbackMessage.fromJson(response.data);
+    return models.FeedbackMessage.fromJson(response.data);
   }
 }
 
 class AuthInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
-    // Get token from secure storage (implement based on your auth setup)
-    // For now, this is a placeholder
-    final token = await _getToken();
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
+    // Get access token from AuthService (Amplify Cognito)
+    try {
+      final token = await AuthService.instance.getAccessToken();
+      if (token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+    } catch (e) {
+      // Log error but don't block the request
+      // The backend will return 401 if token is missing/invalid
+      print('Failed to get access token for feedback API: $e');
     }
     handler.next(options);
-  }
-
-  Future<String?> _getToken() async {
-    // Implement token retrieval from secure storage
-    // This should match your existing auth implementation
-    return null;
   }
 }
 
