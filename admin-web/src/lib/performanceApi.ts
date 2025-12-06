@@ -294,6 +294,22 @@ export const performanceApi = {
     return response.data
   },
 
+  async getAssignments(params?: {
+    userId?: number
+    teamId?: number
+    status?: string
+  }): Promise<TrainingAssignment[]> {
+    const queryParams = new URLSearchParams()
+    if (params?.userId) queryParams.append('user_id', params.userId.toString())
+    if (params?.teamId) queryParams.append('team_id', params.teamId.toString())
+    if (params?.status) queryParams.append('status', params.status)
+
+    const response = await performanceApiClient.get(
+      `/api/v1/training/assignments?${queryParams.toString()}`
+    )
+    return response.data
+  },
+
   async updateAssignment(
     assignmentId: string,
     update: {

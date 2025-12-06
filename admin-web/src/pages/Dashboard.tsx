@@ -2,7 +2,7 @@ import React from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useQuery } from '@tanstack/react-query'
 import api from '../lib/api'
-import { Users, FileText, Clock, Building2, Calendar } from 'lucide-react'
+import { Users, FileText, Clock, Building2, Calendar, TrendingUp, GraduationCap } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const Dashboard: React.FC = () => {
@@ -87,6 +87,24 @@ const Dashboard: React.FC = () => {
             </div>
             <p className="text-sm text-gray-600 mt-1">View your room bookings</p>
           </Link>
+          {!user?.roles?.includes('ADMIN') && (
+            <>
+              <Link to="/performance/my" className="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-600 transition text-left">
+                <div className="flex items-center space-x-2 mb-2">
+                  <TrendingUp className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-medium text-gray-900">KPI Dashboard</h3>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">View your performance metrics</p>
+              </Link>
+              <Link to="/training/my" className="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-600 transition text-left">
+                <div className="flex items-center space-x-2 mb-2">
+                  <GraduationCap className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-medium text-gray-900">Training</h3>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">My courses and assignments</p>
+              </Link>
+            </>
+          )}
           {user?.roles?.includes('ADMIN') && (
             <>
               <Link to="/users" className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-600 transition text-left">

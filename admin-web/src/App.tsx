@@ -35,6 +35,8 @@ import KpiActualsPage from './pages/KpiActualsPage'
 import TrainingCoursesPage from './pages/TrainingCoursesPage'
 import TrainingAssignmentsPage from './pages/TrainingAssignmentsPage'
 import KpiImportPage from './pages/KpiImportPage'
+import EmployeeKpiDashboard from './pages/EmployeeKpiDashboard'
+import EmployeeTrainingOverview from './pages/EmployeeTrainingOverview'
 import FeedbackListPage from './pages/feedback/FeedbackListPage'
 import FeedbackDetailPage from './pages/feedback/FeedbackDetailPage'
 import SubmitFeedbackPage from './pages/feedback/SubmitFeedbackPage'
@@ -292,6 +294,22 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="ADMIN">
                     <TrainingAssignmentsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="performance/my"
+                element={
+                  <ProtectedRoute>
+                    <EmployeeKpiDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="training/my"
+                element={
+                  <ProtectedRoute>
+                    <EmployeeTrainingOverview />
                   </ProtectedRoute>
                 }
               />

@@ -61,7 +61,11 @@ const Layout: React.FC = () => {
           { name: 'Moderation', href: '/moderation', icon: ShieldCheck },
           { name: 'Broadcast Audit', href: '/events/audit', icon: FileText },
         ]
-      : [{ name: 'Feed', href: '/feed', icon: Radio }]),
+      : [
+          { name: 'Feed', href: '/feed', icon: Radio },
+          { name: 'KPI Dashboard', href: '/performance/my', icon: TrendingUp },
+          { name: 'Training', href: '/training/my', icon: GraduationCap },
+        ]),
     ...(isAdmin
       ? [
           { name: 'Users', href: '/users', icon: Users },
