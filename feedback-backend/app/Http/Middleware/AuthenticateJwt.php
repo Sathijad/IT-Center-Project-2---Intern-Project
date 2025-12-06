@@ -32,11 +32,13 @@ class AuthenticateJwt
                 return response()->json(['error' => 'Unauthorized', 'message' => 'User not found'], 401);
             }
 
-            // Attach user to request
-            $request->merge(['user' => $user]);
+            // Attach user to request using setUserResolver (Laravel's standard method)
             $request->setUserResolver(function () use ($user) {
                 return $user;
             });
+
+            // Also attach user object to request attributes for easy access
+            $request->attributes->set('user', $user);
 
             return $next($request);
         } catch (\Exception $e) {
@@ -62,18 +64,15 @@ class AuthenticateJwt
             throw new \Exception('Token missing kid');
         }
 
-        // Find matching key
-        $key = null;
-        foreach ($jwks['keys'] as $jwk) {
-            if ($jwk['kid'] === $kid) {
-                $key = new Key(JWK::parseKey($jwk), 'RS256');
-                break;
-            }
-        }
-
-        if (!$key) {
+        // Parse the entire JWKS to get keys indexed by kid
+        $keys = JWK::parseKeySet($jwks);
+        
+        if (!isset($keys[$kid])) {
             throw new \Exception('No matching key found');
         }
+
+        // Get the key - parseKeySet returns an array of Key objects
+        $key = $keys[$kid];
 
         // Verify and decode token
         $decoded = JWT::decode($token, $key);

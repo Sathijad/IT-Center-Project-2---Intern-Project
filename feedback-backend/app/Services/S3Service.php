@@ -14,8 +14,13 @@ class S3Service
 
     public function __construct()
     {
-        $this->bucket = config('aws.s3_bucket');
-        $this->region = config('aws.s3_region', config('aws.default_region'));
+        $this->bucket = config('aws.s3.bucket') ?? '';
+        $this->region = config('aws.s3.region') ?? config('aws.default_region') ?? 'ap-southeast-2';
+
+        // Validate required configuration
+        if (empty($this->bucket)) {
+            throw new \RuntimeException('AWS S3 bucket is not configured. Please set AWS_S3_BUCKET environment variable.');
+        }
 
         $this->s3Client = new S3Client([
             'version' => 'latest',

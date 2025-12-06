@@ -75,3 +75,14 @@ mobile-app/**/GeneratedPluginRegistrant.swift
 mobile-app/**/GeneratedPluginRegistrant.m
 mobile-app/**/GeneratedPluginRegistrant.h
 
+# PHP/Laravel
+feedback-backend/vendor/
+feedback-backend/storage/logs/
+feedback-backend/storage/framework/cache/
+feedback-backend/storage/framework/sessions/
+feedback-backend/storage/framework/views/
+feedback-backend/bootstrap/cache/
+feedback-backend/.env
+feedback-backend/.phpunit.cache
+feedback-backend/.phpunit.result.cache
+

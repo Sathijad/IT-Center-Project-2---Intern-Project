@@ -11,6 +11,19 @@ class FeedbackAudit extends Model
     protected $primaryKey = 'audit_id';
     public $incrementing = true;
     protected $keyType = 'integer';
+    
+    // Disable updated_at since the table doesn't have this column
+    public $timestamps = true;
+    const UPDATED_AT = null;
+    
+    /**
+     * Get the name of the "updated at" column.
+     * Return null to disable updated_at
+     */
+    public function getUpdatedAtColumn()
+    {
+        return null;
+    }
 
     protected $fillable = [
         'feedback_id',

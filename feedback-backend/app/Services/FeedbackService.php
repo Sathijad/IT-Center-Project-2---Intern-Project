@@ -18,16 +18,34 @@ class FeedbackService
     public function createFeedback(array $data, object $user, array $attachments = []): Feedback
     {
         return DB::transaction(function () use ($data, $user, $attachments) {
-            $feedback = Feedback::create([
-                'feedback_id' => (string) Str::uuid(),
-                'title' => $data['title'],
-                'description' => $data['description'],
-                'category' => $data['category'],
-                'priority' => $data['priority'] ?? 'MEDIUM',
-                'status' => 'OPEN',
-                'created_by' => $user->id,
-                'labels' => $data['labels'] ?? [],
+            $labels = $data['labels'] ?? [];
+            
+            // Format labels as PostgreSQL array string
+            $labelsFormatted = '{}';
+            if (!empty($labels) && is_array($labels)) {
+                $formatted = array_map(function($item) {
+                    $item = str_replace('\\', '\\\\', (string)$item);
+                    $item = str_replace('"', '\\"', $item);
+                    return '"' . $item . '"';
+                }, $labels);
+                $labelsFormatted = '{' . implode(',', $formatted) . '}';
+            }
+            
+            // Insert using raw SQL to properly handle PostgreSQL array
+            $feedbackId = (string) Str::uuid();
+            DB::insert('INSERT INTO feedback (feedback_id, title, description, category, priority, status, created_by, labels, created_at, updated_at) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?::text[], CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)', [
+                $feedbackId,
+                $data['title'],
+                $data['description'],
+                $data['category'],
+                $data['priority'] ?? 'MEDIUM',
+                'OPEN',
+                $user->id,
+                $labelsFormatted,
             ]);
+            
+            $feedback = Feedback::find($feedbackId);
 
             // Create audit log
             FeedbackAudit::create([
