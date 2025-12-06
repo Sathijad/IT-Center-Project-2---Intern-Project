@@ -13,10 +13,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Public routes
-Route::get('/healthz', [HealthController::class, 'healthz']);
+Route::get('/v1/healthz', [HealthController::class, 'healthz']);
 
-// Authenticated routes
-Route::middleware(['auth.jwt'])->group(function () {
+// Authenticated routes with /v1 prefix
+Route::prefix('v1')->middleware(['auth.jwt'])->group(function () {
     // Feedback CRUD
     Route::post('/feedback', [FeedbackController::class, 'create']);
     Route::get('/feedback', [FeedbackController::class, 'list']);
