@@ -11,6 +11,19 @@ class NlpAnalysis extends Model
     protected $primaryKey = 'analysis_id';
     public $incrementing = false;
     protected $keyType = 'string';
+    
+    // Disable updated_at since the table doesn't have this column
+    public $timestamps = true;
+    const UPDATED_AT = null;
+    
+    /**
+     * Get the name of the "updated at" column.
+     * Return null to disable updated_at
+     */
+    public function getUpdatedAtColumn()
+    {
+        return null;
+    }
 
     protected $fillable = [
         'feedback_id',
