@@ -1,14 +1,13 @@
 import React, { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
-import { feedbackApi, Feedback } from '../../lib/feedbackApi'
+import { feedbackApi } from '../../lib/feedbackApi'
 import { Link } from 'react-router-dom'
-import { Plus, Download, Filter, Search } from 'lucide-react'
+import { Plus, Download, Search } from 'lucide-react'
 import FeedbackCard from '../../components/feedback/FeedbackCard'
 
 const FeedbackListPage: React.FC = () => {
   const { user } = useAuth()
-  const queryClient = useQueryClient()
   const isAdmin = user?.roles?.includes('ADMIN')
 
   const [filters, setFilters] = useState({
@@ -25,7 +24,10 @@ const FeedbackListPage: React.FC = () => {
     queryKey: ['feedback-list', filters, page],
     queryFn: () =>
       feedbackApi.getFeedbackList({
-        ...filters,
+        status: filters.status || undefined,
+        assignee: filters.assignee ? parseInt(filters.assignee, 10) : undefined,
+        category: filters.category || undefined,
+        priority: filters.priority || undefined,
         page,
         size: pageSize,
       }),
@@ -84,8 +86,9 @@ const FeedbackListPage: React.FC = () => {
       <div className="bg-white rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select
+              id="status-filter"
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
@@ -99,8 +102,9 @@ const FeedbackListPage: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
             <input
+              id="category-filter"
               type="text"
               value={filters.category}
               onChange={(e) => handleFilterChange('category', e.target.value)}
@@ -109,8 +113,9 @@ const FeedbackListPage: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+            <label htmlFor="priority-filter" className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
             <select
+              id="priority-filter"
               value={filters.priority}
               onChange={(e) => handleFilterChange('priority', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
@@ -124,8 +129,9 @@ const FeedbackListPage: React.FC = () => {
           </div>
           {isAdmin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
+              <label htmlFor="assignee-filter" className="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
               <input
+                id="assignee-filter"
                 type="text"
                 value={filters.assignee}
                 onChange={(e) => handleFilterChange('assignee', e.target.value)}
@@ -135,10 +141,11 @@ const FeedbackListPage: React.FC = () => {
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <label htmlFor="search-filter" className="block text-sm font-medium text-gray-700 mb-1">Search</label>
             <div className="relative">
               <Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
               <input
+                id="search-filter"
                 type="text"
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}

@@ -41,10 +41,11 @@ const SubmitFeedbackPage: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="feedback-title" className="block text-sm font-medium text-gray-700 mb-1">
             Title <span className="text-red-500">*</span>
           </label>
           <input
+            id="feedback-title"
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -56,10 +57,11 @@ const SubmitFeedbackPage: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="feedback-description" className="block text-sm font-medium text-gray-700 mb-1">
             Description <span className="text-red-500">*</span>
           </label>
           <textarea
+            id="feedback-description"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             required
@@ -71,10 +73,11 @@ const SubmitFeedbackPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="feedback-category" className="block text-sm font-medium text-gray-700 mb-1">
               Category <span className="text-red-500">*</span>
             </label>
             <input
+              id="feedback-category"
               type="text"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -86,8 +89,9 @@ const SubmitFeedbackPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+            <label htmlFor="feedback-priority" className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
             <select
+              id="feedback-priority"
               value={formData.priority}
               onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"

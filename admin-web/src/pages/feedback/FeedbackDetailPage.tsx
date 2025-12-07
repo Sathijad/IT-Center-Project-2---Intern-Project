@@ -150,8 +150,9 @@ const FeedbackDetailPage: React.FC = () => {
             <h3 className="text-lg font-semibold mb-4">Update Feedback</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label htmlFor="update-status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select
+                  id="update-status"
                   value={updateForm.status || feedback.status}
                   onChange={(e) => setUpdateForm({ ...updateForm, status: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
@@ -164,8 +165,9 @@ const FeedbackDetailPage: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <label htmlFor="update-priority" className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                 <select
+                  id="update-priority"
                   value={updateForm.priority || feedback.priority}
                   onChange={(e) => setUpdateForm({ ...updateForm, priority: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
@@ -177,8 +179,9 @@ const FeedbackDetailPage: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assignee (User ID)</label>
+                <label htmlFor="update-assignee" className="block text-sm font-medium text-gray-700 mb-1">Assignee (User ID)</label>
                 <input
+                  id="update-assignee"
                   type="number"
                   value={updateForm.assignee_id || feedback.assigned_to || ''}
                   onChange={(e) => setUpdateForm({ ...updateForm, assignee_id: e.target.value })}
