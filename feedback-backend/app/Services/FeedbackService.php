@@ -33,8 +33,13 @@ class FeedbackService
             
             // Insert using raw SQL to properly handle PostgreSQL array
             $feedbackId = (string) Str::uuid();
-            DB::insert('INSERT INTO feedback (feedback_id, title, description, category, priority, status, created_by, labels, created_at, updated_at) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?::text[], CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)', [
+            
+            // Check database driver - SQLite doesn't support ::text[] cast
+            $driver = DB::connection()->getDriverName();
+            $labelsCast = ($driver === 'sqlite') ? '?' : '?::text[]';
+            
+            DB::insert("INSERT INTO feedback (feedback_id, title, description, category, priority, status, created_by, labels, created_at, updated_at) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, {$labelsCast}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", [
                 $feedbackId,
                 $data['title'],
                 $data['description'],
