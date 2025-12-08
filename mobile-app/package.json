@@ -20,7 +20,6 @@
     "app": "^0.1.0",
     "appium": "^2.19.0",
     "appium-flutter-driver": "^1.23.0",
-    "appium-uiautomator2-driver": "^2.29.8",
     "chai": "^4.3.10",
     "mocha": "^10.3.0",
     "ts-node": "^10.9.2",

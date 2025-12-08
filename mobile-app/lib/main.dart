@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_driver/driver_extension.dart';
 import 'src/auth_service.dart';
 import 'src/api_client.dart';
 import 'src/home_screen.dart';
 import 'src/login_screen.dart';
+import 'package:itcenter_auth/main.dart' as app;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  enableFlutterDriverExtension();
   // Only initialize Firebase on mobile platforms (Android/iOS), not on web
   if (!kIsWeb) {
     // Use conditional import - dart:io is not available on web
