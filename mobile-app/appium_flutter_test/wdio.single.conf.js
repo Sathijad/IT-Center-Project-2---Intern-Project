@@ -40,10 +40,14 @@ exports.config = {
                 command: "appium",
                 args: {
                     relaxedSecurity: true,
+                    basePath: "/",
+                    port: 4723,
                 },
                 env: {
                     APPIUM_HOME: process.cwd(),
                 },
+                waitStartTimeout: 180000, // 3 minutes - Appium can be slow to start
+                logPath: './logs',
             },
         ],
     ],

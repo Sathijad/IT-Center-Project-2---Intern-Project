@@ -1,4 +1,4 @@
-const { remote } = require("webdriverio");
+// Using WebdriverIO's built-in driver (browser/driver)
 
 // === Helper functions for UiAutomator2 ===
 async function waitForElement(driver, selector, label, timeout = 10000) {
@@ -61,43 +61,19 @@ async function debugUI(driver, label = "Current screen") {
 // === Main test ===
 describe("Phase 7: Feedback List Screen", function () {
   this.timeout(180000);
-  let driver;
-
-  const opts = {
-    protocol: "http",
-    hostname: "127.0.0.1",
-    port: 4723,
-    path: "/",
-    capabilities: {
-      platformName: "Android",
-      "appium:deviceName": "emulator-5554",
-      "appium:app":
-        "C:/Users/SathijaDeshapriya/Downloads/IT Center Project 2/mobile-app/build/app/outputs/flutter-apk/app-debug.apk",
-      "appium:platformVersion": "13",
-      "appium:automationName": "UiAutomator2",
-      "appium:newCommandTimeout": 300,
-      "appium:autoGrantPermissions": true,
-      "appium:noReset": false,
-      "appium:unicodeKeyboard": true,
-      "appium:resetKeyboard": true,
-      "appium:waitForIdleTimeout": 1000,
-    },
-  };
 
   before(async () => {
-    console.log("🚀 Starting Appium session...");
-    driver = await remote(opts);
-    await driver.pause(3000);
+    console.log("🚀 Appium session will be started by WebdriverIO service...");
+    // Wait for app to launch
+    await browser.pause(5000);
   });
 
   after(async () => {
-    if (driver) {
-      await driver.deleteSession();
-      console.log("🧹 Session closed.");
-    }
+    console.log("🧹 Session will be closed by WebdriverIO.");
   });
 
   it("should navigate to feedback list from home screen", async () => {
+    const driver = browser; // Use WebdriverIO's built-in driver
     try {
       // === LOGIN SCREEN ===
       console.log("⏳ Waiting for login screen...");
@@ -185,78 +161,305 @@ describe("Phase 7: Feedback List Screen", function () {
       await driver.pause(500);
       await passwordField.clearValue();
       await passwordField.setValue(testPassword);
-      await driver.pause(1000);
+      await driver.pause(2000); // Wait longer for button to become enabled
+      
+      // Hide keyboard if it's showing (might block the button)
+      try {
+        await driver.pressKeyCode(4); // Back key to dismiss keyboard
+        await driver.pause(500);
+        console.log("⌨️ Keyboard dismissed");
+      } catch (e) {
+        console.log("⚠️ Could not dismiss keyboard (might not be showing)");
+      }
       
       // Find and click login button - it's actually "Sign In" button
-      let loginButton;
+      // Wait a bit for button to become enabled after typing
+      await driver.pause(1000);
+      
+      // Debug: List all buttons and clickable elements on screen
+      console.log("🔍 Searching for Sign In button...");
       try {
-        // Try by text "Sign In" first (most reliable)
-        loginButton = await driver.$('//android.widget.Button[contains(@text, "Sign In") or @text="Sign In"]');
-        await loginButton.waitForDisplayed({ timeout: 10000 });
-        console.log("✅ Found Sign In button by text");
-      } catch (e) {
-        console.log("⚠️ Sign In button not found by text, trying other methods...");
-        try {
-          // Try by content-desc (ValueKey might not be exposed)
-          loginButton = await driver.$('~sign_in_button');
-          await loginButton.waitForDisplayed({ timeout: 10000 });
-          console.log("✅ Found Sign In button by content-desc");
-        } catch (e2) {
-          // Try finding any button with "Sign" in it
-          loginButton = await driver.$('//android.widget.Button[contains(@text, "Sign") or contains(@content-desc, "sign")]');
-          await loginButton.waitForDisplayed({ timeout: 10000 });
-          console.log("✅ Found Sign In button by XPath (any sign button)");
+        const allButtons = await driver.$$('android.widget.Button');
+        console.log(`📊 Found ${allButtons.length} android.widget.Button elements`);
+        for (let i = 0; i < Math.min(allButtons.length, 10); i++) {
+          try {
+            const text = await allButtons[i].getText();
+            const desc = await allButtons[i].getAttribute('content-desc');
+            const displayed = await allButtons[i].isDisplayed();
+            const enabled = await allButtons[i].isEnabled();
+            console.log(`  Button[${i}]: text="${text}", desc="${desc}", displayed=${displayed}, enabled=${enabled}`);
+          } catch (e) {
+            console.log(`  Button[${i}]: (could not get attributes)`);
+          }
         }
+        
+        // Also check for clickable views (Flutter buttons might not be standard Button widgets)
+        const clickableViews = await driver.$$('//*[@clickable="true"]');
+        console.log(`📊 Found ${clickableViews.length} clickable elements total`);
+        for (let i = 0; i < Math.min(clickableViews.length, 10); i++) {
+          try {
+            const text = await clickableViews[i].getText();
+            const desc = await clickableViews[i].getAttribute('content-desc');
+            const className = await clickableViews[i].getAttribute('class');
+            const displayed = await clickableViews[i].isDisplayed();
+            if (text || desc) {
+              console.log(`  Clickable[${i}]: text="${text}", desc="${desc}", class="${className}", displayed=${displayed}`);
+            }
+          } catch (e) {
+            // Skip
+          }
+        }
+      } catch (e) {
+        console.log(`⚠️ Could not list elements: ${e.message}`);
+      }
+      
+      let loginButton;
+      let buttonFound = false;
+      
+      // Strategy 1: Try exact text "Sign In"
+      try {
+        loginButton = await driver.$('//android.widget.Button[@text="Sign In"]');
+        await loginButton.waitForDisplayed({ timeout: 5000 });
+        console.log("✅ Found Sign In button by exact text");
+        buttonFound = true;
+      } catch (e) {
+        console.log("⚠️ Button not found by exact text 'Sign In'");
+      }
+      
+      // Strategy 2: Try "Signing in..." (when button is busy)
+      if (!buttonFound) {
+        try {
+          loginButton = await driver.$('//android.widget.Button[@text="Signing in..."]');
+          await loginButton.waitForDisplayed({ timeout: 5000 });
+          console.log("✅ Found Sign In button by text 'Signing in...'");
+          buttonFound = true;
+        } catch (e) {
+          console.log("⚠️ Button not found by text 'Signing in...'");
+        }
+      }
+      
+      // Strategy 3: Try contains "Sign"
+      if (!buttonFound) {
+        try {
+          loginButton = await driver.$('//android.widget.Button[contains(@text, "Sign")]');
+          await loginButton.waitForDisplayed({ timeout: 5000 });
+          console.log("✅ Found Sign In button by contains 'Sign'");
+          buttonFound = true;
+        } catch (e) {
+          console.log("⚠️ Button not found by contains 'Sign'");
+        }
+      }
+      
+      // Strategy 4: Try by content-desc/resource-id
+      if (!buttonFound) {
+        try {
+          loginButton = await driver.$('~sign_in_button');
+          await loginButton.waitForDisplayed({ timeout: 5000 });
+          console.log("✅ Found Sign In button by content-desc");
+          buttonFound = true;
+        } catch (e) {
+          console.log("⚠️ Button not found by content-desc");
+        }
+      }
+      
+      // Strategy 5: Try finding any clickable view (Flutter buttons might not be android.widget.Button)
+      if (!buttonFound) {
+        try {
+          // Try all clickable elements
+          const clickableElements = await driver.$$('//*[@clickable="true"]');
+          console.log(`📊 Found ${clickableElements.length} clickable elements`);
+          for (const elem of clickableElements) {
+            try {
+              if (await elem.isDisplayed()) {
+                const text = await elem.getText();
+                const className = await elem.getAttribute('class');
+                if (text && (text.includes('Sign In') || text.includes('Signing in') || text.includes('Sign'))) {
+                  loginButton = elem;
+                  console.log(`✅ Found clickable element by text: "${text}", class: ${className}`);
+                  buttonFound = true;
+                  break;
+                }
+              }
+            } catch (e) {
+              // Continue to next element
+            }
+          }
+        } catch (e) {
+          console.log(`⚠️ Could not find button by clickable elements: ${e.message}`);
+        }
+      }
+      
+      // Strategy 6: Try by content-desc with different patterns
+      if (!buttonFound) {
+        try {
+          const elements = await driver.$$('//*[contains(@content-desc, "sign") or contains(@content-desc, "login")]');
+          for (const elem of elements) {
+            if (await elem.isDisplayed()) {
+              loginButton = elem;
+              const desc = await elem.getAttribute('content-desc');
+              console.log(`✅ Found element by content-desc: "${desc}"`);
+              buttonFound = true;
+              break;
+            }
+          }
+        } catch (e) {
+          console.log(`⚠️ Could not find by content-desc: ${e.message}`);
+        }
+      }
+      
+      // Strategy 7: Try finding by resource-id
+      if (!buttonFound) {
+        try {
+          loginButton = await driver.$('android:id/button1'); // Sometimes Flutter uses this
+          if (await loginButton.isDisplayed()) {
+            console.log("✅ Found button by android:id/button1");
+            buttonFound = true;
+          }
+        } catch (e) {
+          // Not found
+        }
+      }
+      
+      // Strategy 8: Try scrolling to find button (might be off-screen)
+      if (!buttonFound) {
+        try {
+          console.log("🔄 Trying to scroll to find button...");
+          await driver.touchAction([
+            { action: 'press', x: 540, y: 1500 },
+            { action: 'wait', ms: 300 },
+            { action: 'moveTo', x: 540, y: 800 },
+            { action: 'release' }
+          ]);
+          await driver.pause(1000);
+          
+          // Try again after scroll
+          loginButton = await driver.$('//*[contains(@text, "Sign In") or contains(@text, "Signing")]');
+          if (await loginButton.isDisplayed()) {
+            console.log("✅ Found button after scrolling");
+            buttonFound = true;
+          }
+        } catch (e) {
+          console.log(`⚠️ Scrolling didn't help: ${e.message}`);
+        }
+      }
+      
+      if (!buttonFound || !loginButton) {
+        // Dump UI hierarchy for debugging
+        console.log("❌ Button not found! Dumping UI hierarchy...");
+        await debugUI(driver, "After password entry - button not found");
+        
+        // Try to get page source and save it
+        try {
+          const pageSource = await driver.getPageSource();
+          console.log("📄 Full page source (first 2000 chars):");
+          console.log(pageSource.substring(0, 2000));
+        } catch (e) {
+          console.log(`⚠️ Could not get page source: ${e.message}`);
+        }
+        
+        throw new Error("Could not find Sign In button after trying all strategies");
       }
       
       console.log("🔘 Clicking Sign In button...");
       
+      // Ensure button is enabled and visible before clicking
+      const isEnabled = await loginButton.isEnabled();
+      const isDisplayed = await loginButton.isDisplayed();
+      console.log(`📊 Button state: enabled=${isEnabled}, displayed=${isDisplayed}`);
+      
+      if (!isEnabled) {
+        console.log("⚠️ Button is disabled, waiting for it to become enabled...");
+        await driver.pause(2000);
+      }
+      
       // Try multiple click methods
+      let clickSuccess = false;
       try {
+        // Method 1: Standard click
         await loginButton.click();
+        clickSuccess = true;
+        console.log("✅ Button clicked using standard click");
       } catch (e) {
-        console.log("⚠️ Standard click failed, trying tap...");
-        // Get element location and tap
-        const location = await loginButton.getLocation();
-        const size = await loginButton.getSize();
-        await driver.touchAction({
-          action: 'tap',
-          x: location.x + size.width / 2,
-          y: location.y + size.height / 2,
-        });
+        console.log("⚠️ Standard click failed, trying alternative methods...");
+        try {
+          // Method 2: Tap using coordinates
+          const location = await loginButton.getLocation();
+          const size = await loginButton.getSize();
+          const centerX = location.x + size.width / 2;
+          const centerY = location.y + size.height / 2;
+          console.log(`📍 Tapping at coordinates: (${centerX}, ${centerY})`);
+          
+          await driver.performActions([
+            {
+              type: 'pointer',
+              id: 'finger1',
+              parameters: { pointerType: 'touch' },
+              actions: [
+                { type: 'pointerMove', duration: 0, x: centerX, y: centerY },
+                { type: 'pointerDown', button: 0 },
+                { type: 'pause', duration: 100 },
+                { type: 'pointerUp', button: 0 },
+              ],
+            },
+          ]);
+          clickSuccess = true;
+          console.log("✅ Button clicked using tap coordinates");
+        } catch (e2) {
+          console.log(`⚠️ Coordinate tap also failed: ${e2.message}`);
+          // Method 3: Try JavaScript click
+          try {
+            await driver.execute('mobile: click', { elementId: await loginButton.elementId });
+            clickSuccess = true;
+            console.log("✅ Button clicked using mobile:click");
+          } catch (e3) {
+            console.log(`❌ All click methods failed: ${e3.message}`);
+          }
+        }
+      }
+      
+      if (!clickSuccess) {
+        throw new Error("Failed to click Sign In button");
       }
       
       console.log("⏳ Waiting for authentication to process...");
-      await driver.pause(3000); // Initial wait
+      await driver.pause(2000); // Initial wait for API call to start
       
-      // Wait for either verification screen or error
+      // Wait for either verification screen, error, or home screen
       let verificationFound = false;
-      for (let attempt = 0; attempt < 10; attempt++) {
+      let currentScreen = "unknown";
+      
+      for (let attempt = 0; attempt < 15; attempt++) {
         await driver.pause(1000);
         
-        // Check for verification code field
+        // Check for verification code field (most common case)
         try {
-          const codeField = await driver.$('//android.widget.EditText[contains(@hint, "Code") or contains(@hint, "000000")]');
+          const codeField = await driver.$('//android.widget.EditText[contains(@hint, "Code") or contains(@hint, "000000") or contains(@label, "Code")]');
           if (await codeField.isDisplayed()) {
             console.log("✅ Verification code page appeared!");
+            currentScreen = "verification";
             verificationFound = true;
             break;
           }
         } catch (e) {
-          // Not found yet, continue
+          // Not found yet
         }
         
-        // Check for MFA selection
+        // Check for MFA selection screen
         try {
-          const mfaText = await driver.$('//android.widget.TextView[contains(@text, "Authentication Method")]');
+          const mfaText = await driver.$('//android.widget.TextView[contains(@text, "Authentication Method") or contains(@text, "Select")]');
           if (await mfaText.isDisplayed()) {
             console.log("✅ MFA selection screen appeared!");
+            currentScreen = "mfa_selection";
             // Click SMS option
-            const smsOption = await driver.$('//android.view.View[contains(@text, "SMS")]');
-            await smsOption.click();
-            await driver.pause(3000);
-            verificationFound = true;
-            break;
+            try {
+              const smsOption = await driver.$('//android.view.View[contains(@text, "SMS") or contains(@content-desc, "SMS")]');
+              await smsOption.click();
+              await driver.pause(3000);
+              verificationFound = true;
+              break;
+            } catch (e) {
+              console.log("⚠️ Could not click SMS option, continuing...");
+            }
           }
         } catch (e) {
           // Not found
@@ -264,9 +467,10 @@ describe("Phase 7: Feedback List Screen", function () {
         
         // Check for home screen (login successful without MFA)
         try {
-          const homeIndicator = await driver.$('~home_display_name');
-          if (await homeIndicator.isDisplayed()) {
+          const homeText = await driver.$('//android.widget.TextView[contains(@text, "Employee Home") or contains(@text, "Welcome")]');
+          if (await homeText.isDisplayed()) {
             console.log("✅ Login successful! Already on home screen (no MFA required)");
+            currentScreen = "home";
             verificationFound = true;
             break;
           }
@@ -274,12 +478,28 @@ describe("Phase 7: Feedback List Screen", function () {
           // Not on home screen
         }
         
-        console.log(`⏳ Waiting for navigation... (${attempt + 1}/10)`);
+        // Check for error message
+        try {
+          const errorText = await driver.$('//android.widget.TextView[contains(@text, "error") or contains(@text, "Error") or contains(@text, "failed") or contains(@text, "Invalid")]');
+          if (await errorText.isDisplayed()) {
+            const errorMsg = await errorText.getText();
+            console.log(`⚠️ Error message detected: ${errorMsg}`);
+            currentScreen = "error";
+            // Don't break - might still navigate
+          }
+        } catch (e) {
+          // No error found
+        }
+        
+        if (attempt % 3 === 0) {
+          console.log(`⏳ Waiting for navigation... (${attempt + 1}/15) - Current screen: ${currentScreen}`);
+        }
       }
       
       if (!verificationFound) {
-        console.log("⚠️ Could not detect verification screen or home screen");
+        console.log("⚠️ Could not detect verification screen or home screen after 15 seconds");
         await debugUI(driver, "After login click - unknown state");
+        console.log("💡 Tip: The app might be waiting for network response or showing an error");
       }
       
       // Check if we're on verification code page or if there's an error
@@ -313,46 +533,65 @@ describe("Phase 7: Feedback List Screen", function () {
       
       // === MFA/VERIFICATION CODE SCREEN ===
       console.log("⏳ Checking for verification code screen...");
+      
+      // If we're already on home screen, skip verification
       try {
-        // Wait for verification code input field
-        const codeField = await driver.$('//android.widget.EditText[contains(@hint, "Code") or contains(@hint, "000000") or contains(@label, "Code")]');
-        await codeField.waitForDisplayed({ timeout: 15000 });
-        console.log("✅ Verification code field found!");
-        
-        console.log("⏳ Waiting up to 30s for manual verification code entry...");
-        // Wait longer for manual entry
-        for (let i = 0; i < 6; i++) {
-          await driver.pause(5000);
-          console.log(`...${(i + 1) * 5}s elapsed`);
-          
-          // Check if code was entered (field has text)
-          try {
-            const codeValue = await codeField.getText();
-            if (codeValue && codeValue.length > 0) {
-              console.log(`✅ Code detected in field: ${codeValue.length} characters`);
-              break;
-            }
-          } catch (e) {
-            // Continue waiting
-          }
+        const homeText = await driver.$('//android.widget.TextView[contains(@text, "Employee Home") or contains(@text, "Welcome")]');
+        if (await homeText.isDisplayed()) {
+          console.log("✅ Already on home screen, skipping verification");
+        } else {
+          throw new Error("Not on home screen");
         }
-        
-        // Find and click verify button
-        let verifyButton;
-        try {
-          verifyButton = await driver.$('//android.widget.Button[contains(@text, "Verify") or contains(@text, "Verify Code")]');
-          await verifyButton.waitForDisplayed({ timeout: 5000 });
-        } catch (e) {
-          verifyButton = await driver.$('//android.widget.Button[contains(@content-desc, "verify")]');
-        }
-        
-        console.log("🔘 Clicking verify button...");
-        await verifyButton.click();
-        await driver.pause(5000); // Wait for verification to complete
-        console.log("✅ Verification submitted");
       } catch (e) {
-        console.log(`⚠️ Verification code screen not found: ${e.message}`);
-        await debugUI(driver, "After login - checking for verification screen");
+        // Not on home, proceed with verification
+        try {
+          // Wait for verification code input field
+          const codeField = await driver.$('//android.widget.EditText[contains(@hint, "Code") or contains(@hint, "000000") or contains(@label, "Code")]');
+          await codeField.waitForDisplayed({ timeout: 20000 });
+          console.log("✅ Verification code field found!");
+          
+          console.log("⏳ Waiting up to 30s for manual verification code entry...");
+          // Wait longer for manual entry
+          for (let i = 0; i < 6; i++) {
+            await driver.pause(5000);
+            console.log(`...${(i + 1) * 5}s elapsed`);
+            
+            // Check if code was entered (field has text)
+            try {
+              const codeValue = await codeField.getText();
+              if (codeValue && codeValue.length > 0) {
+                console.log(`✅ Code detected in field: ${codeValue.length} characters`);
+                break;
+              }
+            } catch (e) {
+              // Continue waiting
+            }
+          }
+          
+          // Find and click verify button
+          let verifyButton;
+          try {
+            verifyButton = await driver.$('//android.widget.Button[contains(@text, "Verify") or contains(@text, "Verify Code")]');
+            await verifyButton.waitForDisplayed({ timeout: 5000 });
+            console.log("✅ Found verify button");
+          } catch (e) {
+            try {
+              verifyButton = await driver.$('//android.widget.Button[contains(@content-desc, "verify")]');
+              await verifyButton.waitForDisplayed({ timeout: 5000 });
+            } catch (e2) {
+              console.log("⚠️ Verify button not found, trying any button with verify text");
+              verifyButton = await driver.$('//android.widget.Button[contains(@text, "Verify")]');
+            }
+          }
+          
+          console.log("🔘 Clicking verify button...");
+          await verifyButton.click();
+          await driver.pause(5000); // Wait for verification to complete
+          console.log("✅ Verification submitted");
+        } catch (e) {
+          console.log(`⚠️ Verification code screen not found: ${e.message}`);
+          await debugUI(driver, "After login - checking for verification screen");
+        }
       }
       
       // === HOME SCREEN ===
