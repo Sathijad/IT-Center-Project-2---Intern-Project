@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import allureReporter from 'allure-vitest/reporter'
 
 export default defineConfig({
   plugins: [react()],
@@ -17,7 +18,7 @@ export default defineConfig({
       '**/tests/ui/**', // Mocha tests, not Vitest
     ],
     // Allure reporter configuration
-    reporters: ['default', 'allure-vitest/reporter'],
+    reporters: ['default', allureReporter],
   },
   resolve: {
     alias: {

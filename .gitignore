@@ -74,3 +74,9 @@ mobile-app/**/GeneratedPluginRegistrant.swift
 mobile-app/**/GeneratedPluginRegistrant.m
 mobile-app/**/GeneratedPluginRegistrant.h
 
+# Phase 7+ backends (not in phase3_testing branch)
+feedback-backend/
+performance-backend/
+schedules-backend/
+events-backend/
+
