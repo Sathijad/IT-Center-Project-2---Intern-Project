@@ -803,6 +803,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               TextFormField(
+                                key: const ValueKey('login_email_field'),
                                 controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
                                 textInputAction: TextInputAction.next,
@@ -828,6 +829,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(height: 16),
                               TextFormField(
+                                key: const ValueKey('login_password_field'),
                                 controller: _passwordController,
                                 obscureText: _obscurePassword,
                                 textInputAction: TextInputAction.done,
@@ -883,7 +885,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               FilledButton.icon(
-                                key: const ValueKey('sign_in_button'),
+                                key: const ValueKey('login_button'),
                                 onPressed: busy ? null : _doSignIn,
                                 icon: busy
                                     ? const SizedBox(

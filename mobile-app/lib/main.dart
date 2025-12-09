@@ -8,11 +8,19 @@ import 'src/auth_service.dart';
 import 'src/api_client.dart';
 import 'src/home_screen.dart';
 import 'src/login_screen.dart';
-import 'package:itcenter_auth/main.dart' as app;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  enableFlutterDriverExtension();
+  
+  // Only enable Flutter Driver extension when running Appium tests
+  // Set ENABLE_FLUTTER_DRIVER=true when building for tests:
+  // flutter build apk --debug --dart-define=ENABLE_FLUTTER_DRIVER=true
+  const bool enableDriver = bool.fromEnvironment('ENABLE_FLUTTER_DRIVER', defaultValue: false);
+  if (enableDriver) {
+    enableFlutterDriverExtension();
+    debugPrint('Flutter Driver extension enabled for testing');
+  }
+  
   // Only initialize Firebase on mobile platforms (Android/iOS), not on web
   if (!kIsWeb) {
     // Use conditional import - dart:io is not available on web

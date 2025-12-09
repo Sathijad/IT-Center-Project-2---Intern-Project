@@ -53,14 +53,17 @@ exports.config = {
         // capabilities for local Appium web tests on an Android Emulator
         platformName: "Android",
         //   browserName: "Chrome",
-        "appium:deviceName": "Pixel 5",
+        "appium:deviceName": "emulator-5554",
         "appium:app":
           "C:/Users/SathijaDeshapriya/Downloads/IT Center Project 2/mobile-app/build/app/outputs/flutter-apk/app-debug.apk",
-        "appium:platformVersion": "12.0",
-        "appium:automationName": "Flutter",
+        "appium:platformVersion": "13",
+        "appium:automationName": "UiAutomator2",
         "appium:newCommandTimeout": 300,
         "appium:autoGrantPermissions": true,
         "appium:noReset": false,
+        "appium:waitForIdleTimeout": 0,
+        "appium:androidInstallTimeout": 90000,
+        "appium:uiautomator2ServerLaunchTimeout": 60000,
       },
     ],
   
@@ -115,13 +118,14 @@ exports.config = {
         [
             "appium",
             {
-                command: "appium",
                 args: {
+                    basePath: "/",
                     relaxedSecurity: true,
+                    port: 4723,
                 },
-                env: {
-                    APPIUM_HOME: process.cwd(),
-                },
+                logPath: "./logs",
+                command: "appium",
+                waitStartTime: 60000, // Wait up to 60 seconds for Appium to start
             },
         ],
     ],
@@ -169,10 +173,8 @@ exports.config = {
      * @param {object} config wdio configuration object
      * @param {Array.<Object>} capabilities list of capabilities details
      */
-    onPrepare: function (config, capabilities) {
-      // Set APPIUM_HOME to current directory so Appium can find locally installed drivers
-      process.env.APPIUM_HOME = process.cwd();
-    },
+    // onPrepare: function (config, capabilities) {
+    // },
     /**
      * Gets executed before a worker process is spawned and can be used to initialize specific service
      * for that worker as well as modify runtime environments in an async fashion.
