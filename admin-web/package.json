@@ -10,6 +10,7 @@
     "a11y:test": "jest --runInBand --selectProjects a11y",
     "a11y:test:leave": "jest tests/a11y/leave-a11y.test.tsx tests/a11y/components-a11y.test.tsx",
     "ui:test": "mocha --require ts-node/register --recursive tests/ui/**/*.spec.ts --timeout 60000",
+    "ui:test:phase6": "cross-env NODE_OPTIONS=\"--loader ts-node/esm\" TS_NODE_TRANSPILE_ONLY=true mocha \"tests/ui/phase6.spec.ts\" -r ts-node/esm --timeout 120000",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "e2e:api": "node mock/server.js",
     "e2e:web": "cross-env VITE_API_BASE_URL=http://localhost:5050 vite --port 5173",
