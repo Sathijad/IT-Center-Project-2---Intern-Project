@@ -11,8 +11,8 @@ dependencies:
     sdk: flutter
   
   # AWS Amplify
-  amplify_flutter: ^2.4.2
-  amplify_auth_cognito: ^2.4.2
+  amplify_flutter: ^2.6.0
+  amplify_auth_cognito: ^2.6.0
   
   # Networking
   http: ^1.2.2
