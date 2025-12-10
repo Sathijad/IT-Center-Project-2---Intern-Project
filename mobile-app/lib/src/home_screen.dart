@@ -470,15 +470,22 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    // Extract the key value to use as accessibility label for Appium
+    String? accessibilityLabel;
+    if (key is ValueKey) {
+      accessibilityLabel = key.value.toString();
+    }
+
+    // Build the card widget
+    final cardWidget = Card(
       key: key,
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Card(
-        elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -513,6 +520,22 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+
+    // Wrap with Semantics to expose accessibility label to Appium
+    // This ensures the label becomes content-desc in Android view tree
+    // Using explicitChildNodes: false to merge semantics with child widgets
+    if (accessibilityLabel != null) {
+      return Semantics(
+        label: accessibilityLabel,
+        button: true,
+        excludeSemantics: false,
+        container: true,
+        explicitChildNodes: false, // Merge semantics with child widgets
+        child: cardWidget,
+      );
+    }
+
+    return cardWidget;
   }
 
   Widget _buildInfoCard(BuildContext context) {

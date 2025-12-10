@@ -32,6 +32,29 @@ async function enterText(driver, selector, text, label) {
   console.log(`✅ Done typing ${label}`);
 }
 
+// Helper to wait for app to be ready
+async function waitForAppReady(driver, timeout = 30000) {
+  console.log("⏳ Waiting for app to be ready...");
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < timeout) {
+    try {
+      // Check if we can find any UI elements
+      const elements = await driver.$$('//*');
+      if (elements.length > 0) {
+        console.log(`✅ App is ready (found ${elements.length} elements)`);
+        await driver.pause(2000); // Give a bit more time for UI to stabilize
+        return;
+      }
+    } catch (e) {
+      // App not ready yet, continue waiting
+    }
+    await driver.pause(1000);
+  }
+  
+  console.log("⚠️ App ready check timeout, but continuing...");
+}
+
 // Helper to debug UI hierarchy
 async function debugUI(driver, label = "Current screen") {
   try {

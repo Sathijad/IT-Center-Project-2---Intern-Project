@@ -10,7 +10,7 @@ async function enterTextUiAutomator2(driver, selector, text, label) {
   console.log(`🖱️ Clicking ${label}...`);
   await element.click();
   await driver.pause(500);
-  
+
   console.log(`⌨️ Typing into ${label}: ${text}`);
   await element.clearValue();
   await element.setValue(text);
@@ -288,25 +288,189 @@ describe("Phase 7: Feedback Detail Screen", function () {
         console.log("⚠️ Could not verify home screen, but continuing...");
       }
       
-      // === NAVIGATE TO FEEDBACK ===
-      console.log("➡️ Looking for Feedback option...");
-      await driver.pause(2000);
+      // === NAVIGATE TO MY FEEDBACK CARD ===
+      console.log("➡️ Navigating to 'My Feedback' card on home screen...");
       
+      // Use the actual content-desc that appears in Android view tree
+      // Flutter exposes it as "My Feedback\nView your feedback" or just "My Feedback"
+      // We'll search for content-desc that contains "My Feedback"
+      const cardContentDescPattern = "My Feedback";
+      let cardFound = false;
+      let cardContainer = null;
+      const maxScrolls = 10;
+      
+      // Check if already visible - try exact match first, then contains
+      console.log("🔍 Checking if 'My Feedback' card is already visible...");
       try {
-        // Try to find feedback menu item or card
-        const feedbackOption = await findElementByText(driver, "Feedback", 10000);
-        await feedbackOption.click();
-        console.log("✅ Clicked Feedback option");
-        await driver.pause(3000);
+        // Try exact match for "My Feedback\nView your feedback"
+        cardContainer = await driver.$('//*[@content-desc="My Feedback\nView your feedback"]');
+        await cardContainer.waitForDisplayed({ timeout: 2000 });
+        cardFound = true;
+        console.log(`✅ Found 'My Feedback' card by exact content-desc - already visible`);
       } catch (e) {
-        console.log("⚠️ Could not find Feedback option, trying alternative...");
-        // Try tapping using helper function
         try {
-          await tapAtCoordinates(driver, 200, 400);
-          await driver.pause(2000);
-        } catch (tapError) {
-          console.log("⚠️ Could not tap, continuing...");
+          // Try contains match for "My Feedback"
+          cardContainer = await driver.$(`//*[contains(@content-desc, "${cardContentDescPattern}")]`);
+          await cardContainer.waitForDisplayed({ timeout: 2000 });
+          cardFound = true;
+          console.log(`✅ Found 'My Feedback' card by content-desc (contains) - already visible`);
+        } catch (e2) {
+          console.log("📜 Card not visible, scrolling to find it...");
         }
+      }
+      
+      // Scroll until card is visible
+      if (!cardFound) {
+        for (let scroll = 0; scroll < maxScrolls; scroll++) {
+          await driver.performActions([
+            {
+              type: 'pointer',
+              id: 'finger1',
+              parameters: { pointerType: 'touch' },
+              actions: [
+                { type: 'pointerMove', duration: 0, x: 200, y: 800 },
+                { type: 'pointerDown', button: 0 },
+                { type: 'pause', duration: 300 },
+                { type: 'pointerMove', duration: 500, x: 200, y: 100 },
+                { type: 'pointerUp', button: 0 }
+              ]
+            }
+          ]);
+          await driver.pause(1500);
+          
+          // Check if card is now visible - try exact first, then contains
+          try {
+            cardContainer = await driver.$('//*[@content-desc="My Feedback\nView your feedback"]');
+            await cardContainer.waitForDisplayed({ timeout: 1000 });
+            cardFound = true;
+            console.log(`✅ Found 'My Feedback' card after scroll ${scroll + 1} (exact match)`);
+            break;
+          } catch (e) {
+            try {
+              cardContainer = await driver.$(`//*[contains(@content-desc, "${cardContentDescPattern}")]`);
+              await cardContainer.waitForDisplayed({ timeout: 1000 });
+              cardFound = true;
+              console.log(`✅ Found 'My Feedback' card after scroll ${scroll + 1} (contains match)`);
+              break;
+            } catch (e2) {
+              // Continue scrolling
+            }
+          }
+          
+          // Every 3 scrolls, debug what's visible
+          if ((scroll + 1) % 3 === 0) {
+            console.log(`🔍 After ${scroll + 1} scrolls, checking visible content-desc...`);
+            try {
+              const descElements = await driver.$$('//*[@content-desc]');
+              const visibleDescs = [];
+              for (let i = 0; i < Math.min(descElements.length, 30); i++) {
+                try {
+                  const element = descElements[i];
+                  if (await element.isDisplayed()) {
+                    const desc = await element.getAttribute('content-desc');
+                    if (desc && desc.trim().length > 0 && desc.length < 100) {
+                      visibleDescs.push(desc);
+                    }
+                  }
+                } catch (e) {
+                  // Continue
+                }
+              }
+              console.log(`📋 Visible content-desc (${visibleDescs.length}): ${visibleDescs.slice(0, 10).join(", ")}`);
+            } catch (e) {
+              console.log("⚠️ Could not list visible content-desc");
+            }
+          }
+        }
+      }
+      
+      if (!cardFound || !cardContainer) {
+        // Take screenshot and list all visible content-desc for debugging
+        try {
+          await driver.saveScreenshot('./error-my-feedback-card-not-found.png');
+          console.log("📸 Screenshot saved: error-my-feedback-card-not-found.png");
+          
+          // List all visible content-desc
+          const descElements = await driver.$$('//*[@content-desc]');
+          const visibleDescs = [];
+          for (let i = 0; i < Math.min(descElements.length, 50); i++) {
+            try {
+              const element = descElements[i];
+              if (await element.isDisplayed()) {
+                const desc = await element.getAttribute('content-desc');
+                if (desc && desc.trim().length > 0 && desc.length < 100) {
+                  visibleDescs.push(desc);
+                }
+              }
+            } catch (e) {
+              // Continue
+            }
+          }
+          console.log(`📋 All visible content-desc on screen (${visibleDescs.length}):`);
+          visibleDescs.forEach((desc, idx) => {
+            console.log(`  ${idx + 1}. "${desc}"`);
+          });
+      } catch (e) {
+          console.log("⚠️ Could not take screenshot or list content-desc");
+        }
+        throw new Error(`Could not find 'My Feedback' card by content-desc containing '${cardContentDescPattern}' after ${maxScrolls} scrolls.`);
+      }
+      
+      await driver.pause(1000);
+      
+      // Click the card container
+      console.log(`👆 Clicking 'My Feedback' card container...`);
+      await cardContainer.click();
+      console.log(`✅ Clicked 'My Feedback' card container`);
+      await driver.pause(3000);
+      
+      // STRICT CHECK: Verify we landed on the correct screen
+      console.log("🔍 Verifying we landed on 'My Feedback' list screen...");
+      let onCorrectScreen = false;
+      try {
+        // Look for indicators that we're on the feedback list screen
+        const screenIndicators = [
+          '//*[contains(@text, "Feedback") or contains(@content-desc, "Feedback")]',
+          '//*[contains(@text, "My Feedback") or contains(@content-desc, "My Feedback")]',
+        ];
+        
+        for (const indicator of screenIndicators) {
+          try {
+            const element = await driver.$(indicator);
+            await element.waitForDisplayed({ timeout: 3000 });
+            onCorrectScreen = true;
+            console.log("✅ Confirmed: On 'My Feedback' list screen");
+            break;
+          } catch (e) {
+            // Continue to next indicator
+          }
+        }
+      } catch (e) {
+        console.log("⚠️ Could not verify screen, but continuing...");
+      }
+      
+      if (!onCorrectScreen) {
+        // Check if we're on a wrong screen
+        const wrongScreens = [
+          { text: "Profile", name: "Profile Screen" },
+          { text: "My Schedule", name: "Schedule Screen" },
+          { text: "Weekly Schedule", name: "Schedule Screen" },
+        ];
+        
+        for (const screen of wrongScreens) {
+          try {
+            const wrongScreenElement = await driver.$(`//*[@text="${screen.text}" or @content-desc="${screen.text}"]`);
+            await wrongScreenElement.waitForDisplayed({ timeout: 2000 });
+            throw new Error(`❌ Navigation failed: Clicked 'My Feedback' card but landed on '${screen.name}' instead.`);
+          } catch (e) {
+            if (e.message.includes("Navigation failed")) {
+              throw e;
+            }
+            // Not this wrong screen, continue
+          }
+        }
+        
+        console.log("⚠️ Could not verify correct screen, but continuing...");
       }
       
       // === FEEDBACK LIST SCREEN ===
@@ -325,7 +489,7 @@ describe("Phase 7: Feedback Detail Screen", function () {
         try {
           const clickableItem = await driver.$('//android.view.ViewGroup[1]');
           await clickableItem.click();
-          await driver.pause(2000);
+      await driver.pause(2000);
         } catch (e2) {
           console.log("⚠️ Alternative tap also failed");
         }

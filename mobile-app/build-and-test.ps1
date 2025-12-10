@@ -92,8 +92,8 @@ if (-not (Test-Path "node_modules")) {
 }
 
 # Run the tests - only phase7_feedback_detail.spec.js
-Write-Host "Running WebdriverIO test: phase7_feedback_detail.spec.js..." -ForegroundColor Cyan
-npx wdio run ./wdio.conf.js --spec ./test/specs/phase7_feedback_detail.spec.js
+Write-Host "Running WebdriverIO test: phase7_complete_feedback_flow.spec.js..." -ForegroundColor Cyan
+npx wdio run ./wdio.conf.js --spec ./test/specs/phase7_complete_feedback_flow.spec.js
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
