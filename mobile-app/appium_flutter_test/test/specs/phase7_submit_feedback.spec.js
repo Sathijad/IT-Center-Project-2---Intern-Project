@@ -272,20 +272,37 @@ describe("Phase 7: Submit Feedback Flow", function () {
       await passwordField.setValue(testPassword);
       await driver.pause(1000);
       
-      // Find and click Sign In button (same method as phase7_feedback_detail.spec.js)
+      // Find and click Sign In button - checking both text and content-desc
       console.log("👆 Looking for Sign In button...");
       let signInButton;
-      try {
-        signInButton = await findElementByText(driver, "Sign In", 10000);
-      } catch (e1) {
+      const signInSelectors = [
+        // Strategy 1: Using findElementByText (checks both text and content-desc)
+        async () => await findElementByText(driver, "Sign In", 5000),
+        // Strategy 2: Content-desc match
+        async () => await driver.$('//*[contains(@content-desc, "Sign In") or contains(@content-desc, "sign in") or contains(@content-desc, "login_button")]'),
+        // Strategy 3: Button with exact text
+        async () => await driver.$('//android.widget.Button[@text="Sign In"]'),
+        // Strategy 4: Button with contains text
+        async () => await driver.$('//android.widget.Button[contains(@text, "Sign")]'),
+        // Strategy 5: Any clickable with Sign In text
+        async () => await driver.$('//*[@clickable="true" and contains(@text, "Sign In")]'),
+        // Strategy 6: Any button with Sign or Login text
+        async () => await driver.$('//android.widget.Button[contains(@text, "Sign") or contains(@text, "Login")]'),
+      ];
+      
+      for (const selectorFn of signInSelectors) {
         try {
-          signInButton = await driver.$('//android.widget.Button[contains(@text, "Sign")]');
-          await signInButton.waitForDisplayed({ timeout: 10000 });
-        } catch (e2) {
-          // Try by any button with text containing "Sign" or "Login"
-          signInButton = await driver.$('//android.widget.Button[contains(@text, "Sign") or contains(@text, "Login")]');
-          await signInButton.waitForDisplayed({ timeout: 10000 });
+          signInButton = await selectorFn();
+          await signInButton.waitForDisplayed({ timeout: 3000 });
+          console.log(`✅ Found Sign In button`);
+          break;
+        } catch (e) {
+          continue;
         }
+      }
+      
+      if (!signInButton) {
+        throw new Error("Could not find Sign In button using any strategy");
       }
       
       await signInButton.click();

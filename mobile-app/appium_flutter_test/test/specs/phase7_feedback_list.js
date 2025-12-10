@@ -55,6 +55,14 @@ async function waitForAppReady(driver, timeout = 30000) {
   console.log("⚠️ App ready check timeout, but continuing...");
 }
 
+// Helper to find element by text (checks both text and content-desc)
+async function findElementByText(driver, text, timeout = 10000) {
+  const xpath = `//*[contains(@text, "${text}") or contains(@content-desc, "${text}")]`;
+  const element = await driver.$(xpath);
+  await element.waitForDisplayed({ timeout });
+  return element;
+}
+
 // Helper to debug UI hierarchy
 async function debugUI(driver, label = "Current screen") {
   try {
@@ -121,7 +129,6 @@ describe("Phase 7: Feedback List Screen", function () {
   });
 
   it("should navigate to feedback list from home screen", async () => {
-    const driver = browser;
     try {
       // === LOGIN SCREEN ===
       console.log("⏳ Waiting for login screen to appear...");
@@ -186,297 +193,396 @@ describe("Phase 7: Feedback List Screen", function () {
       const testEmail = "user@test.com";
       const testPassword = "Admin@123";
       
-      // Try multiple selector strategies for email field
+      // Find and enter email - using same pattern as phase7_feedback_detail.spec.js
+      console.log("📧 Looking for email field...");
       let emailField;
       try {
-        // Try by hint text first (most reliable for Flutter TextFormField)
-        emailField = await driver.$('//android.widget.EditText[contains(@hint, "email") or contains(@hint, "Email") or @hint="Enter your email"]');
-        await emailField.waitForDisplayed({ timeout: 15000 });
+        // Try multiple strategies to find email field
+        emailField = await driver.$('//android.widget.EditText[@hint="Enter your email" or contains(@hint, "email")]');
+        await emailField.waitForDisplayed({ timeout: 10000 });
         console.log("✅ Found email field by hint text");
-      } catch (e) {
-        console.log("⚠️ Email field not found by hint, trying by index...");
-        // Try by class name and index (first EditText is usually email)
+      } catch (e1) {
         try {
-          const editTexts = await driver.$$('android.widget.EditText');
-          if (editTexts.length > 0) {
-            emailField = editTexts[0];
-            await emailField.waitForDisplayed({ timeout: 15000 });
-            console.log("✅ Found email field by index (first EditText)");
-          } else {
-            throw new Error("No EditText fields found");
-          }
+          // Try by index (usually first EditText is email)
+          emailField = await driver.$('//android.widget.EditText[1]');
+          await emailField.waitForDisplayed({ timeout: 10000 });
+          console.log("✅ Found email field by index");
         } catch (e2) {
-          // Last resort: try by content-desc
-          try {
+          // Try by any EditText
+          const allEditTexts = await driver.$$('//android.widget.EditText');
+          if (allEditTexts.length > 0) {
+            emailField = allEditTexts[0];
+            await emailField.waitForDisplayed({ timeout: 10000 });
+            console.log("✅ Found email field (first EditText)");
+          } else {
+            // Last resort: try by content-desc
             emailField = await driver.$('~login_email_field');
-            await emailField.waitForDisplayed({ timeout: 15000 });
+            await emailField.waitForDisplayed({ timeout: 10000 });
             console.log("✅ Found email field by content-desc");
-          } catch (e3) {
-            throw new Error("Could not find email field with any method");
           }
         }
       }
       
-      console.log("📧 Entering email...");
-      await emailField.click(); // Focus the field first
+      await emailField.click();
       await driver.pause(500);
       await emailField.clearValue();
       await emailField.setValue(testEmail);
+      console.log(`✅ Entered email: ${testEmail}`);
       await driver.pause(1000);
       
-      // Verify text was entered
-      const enteredEmail = await emailField.getText();
-      console.log(`📧 Email field value: "${enteredEmail}"`);
-      
-      // Try multiple selector strategies for password field
+      // Find and enter password - using same pattern as phase7_feedback_detail.spec.js
+      console.log("🔒 Looking for password field...");
       let passwordField;
       try {
-        // Try by hint text first
-        passwordField = await driver.$('//android.widget.EditText[contains(@hint, "password") or contains(@hint, "Password") or @hint="Enter your password"]');
+        // Try to find password field (usually has password="true" or is second EditText)
+        passwordField = await driver.$('//android.widget.EditText[@password="true"]');
         await passwordField.waitForDisplayed({ timeout: 10000 });
-        console.log("✅ Found password field by hint text");
-      } catch (e) {
-        console.log("⚠️ Password field not found by hint, trying by index...");
+        console.log("✅ Found password field by password attribute");
+      } catch (e1) {
         try {
-          // Second EditText is usually password
-          const editTexts = await driver.$$('android.widget.EditText');
-          if (editTexts.length > 1) {
-            passwordField = editTexts[1];
-            await passwordField.waitForDisplayed({ timeout: 10000 });
-            console.log("✅ Found password field by index (second EditText)");
-          } else if (editTexts.length === 1) {
-            // Only one field? Might be password if email was already filled
-            passwordField = editTexts[0];
-            await passwordField.waitForDisplayed({ timeout: 10000 });
-            console.log("✅ Found password field (only one EditText found)");
-          } else {
-            throw new Error("No EditText fields found for password");
-          }
-        } catch (e2) {
-          // Last resort: try by content-desc
-          passwordField = await driver.$('~login_password_field');
+          passwordField = await driver.$('//android.widget.EditText[@hint="Enter your password" or contains(@hint, "password")]');
           await passwordField.waitForDisplayed({ timeout: 10000 });
-          console.log("✅ Found password field by content-desc");
+          console.log("✅ Found password field by hint text");
+        } catch (e2) {
+          // Try by index (usually second EditText is password)
+          passwordField = await driver.$('//android.widget.EditText[2]');
+          await passwordField.waitForDisplayed({ timeout: 10000 });
+          console.log("✅ Found password field by index");
         }
       }
       
-      console.log("🔒 Entering password...");
-      await passwordField.click(); // Focus the field first
+      await passwordField.click();
       await driver.pause(500);
       await passwordField.clearValue();
       await passwordField.setValue(testPassword);
+      console.log("✅ Entered password");
       await driver.pause(1000);
       
-      // Find and click login button - it's actually "Sign In" button
+      // Find and click Sign In button - checking both text and content-desc
+      console.log("👆 Looking for Sign In button...");
       let loginButton;
-      try {
-        // Try by text "Sign In" first (most reliable)
-        loginButton = await driver.$('//android.widget.Button[contains(@text, "Sign In") or @text="Sign In"]');
-        await loginButton.waitForDisplayed({ timeout: 10000 });
-        console.log("✅ Found Sign In button by text");
-      } catch (e) {
-        console.log("⚠️ Sign In button not found by text, trying other methods...");
-        try {
-          // Try by content-desc (ValueKey might not be exposed)
-          loginButton = await driver.$('~sign_in_button');
-          await loginButton.waitForDisplayed({ timeout: 10000 });
-          console.log("✅ Found Sign In button by content-desc");
-        } catch (e2) {
-          // Try finding any button with "Sign" in it
-          loginButton = await driver.$('//android.widget.Button[contains(@text, "Sign") or contains(@content-desc, "sign")]');
-          await loginButton.waitForDisplayed({ timeout: 10000 });
-          console.log("✅ Found Sign In button by XPath (any sign button)");
-        }
+      
+      // Helper function to find element by text (checks both text and content-desc)
+      async function findElementByText(driver, text, timeout = 10000) {
+        const xpath = `//*[contains(@text, "${text}") or contains(@content-desc, "${text}")]`;
+        const element = await driver.$(xpath);
+        await element.waitForDisplayed({ timeout });
+        return element;
       }
       
-      console.log("🔘 Clicking Sign In button...");
+      const signInSelectors = [
+        // Strategy 1: Using findElementByText (checks both text and content-desc)
+        async () => await findElementByText(driver, "Sign In", 5000),
+        // Strategy 2: Content-desc match
+        async () => await driver.$('//*[contains(@content-desc, "Sign In") or contains(@content-desc, "sign in") or contains(@content-desc, "login_button")]'),
+        // Strategy 3: Button with exact text
+        async () => await driver.$('//android.widget.Button[@text="Sign In"]'),
+        // Strategy 4: Button with contains text
+        async () => await driver.$('//android.widget.Button[contains(@text, "Sign")]'),
+        // Strategy 5: Any clickable with Sign In text
+        async () => await driver.$('//*[@clickable="true" and contains(@text, "Sign In")]'),
+        // Strategy 6: Any button with Sign or Login text
+        async () => await driver.$('//android.widget.Button[contains(@text, "Sign") or contains(@text, "Login")]'),
+      ];
       
-      // Try multiple click methods
-      try {
-        await loginButton.click();
-      } catch (e) {
-        console.log("⚠️ Standard click failed, trying tap...");
-        // Get element location and tap
-        const location = await loginButton.getLocation();
-        const size = await loginButton.getSize();
-        await driver.touchAction({
-          action: 'tap',
-          x: location.x + size.width / 2,
-          y: location.y + size.height / 2,
-        });
-      }
-      
-      console.log("⏳ Waiting for authentication to process...");
-      await driver.pause(3000); // Initial wait
-      
-      // Wait for either verification screen or error
-      let verificationFound = false;
-      for (let attempt = 0; attempt < 10; attempt++) {
-        await driver.pause(1000);
-        
-        // Check for verification code field
+      for (const selectorFn of signInSelectors) {
         try {
-          const codeField = await driver.$('//android.widget.EditText[contains(@hint, "Code") or contains(@hint, "000000")]');
-          if (await codeField.isDisplayed()) {
-            console.log("✅ Verification code page appeared!");
-            verificationFound = true;
-            break;
-          }
+          loginButton = await selectorFn();
+          await loginButton.waitForDisplayed({ timeout: 3000 });
+          console.log(`✅ Found Sign In button`);
+          break;
         } catch (e) {
-          // Not found yet, continue
+          continue;
         }
-        
-        // Check for MFA selection
-        try {
-          const mfaText = await driver.$('//android.widget.TextView[contains(@text, "Authentication Method")]');
-          if (await mfaText.isDisplayed()) {
-            console.log("✅ MFA selection screen appeared!");
-            // Click SMS option
-            const smsOption = await driver.$('//android.view.View[contains(@text, "SMS")]');
-            await smsOption.click();
-            await driver.pause(3000);
-            verificationFound = true;
-            break;
-          }
-        } catch (e) {
-          // Not found
-        }
-        
-        // Check for home screen (login successful without MFA)
-        try {
-          const homeIndicator = await driver.$('~home_display_name');
-          if (await homeIndicator.isDisplayed()) {
-            console.log("✅ Login successful! Already on home screen (no MFA required)");
-            verificationFound = true;
-            break;
-          }
-        } catch (e) {
-          // Not on home screen
-        }
-        
-        console.log(`⏳ Waiting for navigation... (${attempt + 1}/10)`);
       }
       
-      if (!verificationFound) {
-        console.log("⚠️ Could not detect verification screen or home screen");
-        await debugUI(driver, "After login click - unknown state");
+      if (!loginButton) {
+        throw new Error("Could not find Sign In button using any strategy");
       }
       
-      // Check if we're on verification code page or if there's an error
+      await loginButton.click();
+      console.log("✅ Clicked Sign In button");
+      await driver.pause(3000);
+      
+      // === MFA SCREEN (if applicable) ===
+      console.log("🔍 Checking for MFA screen...");
+      let mfaDetected = false;
       try {
-        // Look for verification code field or MFA selection
-        const codeField = await driver.$('//android.widget.EditText[contains(@hint, "Code") or contains(@hint, "000000")]');
-        await codeField.waitForDisplayed({ timeout: 15000 });
-        console.log("✅ Verification code page appeared!");
-      } catch (e) {
-        // Check for MFA selection screen
-        try {
-          const mfaSelection = await driver.$('//android.widget.TextView[contains(@text, "Authentication Method") or contains(@text, "Select")]');
-          await mfaSelection.waitForDisplayed({ timeout: 5000 });
-          console.log("✅ MFA selection screen appeared!");
-          // If MFA selection, click SMS option
-          const smsOption = await driver.$('//android.view.View[contains(@content-desc, "SMS") or contains(@text, "SMS")]');
-          await smsOption.click();
-          await driver.pause(3000);
-        } catch (e2) {
-          // Check for error message
+        // Check for various MFA indicators
+        const mfaIndicators = [
+          '//*[contains(@text, "Verification Code") or contains(@text, "verification") or contains(@text, "Code")]',
+          '//*[contains(@text, "MFA") or contains(@text, "Two-Factor")]',
+          '//android.widget.EditText[@hint*="code" or @hint*="Code"]'
+        ];
+        
+        for (const indicator of mfaIndicators) {
           try {
-            const errorMsg = await driver.$('//android.widget.TextView[contains(@text, "error") or contains(@text, "Error") or contains(@text, "failed")]');
-            const errorText = await errorMsg.getText();
-            console.log(`⚠️ Error message found: ${errorText}`);
-          } catch (e3) {
-            console.log("⚠️ Could not find verification code page, MFA selection, or error. Checking current screen...");
-            await debugUI(driver, "After login click");
-          }
-        }
-      }
-      
-      // === MFA/VERIFICATION CODE SCREEN ===
-      console.log("⏳ Checking for verification code screen...");
-      try {
-        // Wait for verification code input field
-        const codeField = await driver.$('//android.widget.EditText[contains(@hint, "Code") or contains(@hint, "000000") or contains(@label, "Code")]');
-        await codeField.waitForDisplayed({ timeout: 15000 });
-        console.log("✅ Verification code field found!");
-        
-        console.log("⏳ Waiting up to 30s for manual verification code entry...");
-        // Wait longer for manual entry
-        for (let i = 0; i < 6; i++) {
-          await driver.pause(5000);
-          console.log(`...${(i + 1) * 5}s elapsed`);
-          
-          // Check if code was entered (field has text)
-          try {
-            const codeValue = await codeField.getText();
-            if (codeValue && codeValue.length > 0) {
-              console.log(`✅ Code detected in field: ${codeValue.length} characters`);
-              break;
-            }
+            const mfaElement = await driver.$(indicator);
+            await mfaElement.waitForDisplayed({ timeout: 5000 });
+            mfaDetected = true;
+            console.log("✅ MFA screen detected!");
+            break;
           } catch (e) {
-            // Continue waiting
+            // Continue to next indicator
           }
         }
         
-        // Find and click verify button
-        let verifyButton;
-        try {
-          verifyButton = await driver.$('//android.widget.Button[contains(@text, "Verify") or contains(@text, "Verify Code")]');
-          await verifyButton.waitForDisplayed({ timeout: 5000 });
-        } catch (e) {
-          verifyButton = await driver.$('//android.widget.Button[contains(@content-desc, "verify")]');
+        if (mfaDetected) {
+          console.log("⏳ Waiting for you to enter verification code manually...");
+          console.log("⏳ Waiting up to 30 seconds...");
+          
+          // Wait for user to enter code (check every 2 seconds)
+          let codeEntered = false;
+          for (let i = 0; i < 15; i++) {
+            await driver.pause(2000);
+            console.log(`...${(i + 1) * 2}s elapsed`);
+            
+            // Try to find verify/submit button - if it becomes enabled, code might be entered
+            try {
+              const verifyButton = await driver.$('//android.widget.Button[contains(@text, "Verify") or contains(@text, "Submit") or contains(@text, "Next")]');
+              if (await verifyButton.isDisplayed()) {
+                console.log("✅ Verify button found, waiting a bit more for code entry...");
+                await driver.pause(3000);
+                
+                // Click verify button
+                await verifyButton.click();
+                console.log("✅ Clicked verify/submit button");
+                codeEntered = true;
+                break;
+              }
+            } catch (e) {
+              // Button not found yet, continue waiting
+            }
+          }
+          
+          if (!codeEntered) {
+            // Try to find and click verify button anyway
+            try {
+              const verifyButton = await findElementByText(driver, "Verify", 5000);
+              await verifyButton.click();
+              console.log("✅ Clicked verify button");
+            } catch (e) {
+              console.log("⚠️ Verify button not found, but continuing...");
+            }
+          }
+          
+          // Wait for navigation to complete after verification
+          console.log("⏳ Waiting for navigation after MFA verification...");
+          await driver.pause(5000);
+          
+          // Check if we're still on MFA screen or moved forward
+          let stillOnMfa = false;
+          try {
+            const mfaCheck = await driver.$('//*[contains(@text, "Verification Code") or contains(@text, "verification")]');
+            await mfaCheck.waitForDisplayed({ timeout: 2000 });
+            stillOnMfa = true;
+            console.log("⚠️ Still on MFA screen, waiting more...");
+            await driver.pause(5000);
+          } catch (e) {
+            console.log("✅ MFA screen cleared, continuing to home screen...");
+            stillOnMfa = false;
+          }
+          
+          // Additional wait to ensure app has fully navigated
+          if (!stillOnMfa) {
+            console.log("⏳ Waiting for app to fully load after MFA...");
+            await driver.pause(3000);
+          }
+        } else {
+          console.log("✅ No MFA screen detected, continuing...");
         }
-        
-        console.log("🔘 Clicking verify button...");
-        await verifyButton.click();
-        await driver.pause(5000); // Wait for verification to complete
-        console.log("✅ Verification submitted");
       } catch (e) {
-        console.log(`⚠️ Verification code screen not found: ${e.message}`);
-        await debugUI(driver, "After login - checking for verification screen");
+        console.log("⚠️ Error checking for MFA:", e.message);
+        console.log("Continuing anyway...");
       }
       
       // === HOME SCREEN ===
-      console.log("⏳ Waiting for Home screen...");
-      await driver.pause(3000); // Wait for home screen to load
+      console.log("⏳ Waiting for Home screen to load...");
+      await driver.pause(5000);
       
-      // Try to find home screen indicator
+      // Try to verify we're on home screen
       try {
-        await driver.$('~home_display_name').waitForDisplayed({ timeout: 10000 });
+        const homeIndicator = await findElementByText(driver, "Home", 10000);
+        console.log("🏠 On Home screen");
       } catch (e) {
-        console.log("⚠️ Home screen indicator not found, but continuing...");
+        console.log("⚠️ Could not verify home screen, but continuing...");
       }
-      console.log("🏠 On Home screen");
       
-      // Navigate to Feedback List - try multiple selectors
+      // Navigate to Feedback List - use actual content-desc that appears in Android view tree
+      console.log("➡️ Navigating to 'My Feedback' card on home screen...");
+      
+      // Use the actual content-desc that appears in Android view tree
+      // Flutter exposes it as "My Feedback\nView your feedback" or just "My Feedback"
+      // We'll search for content-desc that contains "My Feedback"
+      const myFeedbackCardContentDescPattern = "My Feedback";
+      let myFeedbackCardFound = false;
+      let myFeedbackCardContainer = null;
+      const maxScrolls = 10;
+      
+      // Check if already visible - try exact match first, then contains
+      console.log("🔍 Checking if 'My Feedback' card is already visible...");
       try {
-        const feedbackCard = await driver.$('~feedback_list_action_card');
-        await feedbackCard.waitForDisplayed({ timeout: 5000 });
-        await feedbackCard.click();
+        // Try exact match for "My Feedback\nView your feedback"
+        myFeedbackCardContainer = await driver.$('//*[@content-desc="My Feedback\nView your feedback"]');
+        await myFeedbackCardContainer.waitForDisplayed({ timeout: 2000 });
+        myFeedbackCardFound = true;
+        console.log(`✅ Found 'My Feedback' card by exact content-desc - already visible`);
       } catch (e) {
-        // Fallback: try by text or XPath
         try {
-          const feedbackCard = await driver.$('//android.view.View[contains(@content-desc, "feedback") or contains(@text, "Feedback")]');
-          await feedbackCard.click();
+          // Try contains match for "My Feedback"
+          myFeedbackCardContainer = await driver.$(`//*[contains(@content-desc, "${myFeedbackCardContentDescPattern}")]`);
+          await myFeedbackCardContainer.waitForDisplayed({ timeout: 2000 });
+          myFeedbackCardFound = true;
+          console.log(`✅ Found 'My Feedback' card by content-desc (contains) - already visible`);
         } catch (e2) {
-          // Last resort: tap by coordinates (approximate location)
-          console.log("⚠️ Using coordinate tap as fallback");
-          await driver.touchAction([{ action: "tap", x: 200, y: 600 }]);
+          console.log("📜 Card not visible, scrolling to find it...");
         }
       }
-      await driver.pause(2000);
       
-      // === FEEDBACK LIST SCREEN ===
-      console.log("➡️ On Feedback List screen.");
+      // Scroll until card is visible
+      if (!myFeedbackCardFound) {
+        for (let scroll = 0; scroll < maxScrolls; scroll++) {
+          try {
+            // Check if app is still responsive before scrolling
+            try {
+              await driver.getPageSource();
+            } catch (e) {
+              console.error(`❌ Cannot get page source. App may have crashed: ${e.message}`);
+              throw new Error(`App may have crashed. UiAutomator2 instrumentation not responding: ${e.message}`);
+            }
+            
+            // Try performActions first (more precise)
+            try {
+              await driver.performActions([
+                {
+                  type: 'pointer',
+                  id: 'finger1',
+                  parameters: { pointerType: 'touch' },
+                  actions: [
+                    { type: 'pointerMove', duration: 0, x: 200, y: 800 },
+                    { type: 'pointerDown', button: 0 },
+                    { type: 'pause', duration: 300 },
+                    { type: 'pointerMove', duration: 500, x: 200, y: 100 },
+                    { type: 'pointerUp', button: 0 }
+                  ]
+                }
+              ]);
+              await driver.pause(1500);
+            } catch (actionError) {
+              // If performActions fails, try alternative scroll method
+              if (actionError.message && (actionError.message.includes('instrumentation process is not running') || actionError.message.includes('instrumentation process'))) {
+                console.log(`⚠️ performActions failed on scroll ${scroll + 1}, trying alternative scroll method...`);
+                
+                // Try alternative scroll method using mobile:scroll
+                try {
+                  await driver.execute('mobile: scroll', {
+                    direction: 'down',
+                    element: null
+                  });
+                  await driver.pause(1500);
+                  console.log(`✅ Used alternative scroll method (mobile:scroll)`);
+                } catch (e2) {
+                  console.error(`❌ Alternative scroll also failed: ${e2.message}`);
+                  // Don't throw here, just log and continue - maybe the card is already visible
+                  console.log(`⚠️ Continuing without scroll...`);
+                  await driver.pause(1000);
+                }
+              } else {
+                // Re-throw if it's a different error
+                throw actionError;
+              }
+            }
+          } catch (e) {
+            // For other errors, log and continue
+            console.log(`⚠️ Scroll ${scroll + 1} failed: ${e.message}, continuing...`);
+            await driver.pause(1000);
+          }
+          
+          // Check if card is now visible - try exact first, then contains
+          try {
+            myFeedbackCardContainer = await driver.$('//*[@content-desc="My Feedback\nView your feedback"]');
+            await myFeedbackCardContainer.waitForDisplayed({ timeout: 1000 });
+            myFeedbackCardFound = true;
+            console.log(`✅ Found 'My Feedback' card after scroll ${scroll + 1} (exact match)`);
+            break;
+          } catch (e) {
+            try {
+              myFeedbackCardContainer = await driver.$(`//*[contains(@content-desc, "${myFeedbackCardContentDescPattern}")]`);
+              await myFeedbackCardContainer.waitForDisplayed({ timeout: 1000 });
+              myFeedbackCardFound = true;
+              console.log(`✅ Found 'My Feedback' card after scroll ${scroll + 1} (contains match)`);
+              break;
+            } catch (e2) {
+              // Continue scrolling
+            }
+          }
+        }
+      }
+      
+      if (!myFeedbackCardFound || !myFeedbackCardContainer) {
+        throw new Error(`Could not find 'My Feedback' card by content-desc containing '${myFeedbackCardContentDescPattern}' after ${maxScrolls} scrolls.`);
+      }
+      
+      await driver.pause(1000);
+      
+      // Click the card container
+      console.log(`👆 Clicking 'My Feedback' card container...`);
+      await myFeedbackCardContainer.click();
+      console.log(`✅ Clicked 'My Feedback' card container`);
       await driver.pause(3000);
       
-      // Verify we're on the feedback list screen
-      // The screen should show "My Feedback" in the app bar
+      // STRICT CHECK: Verify we landed on the correct screen
+      console.log("🔍 Verifying we landed on 'My Feedback' list screen...");
+      let onCorrectScreen = false;
       try {
-        await driver.$('//android.widget.TextView[contains(@text, "Feedback")]').waitForDisplayed({ timeout: 5000 });
-        console.log("✅ Successfully navigated to Feedback List screen");
+        // Look for indicators that we're on the feedback list screen
+        const screenIndicators = [
+          '//*[contains(@text, "Feedback") or contains(@content-desc, "Feedback")]',
+          '//*[contains(@text, "My Feedback") or contains(@content-desc, "My Feedback")]',
+        ];
+        
+        for (const indicator of screenIndicators) {
+          try {
+            const element = await driver.$(indicator);
+            await element.waitForDisplayed({ timeout: 3000 });
+            onCorrectScreen = true;
+            console.log("✅ Confirmed: On 'My Feedback' list screen");
+            break;
+          } catch (e) {
+            // Continue to next indicator
+          }
+        }
       } catch (e) {
-        console.log("⚠️ Could not verify feedback list screen, but continuing...");
+        console.log("⚠️ Could not verify screen, but continuing...");
       }
+      
+      if (!onCorrectScreen) {
+        // Check if we're on a wrong screen
+        const wrongScreens = [
+          { text: "Profile", name: "Profile Screen" },
+          { text: "My Schedule", name: "Schedule Screen" },
+          { text: "Weekly Schedule", name: "Schedule Screen" },
+        ];
+        
+        for (const screen of wrongScreens) {
+          try {
+            const wrongScreenElement = await driver.$(`//*[@text="${screen.text}" or @content-desc="${screen.text}"]`);
+            await wrongScreenElement.waitForDisplayed({ timeout: 2000 });
+            throw new Error(`❌ Navigation failed: Clicked 'My Feedback' card but landed on '${screen.name}' instead.`);
+          } catch (e) {
+            if (e.message && e.message.includes("Navigation failed")) {
+              throw e;
+            }
+            // Not this wrong screen, continue
+          }
+        }
+        
+        console.log("⚠️ Could not verify correct screen, but continuing...");
+      }
+      
+      // === FEEDBACK LIST SCREEN ===
+      console.log("➡️ On Feedback List screen");
+      await driver.pause(3000);
       
       // Test filter functionality
       console.log("🔍 Testing status filter...");
@@ -510,7 +616,10 @@ describe("Phase 7: Feedback List Screen", function () {
         await driver.pause(2000);
         const homeIndicator = await driver.$('~home_display_name');
         await homeIndicator.waitForDisplayed({ timeout: 5000 });
-        const feedbackCard = await driver.$('~feedback_list_action_card');
+        
+        // Use actual content-desc pattern
+        const feedbackCard = await driver.$('//*[contains(@content-desc, "My Feedback")]');
+        await feedbackCard.waitForDisplayed({ timeout: 5000 });
         await feedbackCard.click();
         await driver.pause(2000);
       } catch (e) {
@@ -532,7 +641,6 @@ describe("Phase 7: Feedback List Screen", function () {
   });
 
   it("should refresh feedback list", async () => {
-    const driver = browser;
     try {
       // Navigate to feedback list
       console.log("⏳ Navigating to feedback list...");
@@ -541,7 +649,10 @@ describe("Phase 7: Feedback List Screen", function () {
         await driver.pause(2000);
         const homeIndicator = await driver.$('~home_display_name');
         await homeIndicator.waitForDisplayed({ timeout: 5000 });
-        const feedbackCard = await driver.$('~feedback_list_action_card');
+        
+        // Use actual content-desc pattern
+        const feedbackCard = await driver.$('//*[contains(@content-desc, "My Feedback")]');
+        await feedbackCard.waitForDisplayed({ timeout: 5000 });
         await feedbackCard.click();
         await driver.pause(2000);
       } catch (e) {
