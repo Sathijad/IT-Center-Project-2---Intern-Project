@@ -164,20 +164,37 @@ describe("Phase 7: Feedback Detail Screen", function () {
       console.log("✅ Entered password");
       await driver.pause(1000);
       
-      // Find and click Sign In button
+      // Find and click Sign In button - checking both text and content-desc
       console.log("👆 Looking for Sign In button...");
       let signInButton;
-      try {
-        signInButton = await findElementByText(driver, "Sign In", 10000);
-      } catch (e1) {
+      const signInSelectors = [
+        // Strategy 1: Using findElementByText (checks both text and content-desc)
+        async () => await findElementByText(driver, "Sign In", 5000),
+        // Strategy 2: Content-desc match
+        async () => await driver.$('//*[contains(@content-desc, "Sign In") or contains(@content-desc, "sign in") or contains(@content-desc, "login_button")]'),
+        // Strategy 3: Button with exact text
+        async () => await driver.$('//android.widget.Button[@text="Sign In"]'),
+        // Strategy 4: Button with contains text
+        async () => await driver.$('//android.widget.Button[contains(@text, "Sign")]'),
+        // Strategy 5: Any clickable with Sign In text
+        async () => await driver.$('//*[@clickable="true" and contains(@text, "Sign In")]'),
+        // Strategy 6: Any button with Sign or Login text
+        async () => await driver.$('//android.widget.Button[contains(@text, "Sign") or contains(@text, "Login")]'),
+      ];
+      
+      for (const selectorFn of signInSelectors) {
         try {
-          signInButton = await driver.$('//android.widget.Button[contains(@text, "Sign")]');
-          await signInButton.waitForDisplayed({ timeout: 10000 });
-        } catch (e2) {
-          // Try by any button with text containing "Sign" or "Login"
-          signInButton = await driver.$('//android.widget.Button[contains(@text, "Sign") or contains(@text, "Login")]');
-          await signInButton.waitForDisplayed({ timeout: 10000 });
+          signInButton = await selectorFn();
+          await signInButton.waitForDisplayed({ timeout: 3000 });
+          console.log(`✅ Found Sign In button`);
+          break;
+        } catch (e) {
+          continue;
         }
+      }
+      
+      if (!signInButton) {
+        throw new Error("Could not find Sign In button using any strategy");
       }
       
       await signInButton.click();
@@ -322,21 +339,61 @@ describe("Phase 7: Feedback Detail Screen", function () {
       // Scroll until card is visible
       if (!cardFound) {
         for (let scroll = 0; scroll < maxScrolls; scroll++) {
-          await driver.performActions([
-            {
-              type: 'pointer',
-              id: 'finger1',
-              parameters: { pointerType: 'touch' },
-              actions: [
-                { type: 'pointerMove', duration: 0, x: 200, y: 800 },
-                { type: 'pointerDown', button: 0 },
-                { type: 'pause', duration: 300 },
-                { type: 'pointerMove', duration: 500, x: 200, y: 100 },
-                { type: 'pointerUp', button: 0 }
-              ]
+          try {
+            // Check if app is still responsive before scrolling
+            try {
+              await driver.getPageSource();
+            } catch (e) {
+              console.error(`❌ Cannot get page source. App may have crashed: ${e.message}`);
+              throw new Error(`App may have crashed. UiAutomator2 instrumentation not responding: ${e.message}`);
             }
-          ]);
-          await driver.pause(1500);
+            
+            // Try performActions first (more precise)
+            try {
+              await driver.performActions([
+                {
+                  type: 'pointer',
+                  id: 'finger1',
+                  parameters: { pointerType: 'touch' },
+                  actions: [
+                    { type: 'pointerMove', duration: 0, x: 200, y: 800 },
+                    { type: 'pointerDown', button: 0 },
+                    { type: 'pause', duration: 300 },
+                    { type: 'pointerMove', duration: 500, x: 200, y: 100 },
+                    { type: 'pointerUp', button: 0 }
+                  ]
+                }
+              ]);
+              await driver.pause(1500);
+            } catch (actionError) {
+              // If performActions fails, try alternative scroll method
+              if (actionError.message && (actionError.message.includes('instrumentation process is not running') || actionError.message.includes('instrumentation process'))) {
+                console.log(`⚠️ performActions failed on scroll ${scroll + 1}, trying alternative scroll method...`);
+                
+                // Try alternative scroll method using mobile:scroll
+                try {
+                  await driver.execute('mobile: scroll', {
+                    direction: 'down',
+                    element: null
+                  });
+                  await driver.pause(1500);
+                  console.log(`✅ Used alternative scroll method (mobile:scroll)`);
+                } catch (e2) {
+                  console.error(`❌ Alternative scroll also failed: ${e2.message}`);
+                  // Don't throw here, just log and continue - maybe the card is already visible
+                  console.log(`⚠️ Continuing without scroll...`);
+                  await driver.pause(1000);
+                }
+              } else {
+                // Re-throw if it's a different error
+                throw actionError;
+              }
+            }
+          } catch (e) {
+            // For other errors, log and continue
+            console.log(`⚠️ Scroll ${scroll + 1} failed: ${e.message}, continuing...`);
+            await driver.pause(1000);
+          }
           
           // Check if card is now visible - try exact first, then contains
           try {
