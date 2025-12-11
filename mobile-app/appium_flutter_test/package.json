@@ -1,0 +1,33 @@
+{
+  "name": "appium-flutter-test",
+  "version": "1.0.0",
+  "description": "Appium tests for Flutter mobile app - Phase 6 Schedule Features",
+  "main": "wdio.conf.js",
+  "scripts": {
+    "test": "wdio run wdio.conf.js",
+    "test:phase6": "wdio run wdio.conf.js --spec test/specs/phase6*.spec.js",
+    "test:schedule-overview": "wdio run wdio.conf.js --spec test/specs/phase6_schedule_overview.spec.js",
+    "test:schedule-flow": "wdio run wdio.conf.js --spec test/specs/phase6_complete_schedule_flow.spec.js"
+  },
+  "keywords": [
+    "appium",
+    "webdriverio",
+    "flutter",
+    "mobile",
+    "testing"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "webdriverio": "^9.0.0",
+    "@wdio/cli": "^9.0.0",
+    "@wdio/local-runner": "^9.0.0",
+    "@wdio/mocha-framework": "^9.0.0",
+    "@wdio/spec-reporter": "^9.0.0",
+    "appium": "^2.0.0",
+    "@wdio/appium-service": "^9.0.0",
+    "appium-uiautomator2-driver": "^2.0.0"
+  },
+  "devDependencies": {}
+}
+
