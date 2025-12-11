@@ -1,13 +1,16 @@
 {
   "name": "appium-flutter-test",
   "version": "1.0.0",
-  "description": "Appium tests for Flutter mobile app - Phase 4 Schedule & Tasks Features",
+  "description": "Appium tests for Flutter mobile app - Phase 4 Schedule & Tasks, Phase 6 KPI Dashboard & Training",
   "main": "wdio.conf.js",
   "scripts": {
     "test": "wdio run wdio.conf.js",
     "test:phase4": "wdio run wdio.conf.js --spec test/specs/phase4*.spec.js",
     "test:schedule-overview": "wdio run wdio.conf.js --spec test/specs/phase4_schedule_overview.spec.js",
-    "test:schedule-flow": "wdio run wdio.conf.js --spec test/specs/phase4_complete_schedule_flow.spec.js"
+    "test:schedule-flow": "wdio run wdio.conf.js --spec test/specs/phase4_complete_schedule_flow.spec.js",
+    "test:phase6": "wdio run wdio.conf.js --spec test/specs/phase6*.spec.js",
+    "test:kpi-dashboard": "wdio run wdio.conf.js --spec test/specs/phase6_kpi_dashboard.spec.js",
+    "test:performance-flow": "wdio run wdio.conf.js --spec test/specs/phase6_complete_performance_flow.spec.js"
   },
   "keywords": [
     "appium",

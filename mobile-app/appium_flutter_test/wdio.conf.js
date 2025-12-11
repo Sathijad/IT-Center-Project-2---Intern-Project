@@ -2,9 +2,9 @@ exports.config = {
   runner: 'local',
   specs: ['./test/specs/**/*.spec.js'],
   exclude: [],
-  maxInstances: 1,
-  capabilities: [
-    {
+    maxInstances: 1,
+    capabilities: [
+      {
       platformName: 'Android',
       'appium:deviceName': 'emulator-5554',
       'appium:app': 'C:/Users/SathijaDeshapriya/Downloads/IT Center Project 2/mobile-app/build/app/outputs/flutter-apk/app-debug.apk',
@@ -19,11 +19,11 @@ exports.config = {
     },
   ],
   logLevel: 'info',
-  bail: 0,
+    bail: 0,
   baseUrl: 'http://127.0.0.1:4723',
-  waitforTimeout: 10000,
-  connectionRetryTimeout: 120000,
-  connectionRetryCount: 3,
+    waitforTimeout: 10000,
+    connectionRetryTimeout: 120000,
+    connectionRetryCount: 3,
   services: [
     [
       'appium',
@@ -44,7 +44,7 @@ exports.config = {
   ],
   framework: 'mocha',
   reporters: ['spec'],
-  mochaOpts: {
+    mochaOpts: {
     ui: 'bdd',
     timeout: 180000,
   },
