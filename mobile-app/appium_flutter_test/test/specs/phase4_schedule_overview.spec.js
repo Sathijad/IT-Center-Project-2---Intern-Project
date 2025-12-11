@@ -1,6 +1,22 @@
 const { remote } = require("webdriverio");
 
 // === Helper functions for UiAutomator2 ===
+async function enterTextUiAutomator2(driver, selector, text, label) {
+  console.log(`⏳ Waiting for ${label}...`);
+  const element = await driver.$(selector);
+  await element.waitForDisplayed({ timeout: 15000 });
+  
+  console.log(`🖱️ Clicking ${label}...`);
+  await element.click();
+  await driver.pause(500);
+
+  console.log(`⌨️ Typing into ${label}: ${text}`);
+  await element.clearValue();
+  await element.setValue(text);
+  await driver.pause(1000);
+  console.log(`✅ Done typing ${label}`);
+}
+
 async function findElementByText(driver, text, timeout = 10000) {
   const xpath = `//*[contains(@text, "${text}") or contains(@content-desc, "${text}")]`;
   const element = await driver.$(xpath);
@@ -9,7 +25,7 @@ async function findElementByText(driver, text, timeout = 10000) {
 }
 
 // === Main test ===
-describe("Phase 6: Complete Schedule Flow", function () {
+describe("Phase 4: Schedule Overview Screen", function () {
   this.timeout(180000);
   let driver;
 
@@ -47,12 +63,14 @@ describe("Phase 6: Complete Schedule Flow", function () {
     }
   });
 
-  it("should complete full schedule flow: login -> navigate -> view schedules -> refresh", async () => {
+  it("should navigate to schedule overview and view schedules", async () => {
     try {
       // === LOGIN SCREEN ===
       console.log("⏳ Waiting for login screen to load...");
       await driver.pause(8000);
       
+      // Verify we're on the login screen
+      console.log("🔍 Verifying login screen is displayed...");
       try {
         const loginIndicator = await findElementByText(driver, "IT Center", 15000);
         console.log("✅ Login screen is displayed");
@@ -359,6 +377,7 @@ describe("Phase 6: Complete Schedule Flow", function () {
                 await textElement.waitForDisplayed({ timeout: 1000 });
                 
                 // Try to find the card container (parent or ancestor that's clickable)
+                // The card should be a clickable container
                 try {
                   // Get parent elements
                   const parent = await textElement.$('./..');
@@ -383,10 +402,61 @@ describe("Phase 6: Complete Schedule Flow", function () {
               }
             }
           }
+          
+          // Debug every 3 scrolls
+          if ((scroll + 1) % 3 === 0) {
+            console.log(`🔍 After ${scroll + 1} scrolls, checking visible content-desc...`);
+            try {
+              const descElements = await driver.$$('//*[@content-desc]');
+              const visibleDescs = [];
+              for (let i = 0; i < Math.min(descElements.length, 30); i++) {
+                try {
+                  const element = descElements[i];
+                  if (await element.isDisplayed()) {
+                    const desc = await element.getAttribute('content-desc');
+                    if (desc && desc.trim().length > 0 && desc.length < 100) {
+                      visibleDescs.push(desc);
+                    }
+                  }
+                } catch (e) {
+                  // Continue
+                }
+              }
+              console.log(`📋 Visible content-desc (${visibleDescs.length}): ${visibleDescs.slice(0, 10).join(", ")}`);
+            } catch (e) {
+              console.log("⚠️ Could not list visible content-desc");
+            }
+          }
         }
       }
       
       if (!cardFound || !cardContainer) {
+        try {
+          await driver.saveScreenshot('./error-my-schedule-card-not-found.png');
+          console.log("📸 Screenshot saved: error-my-schedule-card-not-found.png");
+          
+          const descElements = await driver.$$('//*[@content-desc]');
+          const visibleDescs = [];
+          for (let i = 0; i < Math.min(descElements.length, 50); i++) {
+            try {
+              const element = descElements[i];
+              if (await element.isDisplayed()) {
+                const desc = await element.getAttribute('content-desc');
+                if (desc && desc.trim().length > 0 && desc.length < 100) {
+                  visibleDescs.push(desc);
+                }
+              }
+            } catch (e) {
+              // Continue
+            }
+          }
+          console.log(`📋 All visible content-desc on screen (${visibleDescs.length}):`);
+          visibleDescs.forEach((desc, idx) => {
+            console.log(`  ${idx + 1}. "${desc}"`);
+          });
+        } catch (e) {
+          console.log("⚠️ Could not take screenshot or list content-desc");
+        }
         throw new Error(`Could not find 'My Schedule' card by content-desc or text after ${maxScrolls} scrolls.`);
       }
       
@@ -551,6 +621,7 @@ describe("Phase 6: Complete Schedule Flow", function () {
         const loadingIndicator = await driver.$('//*[@class="android.widget.ProgressBar" or contains(@class, "ProgressBar")]');
         await loadingIndicator.waitForDisplayed({ timeout: 2000 });
         console.log("⏳ Loading indicator found, waiting for it to disappear...");
+        // Wait for loading to complete (max 15 seconds)
         for (let i = 0; i < 15; i++) {
           await driver.pause(1000);
           try {
@@ -558,50 +629,33 @@ describe("Phase 6: Complete Schedule Flow", function () {
             console.log(`✅ Loading completed after ${i + 1} seconds`);
             break;
           } catch (e) {
+            // Still loading
             if ((i + 1) % 3 === 0) {
               console.log(`   Still loading... (${i + 1}s)`);
             }
           }
         }
       } catch (e) {
+        // No loading indicator found, screen likely already loaded
         console.log("✅ No loading indicator found, screen should be ready");
       }
       
-      await driver.pause(2000);
+      await driver.pause(2000); // Additional wait after loading
       
-      // Test pull-to-refresh functionality
-      console.log("🔄 Testing pull-to-refresh functionality...");
-      try {
-        await driver.performActions([
-          {
-            type: 'pointer',
-            id: 'finger1',
-            parameters: { pointerType: 'touch' },
-            actions: [
-              { type: 'pointerMove', duration: 0, x: 200, y: 400 },
-              { type: 'pointerDown', button: 0 },
-              { type: 'pause', duration: 300 },
-              { type: 'pointerMove', duration: 500, x: 200, y: 800 },
-              { type: 'pointerUp', button: 0 }
-            ]
-          }
-        ]);
-        await driver.pause(2000);
-        console.log("✅ Performed pull-to-refresh gesture");
-      } catch (e) {
-        console.log("⚠️ Pull-to-refresh gesture failed, but continuing...");
-      }
-      
-      // Verify screen content (lighter check since navigation was already verified)
+      // Since we already verified navigation (found "Weekly Schedule" title), 
+      // we just need to verify the screen has some content (empty state or schedule items)
+      // This is a lighter check - we know we're on the right screen from navigation check
       console.log("🔍 Verifying screen has content (empty state or schedule items)...");
-      let scheduleScreenVerified = false;
       
-      // Check for empty state
+      let screenContentFound = false;
+      
+      // Check for empty state text
       try {
         const emptyStateSelectors = [
           '//*[@text="No schedules found"]',
           '//*[contains(@text, "No schedules found")]',
           '//*[contains(@text, "don\'t have any scheduled shifts")]',
+          '//*[contains(@text, "scheduled shifts")]',
         ];
         
         for (const selector of emptyStateSelectors) {
@@ -609,15 +663,20 @@ describe("Phase 6: Complete Schedule Flow", function () {
             const emptyStateText = await driver.$(selector);
             await emptyStateText.waitForDisplayed({ timeout: 5000 });
             console.log(`✅ Found empty state: "${await emptyStateText.getText()}"`);
-            scheduleScreenVerified = true;
+            screenContentFound = true;
             break;
-          } catch (e) {}
+          } catch (e) {
+            // Continue to next selector
+          }
         }
-      } catch (e) {}
+      } catch (e) {
+        // Empty state not found, check for schedule items
+      }
       
-      // If empty state not found, check for schedule items
-      if (!scheduleScreenVerified) {
+      // If empty state not found, check for schedule items or any content
+      if (!screenContentFound) {
         try {
+          // Look for any cards or schedule-related content
           const contentIndicators = [
             '//android.widget.Card',
             '//*[contains(@text, "Shift")]',
@@ -627,413 +686,55 @@ describe("Phase 6: Complete Schedule Flow", function () {
           for (const indicator of contentIndicators) {
             try {
               const elements = await driver.$$(indicator);
+              let foundVisible = false;
               for (let i = 0; i < Math.min(elements.length, 5); i++) {
                 try {
                   if (await elements[i].isDisplayed()) {
+                    foundVisible = true;
                     const text = await elements[i].getText().catch(() => '');
                     console.log(`✅ Found schedule content: ${indicator} (text: "${text.substring(0, 50)}")`);
-                    scheduleScreenVerified = true;
                     break;
                   }
-                } catch (e) {}
+                } catch (e) {
+                  // Continue
+                }
               }
-              if (scheduleScreenVerified) break;
-            } catch (e2) {}
+              if (foundVisible) {
+                screenContentFound = true;
+                break;
+              }
+            } catch (e2) {
+              // Continue to next indicator
+            }
           }
-        } catch (e) {}
+        } catch (e) {
+          // Could not find content
+        }
       }
       
-      if (!scheduleScreenVerified) {
+      // If we still haven't found content, that's OK - we already verified navigation
+      // The screen might be loading or have no content yet
+      // But we should at least verify the AppBar is still there
+      if (!screenContentFound) {
         console.log("⚠️ Could not find empty state or schedule items, but navigation was verified.");
         console.log("   This is acceptable - screen may be loading or have no content.");
+        console.log("   Test will pass since navigation to correct screen was verified.");
       } else {
-        console.log("✅ Schedule screen content verified successfully!");
+        console.log("✅ Screen content verified successfully!");
       }
       
-      // Final check: Verify AppBar is still visible
+      // Final check: Verify we can still see the AppBar (confirm we're still on the right screen)
       console.log("🔍 Final check: Verifying AppBar is still visible...");
       try {
         const appBarCheck = await driver.$('//*[contains(@text, "Weekly Schedule")]');
         await appBarCheck.waitForDisplayed({ timeout: 3000 });
         console.log("✅ AppBar 'Weekly Schedule' is still visible - confirmed on correct screen");
       } catch (e) {
+        // AppBar not found - this is concerning but navigation was already verified
         console.log("⚠️ Could not find AppBar in final check, but navigation was already verified earlier");
       }
       
-      console.log("✅ Schedule screen testing completed!");
-      
-      // === NAVIGATE BACK TO HOME ===
-      console.log("⬅️ Navigating back to Home screen...");
-      try {
-        await driver.back();
-        await driver.pause(3000);
-        console.log("✅ Navigated back to Home screen");
-      } catch (e) {
-        console.log("⚠️ Could not navigate back, but continuing...");
-      }
-      
-      // === NAVIGATE TO MY TASKS CARD ===
-      console.log("➡️ Navigating to 'My Tasks' card on home screen...");
-      
-      const taskCardTitle = "My Tasks";
-      const taskCardSubtitle = "Track assignments";
-      let taskCardFound = false;
-      let taskCardContainer = null;
-      const maxTaskScrolls = 10;
-      
-      // Check if already visible
-      console.log("🔍 Checking if 'My Tasks' card is already visible...");
-      
-      // Strategy 1: Exact content-desc match
-      try {
-        taskCardContainer = await driver.$('//*[@content-desc="My Tasks\nTrack assignments"]');
-        await taskCardContainer.waitForDisplayed({ timeout: 2000 });
-        taskCardFound = true;
-        console.log(`✅ Found 'My Tasks' card by exact content-desc - already visible`);
-      } catch (e) {
-        // Strategy 2: Contains content-desc
-        try {
-          taskCardContainer = await driver.$(`//*[contains(@content-desc, "${taskCardTitle}")]`);
-          await taskCardContainer.waitForDisplayed({ timeout: 2000 });
-          taskCardFound = true;
-          console.log(`✅ Found 'My Tasks' card by content-desc (contains) - already visible`);
-        } catch (e2) {
-          // Strategy 3: Search by text
-          try {
-            taskCardContainer = await driver.$(`//*[@text="${taskCardTitle}" or contains(@text, "${taskCardTitle}")]`);
-            await taskCardContainer.waitForDisplayed({ timeout: 2000 });
-            taskCardFound = true;
-            console.log(`✅ Found 'My Tasks' card by text - already visible`);
-          } catch (e3) {
-            console.log("📜 Card not visible, scrolling to find it...");
-          }
-        }
-      }
-      
-      // Scroll until card is visible
-      if (!taskCardFound) {
-        for (let scroll = 0; scroll < maxTaskScrolls; scroll++) {
-          try {
-            await driver.getPageSource();
-          } catch (e) {
-            console.error(`❌ Cannot get page source. App may have crashed: ${e.message}`);
-            throw new Error(`App may have crashed. UiAutomator2 instrumentation not responding: ${e.message}`);
-          }
-          
-          try {
-            await driver.performActions([
-              {
-                type: 'pointer',
-                id: 'finger1',
-                parameters: { pointerType: 'touch' },
-                actions: [
-                  { type: 'pointerMove', duration: 0, x: 200, y: 800 },
-                  { type: 'pointerDown', button: 0 },
-                  { type: 'pause', duration: 300 },
-                  { type: 'pointerMove', duration: 500, x: 200, y: 100 },
-                  { type: 'pointerUp', button: 0 }
-                ]
-              }
-            ]);
-            await driver.pause(1500);
-          } catch (actionError) {
-            if (actionError.message && (actionError.message.includes('instrumentation process is not running') || actionError.message.includes('instrumentation process'))) {
-              console.log(`⚠️ performActions failed on scroll ${scroll + 1}, trying alternative scroll method...`);
-              try {
-                await driver.execute('mobile: scroll', { direction: 'down', element: null });
-                await driver.pause(1500);
-                console.log(`✅ Used alternative scroll method (mobile:scroll)`);
-              } catch (e2) {
-                console.error(`❌ Alternative scroll also failed: ${e2.message}`);
-                await driver.pause(1000);
-              }
-            } else {
-              throw actionError;
-            }
-          }
-          
-          // Check if card is now visible
-          try {
-            taskCardContainer = await driver.$('//*[@content-desc="My Tasks\nTrack assignments"]');
-            await taskCardContainer.waitForDisplayed({ timeout: 1000 });
-            taskCardFound = true;
-            console.log(`✅ Found 'My Tasks' card after scroll ${scroll + 1} (exact content-desc)`);
-            break;
-          } catch (e) {
-            try {
-              taskCardContainer = await driver.$(`//*[contains(@content-desc, "${taskCardTitle}")]`);
-              await taskCardContainer.waitForDisplayed({ timeout: 1000 });
-              taskCardFound = true;
-              console.log(`✅ Found 'My Tasks' card after scroll ${scroll + 1} (contains content-desc)`);
-              break;
-            } catch (e2) {
-              try {
-                const textElement = await driver.$(`//*[@text="${taskCardTitle}" or contains(@text, "${taskCardTitle}")]`);
-                await textElement.waitForDisplayed({ timeout: 1000 });
-                try {
-                  const parent = await textElement.$('./..');
-                  if (await parent.isDisplayed()) {
-                    taskCardContainer = parent;
-                    taskCardFound = true;
-                    console.log(`✅ Found 'My Tasks' card after scroll ${scroll + 1} (by text, using parent)`);
-                    break;
-                  }
-                } catch (e3) {
-                  const isClickable = await textElement.getAttribute('clickable');
-                  if (isClickable === 'true') {
-                    taskCardContainer = textElement;
-                    taskCardFound = true;
-                    console.log(`✅ Found 'My Tasks' card after scroll ${scroll + 1} (by text, clickable)`);
-                    break;
-                  }
-                }
-              } catch (e4) {}
-            }
-          }
-        }
-      }
-      
-      if (!taskCardFound || !taskCardContainer) {
-        try {
-          await driver.saveScreenshot('./error-my-tasks-card-not-found.png');
-          console.log("📸 Screenshot saved: error-my-tasks-card-not-found.png");
-        } catch (e) {}
-        throw new Error(`Could not find 'My Tasks' card by content-desc or text after ${maxTaskScrolls} scrolls.`);
-      }
-      
-      await driver.pause(1000);
-      
-      // Verify card content before clicking
-      console.log(`🔍 Verifying card content before clicking...`);
-      try {
-        const cardText = await taskCardContainer.getText();
-        const cardContentDesc = await taskCardContainer.getAttribute('content-desc');
-        console.log(`📋 Card text: "${cardText}"`);
-        console.log(`📋 Card content-desc: "${cardContentDesc}"`);
-        
-        const hasCorrectText = (cardText && (cardText.includes("My Tasks") || cardText.includes("Track assignments"))) ||
-                              (cardContentDesc && (cardContentDesc.includes("My Tasks") || cardContentDesc.includes("Track assignments")));
-        
-        if (!hasCorrectText) {
-          throw new Error(`❌ CARD VERIFICATION FAILED: Found card with text "${cardText}" and content-desc "${cardContentDesc}", but it does not contain "My Tasks". This is likely the wrong card.`);
-        }
-        console.log(`✅ Verified: Card contains "My Tasks" text`);
-      } catch (e) {
-        if (e.message && e.message.includes("CARD VERIFICATION FAILED")) {
-          try {
-            await driver.saveScreenshot('./error-wrong-task-card-selected.png');
-            console.log("📸 Screenshot saved: error-wrong-task-card-selected.png");
-          } catch (e2) {}
-          throw e;
-        }
-        console.log(`⚠️ Could not verify card text, but continuing...`);
-      }
-      
-      // Click the task card
-      console.log(`👆 Clicking 'My Tasks' card container...`);
-      try {
-        await taskCardContainer.click();
-        console.log(`✅ Clicked 'My Tasks' card container`);
-      } catch (clickError) {
-        console.log(`⚠️ Standard click failed, trying alternative methods...`);
-        try {
-          await taskCardContainer.touchAction('tap');
-          console.log(`✅ Clicked using touchAction`);
-        } catch (e2) {
-          try {
-            const location = await taskCardContainer.getLocation();
-            const size = await taskCardContainer.getSize();
-            const x = location.x + (size.width / 2);
-            const y = location.y + (size.height / 2);
-            await driver.performActions([{
-              type: 'pointer',
-              id: 'finger1',
-              parameters: { pointerType: 'touch' },
-              actions: [
-                { type: 'pointerMove', duration: 0, x: x, y: y },
-                { type: 'pointerDown', button: 0 },
-                { type: 'pause', duration: 100 },
-                { type: 'pointerUp', button: 0 }
-              ]
-            }]);
-            console.log(`✅ Clicked using performActions at (${x}, ${y})`);
-          } catch (e3) {
-            throw new Error(`❌ CLICK FAILED: Could not click 'My Tasks' card using any method. Error: ${clickError.message}`);
-          }
-        }
-      }
-      await driver.pause(3000);
-      
-      // STRICT CHECK: Verify we landed on the correct Tasks screen
-      console.log("🔍 STRICT CHECK: Verifying we landed on 'My Tasks' screen...");
-      await driver.pause(2000);
-      
-      let onTasksScreen = false;
-      const tasksScreenIndicators = [
-        '//*[@text="My Tasks"]',
-        '//*[contains(@text, "My Tasks")]',
-        '//*[contains(@content-desc, "My Tasks")]',
-      ];
-      
-      for (const indicator of tasksScreenIndicators) {
-        try {
-          const element = await driver.$(indicator);
-          await element.waitForDisplayed({ timeout: 5000 });
-          onTasksScreen = true;
-          console.log(`✅ Confirmed: Found 'My Tasks' screen title using: ${indicator}`);
-          break;
-        } catch (e) {}
-      }
-      
-      if (!onTasksScreen) {
-        const wrongScreens = [
-          { text: "Profile", name: "Profile Screen" },
-          { text: "Weekly Schedule", name: "Schedule Screen" },
-          { text: "My Feedback", name: "Feedback Screen" },
-        ];
-        
-        for (const screen of wrongScreens) {
-          try {
-            const wrongScreenElement = await driver.$(`//*[@text="${screen.text}" or contains(@text, "${screen.text}")]`);
-            await wrongScreenElement.waitForDisplayed({ timeout: 2000 });
-            try {
-              await driver.saveScreenshot('./error-wrong-tasks-screen-navigation.png');
-              console.log("📸 Screenshot saved: error-wrong-tasks-screen-navigation.png");
-            } catch (e) {}
-            throw new Error(`❌ NAVIGATION FAILED: Clicked 'My Tasks' card but landed on '${screen.name}' instead. Expected 'My Tasks' screen.`);
-          } catch (e) {
-            if (e.message && e.message.includes("NAVIGATION FAILED")) {
-              throw e;
-            }
-          }
-        }
-        
-        try {
-          await driver.saveScreenshot('./error-tasks-screen-verification-failed.png');
-          console.log("📸 Screenshot saved: error-tasks-screen-verification-failed.png");
-        } catch (e) {}
-        throw new Error(`❌ NAVIGATION VERIFICATION FAILED: Could not verify we are on 'My Tasks' screen after clicking 'My Tasks' card.`);
-      }
-      
-      // === TASKS SCREEN - ACTUAL AUTOMATION ===
-      console.log("➡️ On My Tasks screen - performing automation checks...");
-      await driver.pause(3000);
-      
-      // Wait for loading to complete
-      console.log("🔍 Waiting for tasks screen to finish loading...");
-      try {
-        const loadingIndicator = await driver.$('//*[@class="android.widget.ProgressBar" or contains(@class, "ProgressBar")]');
-        await loadingIndicator.waitForDisplayed({ timeout: 2000 });
-        for (let i = 0; i < 15; i++) {
-          await driver.pause(1000);
-          try {
-            await loadingIndicator.waitForDisplayed({ timeout: 500, reverse: true });
-            console.log(`✅ Loading completed after ${i + 1} seconds`);
-            break;
-          } catch (e) {
-            if ((i + 1) % 3 === 0) {
-              console.log(`   Still loading... (${i + 1}s)`);
-            }
-          }
-        }
-      } catch (e) {
-        console.log("✅ No loading indicator found, screen should be ready");
-      }
-      
-      await driver.pause(2000);
-      
-      // Test pull-to-refresh
-      console.log("🔄 Testing pull-to-refresh on Tasks screen...");
-      try {
-        await driver.performActions([
-          {
-            type: 'pointer',
-            id: 'finger1',
-            parameters: { pointerType: 'touch' },
-            actions: [
-              { type: 'pointerMove', duration: 0, x: 200, y: 400 },
-              { type: 'pointerDown', button: 0 },
-              { type: 'pause', duration: 300 },
-              { type: 'pointerMove', duration: 500, x: 200, y: 800 },
-              { type: 'pointerUp', button: 0 }
-            ]
-          }
-        ]);
-        await driver.pause(2000);
-        console.log("✅ Performed pull-to-refresh gesture on Tasks screen");
-      } catch (e) {
-        console.log("⚠️ Pull-to-refresh gesture failed, but continuing...");
-      }
-      
-      // Verify screen content
-      console.log("🔍 Verifying tasks screen has content...");
-      let tasksScreenVerified = false;
-      
-      // Check for empty state
-      try {
-        const emptyStateSelectors = [
-          '//*[@text="No tasks found"]',
-          '//*[contains(@text, "No tasks found")]',
-          '//*[contains(@text, "don\'t have any assigned tasks")]',
-        ];
-        
-        for (const selector of emptyStateSelectors) {
-          try {
-            const emptyStateText = await driver.$(selector);
-            await emptyStateText.waitForDisplayed({ timeout: 5000 });
-            console.log(`✅ Found empty state: "${await emptyStateText.getText()}"`);
-            tasksScreenVerified = true;
-            break;
-          } catch (e) {}
-        }
-      } catch (e) {}
-      
-      // If empty state not found, check for task items
-      if (!tasksScreenVerified) {
-        try {
-          const contentIndicators = [
-            '//android.widget.Card',
-            '//*[contains(@text, "Task")]',
-            '//*[contains(@text, "Add comment")]',
-          ];
-          
-          for (const indicator of contentIndicators) {
-            try {
-              const elements = await driver.$$(indicator);
-              for (let i = 0; i < Math.min(elements.length, 5); i++) {
-                try {
-                  if (await elements[i].isDisplayed()) {
-                    const text = await elements[i].getText().catch(() => '');
-                    console.log(`✅ Found task content: ${indicator} (text: "${text.substring(0, 50)}")`);
-                    tasksScreenVerified = true;
-                    break;
-                  }
-                } catch (e) {}
-              }
-              if (tasksScreenVerified) break;
-            } catch (e2) {}
-          }
-        } catch (e) {}
-      }
-      
-      if (!tasksScreenVerified) {
-        console.log("⚠️ Could not find empty state or task items, but navigation was verified.");
-        console.log("   This is acceptable - screen may be loading or have no content.");
-      } else {
-        console.log("✅ Tasks screen content verified successfully!");
-      }
-      
-      // Final check: Verify AppBar is still visible
-      console.log("🔍 Final check: Verifying AppBar is still visible...");
-      try {
-        const appBarCheck = await driver.$('//*[contains(@text, "My Tasks")]');
-        await appBarCheck.waitForDisplayed({ timeout: 3000 });
-        console.log("✅ AppBar 'My Tasks' is still visible - confirmed on correct screen");
-      } catch (e) {
-        console.log("⚠️ Could not find AppBar in final check, but navigation was already verified earlier");
-      }
-      
-      console.log("✅ Test completed successfully - Schedule and Tasks screens both tested!");
+      console.log("✅ Test completed successfully - navigation and screen verification passed!");
     } catch (err) {
       console.error("❌ Test failed:", err.message);
       try {

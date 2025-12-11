@@ -1,9 +1,9 @@
-# Build and Test Script for Phase 6 Appium Tests
+# Build and Test Script for Phase 4 Appium Tests (Schedule & Tasks)
 # This script builds the Flutter app with Flutter Driver enabled and runs Appium tests
 # Usage: .\build-and-test.ps1 [test-file] [-SkipBuild]
 # Examples:
-#   .\build-and-test.ps1 phase6_schedule_overview.spec.js
-#   .\build-and-test.ps1 phase6_schedule_overview.spec.js -SkipBuild
+#   .\build-and-test.ps1 phase4_schedule_overview.spec.js
+#   .\build-and-test.ps1 phase4_schedule_overview.spec.js -SkipBuild
 
 param(
     [Parameter(Mandatory=$false)]
@@ -14,7 +14,7 @@ param(
 )
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Phase 6: Appium Test Build & Run" -ForegroundColor Cyan
+Write-Host "Phase 4: Appium Test Build & Run (Schedule & Tasks)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -59,53 +59,14 @@ Write-Host "Running Appium tests..." -ForegroundColor Yellow
 # Check if Appium is already running on port 4723
 $portCheck = Get-NetTCPConnection -LocalPort 4723 -ErrorAction SilentlyContinue
 if ($portCheck) {
-    Write-Host "   WARNING: Appium server is already running on port 4723" -ForegroundColor Yellow
-    Write-Host "   Stopping existing Appium to ensure driver is loaded..." -ForegroundColor Gray
-    
-    # Stop existing Appium
-    $appiumProcesses = Get-Process -Name "node" -ErrorAction SilentlyContinue | Where-Object {
-        try {
-            $cmdLine = (Get-CimInstance Win32_Process -Filter "ProcessId = $($_.Id)").CommandLine
-            return $cmdLine -like "*appium*"
-        } catch {
-            return $false
-        }
-    }
-    if ($appiumProcesses) {
-        foreach ($proc in $appiumProcesses) {
-            Write-Host "   Stopping Appium process (PID: $($proc.Id))..." -ForegroundColor Gray
-            Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-        }
-    }
-    
-    # Also kill processes on port 4723
-    $portProcesses = Get-NetTCPConnection -LocalPort 4723 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
-    if ($portProcesses) {
-        foreach ($processId in $portProcesses) {
-            try {
-                Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
-            } catch {
-                # Process may have already terminated
-            }
-        }
-    }
-    
-    Start-Sleep -Seconds 3
-    Write-Host "   Appium stopped." -ForegroundColor Green
+    Write-Host "   INFO: Appium server is already running on port 4723" -ForegroundColor Green
+    Write-Host "   Using existing Appium instance..." -ForegroundColor Gray
+    Write-Host "   (If you need to restart Appium, stop it manually first: .\stop-appium.ps1)" -ForegroundColor Gray
 } else {
-    Write-Host "   Appium is not running." -ForegroundColor Gray
+    Write-Host "   INFO: Appium is not running." -ForegroundColor Yellow
+    Write-Host "   WebdriverIO will try to start Appium automatically (may take 1-2 minutes)..." -ForegroundColor Gray
 }
 
-Write-Host ""
-Write-Host "   IMPORTANT: Appium must be started manually before running tests!" -ForegroundColor Yellow
-Write-Host "   Recommended workflow:" -ForegroundColor Yellow
-Write-Host "   1. In a separate terminal, run: cd mobile-app\appium_flutter_test" -ForegroundColor Gray
-Write-Host "   2. Run: .\start-appium.ps1" -ForegroundColor Gray
-Write-Host "   3. Wait for 'SUCCESS: Appium server started successfully!'" -ForegroundColor Gray
-Write-Host "   4. Then run tests using: .\run-test.ps1 $TestFile" -ForegroundColor Gray
-Write-Host ""
-Write-Host "   Or continue and WebdriverIO will try to start Appium (may timeout)..." -ForegroundColor Gray
-Write-Host ""
 Write-Host ""
 
 # Change to appium test directory
@@ -114,13 +75,13 @@ Set-Location "$mobileAppDir\appium_flutter_test"
 # Determine which test to run
 if ($TestFile -eq "") {
     Write-Host "WARNING: No test file specified. Available test files:" -ForegroundColor Yellow
-    Write-Host "   - phase6_schedule_overview.spec.js" -ForegroundColor Gray
-    Write-Host "   - phase6_complete_schedule_flow.spec.js" -ForegroundColor Gray
+    Write-Host "   - phase4_schedule_overview.spec.js" -ForegroundColor Gray
+    Write-Host "   - phase4_complete_schedule_flow.spec.js" -ForegroundColor Gray
     Write-Host ""
     Write-Host "Usage: .\build-and-test.ps1 [test-file] [-SkipBuild]" -ForegroundColor Yellow
     Write-Host "Examples:" -ForegroundColor Yellow
-    Write-Host "   .\build-and-test.ps1 phase6_schedule_overview.spec.js" -ForegroundColor Gray
-    Write-Host "   .\build-and-test.ps1 phase6_schedule_overview.spec.js -SkipBuild" -ForegroundColor Gray
+    Write-Host "   .\build-and-test.ps1 phase4_schedule_overview.spec.js" -ForegroundColor Gray
+    Write-Host "   .\build-and-test.ps1 phase4_schedule_overview.spec.js -SkipBuild" -ForegroundColor Gray
     Write-Host ""
     exit 1
 }

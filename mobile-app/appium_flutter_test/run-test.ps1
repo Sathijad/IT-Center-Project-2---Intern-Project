@@ -1,7 +1,7 @@
 # Run Test Script - Assumes Appium is already running
 # This script runs a specific test file, assuming Appium is already started
 # Usage: .\run-test.ps1 [test-file]
-# Example: .\run-test.ps1 phase6_schedule_overview.spec.js
+# Example: .\run-test.ps1 phase4_schedule_overview.spec.js
 
 param(
     [Parameter(Mandatory=$true)]
@@ -9,7 +9,7 @@ param(
 )
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Phase 6: Running Appium Test" -ForegroundColor Cyan
+Write-Host "Phase 4: Running Appium Test (Schedule & Tasks)" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
