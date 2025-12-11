@@ -42,8 +42,23 @@ describe("Phase 4: Complete Schedule Flow (Schedule & Tasks)", function () {
 
   after(async () => {
     if (driver) {
-      await driver.deleteSession();
-      console.log("🧹 Session closed.");
+      try {
+        await driver.deleteSession();
+        console.log("🧹 Session closed.");
+      } catch (error) {
+        // Session may already be closed by WebdriverIO - this is OK
+        if (error.message && (
+          error.message.includes('UND_ERR_CLOSED') ||
+          error.message.includes('terminated') ||
+          error.message.includes('not started') ||
+          error.message.includes('session') && error.message.includes('DELETE')
+        )) {
+          console.log("ℹ️ Session already closed by WebdriverIO (expected)");
+        } else {
+          // Re-throw unexpected errors
+          throw error;
+        }
+      }
     }
   });
 
