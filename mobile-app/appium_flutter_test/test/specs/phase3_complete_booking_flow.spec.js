@@ -577,6 +577,11 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
           { text: "Profile", name: "Profile Screen" },
           { text: "My Schedule", name: "Schedule Screen" },
           { text: "My Feedback", name: "Feedback Screen" },
+          { text: "Submit Feedback", name: "Submit Feedback Screen", selectors: [
+            '~Submit Feedback', // Flutter button label exposed via content-desc
+            '//*[contains(@content-desc, "Submit Feedback")]',
+            '//*[@text="Submit Feedback" or contains(@text, "Submit Feedback")]',
+          ]},
           { text: "KPI Dashboard", name: "KPI Dashboard Screen" },
         ];
         
@@ -1178,6 +1183,11 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
           { text: "Staff Room", name: "Staff Room Screen" },
           { text: "My Schedule", name: "Schedule Screen" },
           { text: "My Feedback", name: "Feedback Screen" },
+          { text: "Submit Feedback", name: "Submit Feedback Screen", selectors: [
+            '~Submit Feedback', // Flutter button label exposed via content-desc
+            '//*[contains(@content-desc, "Submit Feedback")]',
+            '//*[@text="Submit Feedback" or contains(@text, "Submit Feedback")]',
+          ]},
         ];
         
         for (const screen of wrongScreens) {
