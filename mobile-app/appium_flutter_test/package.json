@@ -1,13 +1,21 @@
 {
   "name": "appium-flutter-test",
   "version": "1.0.0",
-  "description": "Appium tests for Flutter mobile app - Phase 4 Schedule & Tasks, Phase 6 KPI Dashboard & Training",
+  "description": "Appium tests for Flutter mobile app - Phase 1 Staff Authentication & Role Management, Phase 2 Staff Leave & Attendance Management, Phase 3 Staff Room & Resource Booking, Phase 4 Schedule & Tasks, Phase 5 Events & Announcements, Phase 6 KPI Dashboard & Training",
   "main": "wdio.conf.js",
   "scripts": {
     "test": "wdio run wdio.conf.js",
+    "test:phase1": "wdio run wdio.conf.js --spec test/specs/phase1*.spec.js",
+    "test:auth-role-flow": "wdio run wdio.conf.js --spec test/specs/phase1_complete_auth_role_flow.spec.js",
+    "test:phase2": "wdio run wdio.conf.js --spec test/specs/phase2*.spec.js",
+    "test:leave-attendance-flow": "wdio run wdio.conf.js --spec test/specs/phase2_complete_leave_attendance_flow.spec.js",
+    "test:phase3": "wdio run wdio.conf.js --spec test/specs/phase3*.spec.js",
+    "test:booking-flow": "wdio run wdio.conf.js --spec test/specs/phase3_complete_booking_flow.spec.js",
     "test:phase4": "wdio run wdio.conf.js --spec test/specs/phase4*.spec.js",
     "test:schedule-overview": "wdio run wdio.conf.js --spec test/specs/phase4_schedule_overview.spec.js",
     "test:schedule-flow": "wdio run wdio.conf.js --spec test/specs/phase4_complete_schedule_flow.spec.js",
+    "test:phase5": "wdio run wdio.conf.js --spec test/specs/phase5*.spec.js",
+    "test:announcements": "wdio run wdio.conf.js --spec test/specs/phase5_announcements_overview.spec.js",
     "test:phase6": "wdio run wdio.conf.js --spec test/specs/phase6*.spec.js",
     "test:kpi-dashboard": "wdio run wdio.conf.js --spec test/specs/phase6_kpi_dashboard.spec.js",
     "test:performance-flow": "wdio run wdio.conf.js --spec test/specs/phase6_complete_performance_flow.spec.js"

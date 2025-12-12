@@ -1,22 +1,6 @@
 const { remote } = require("webdriverio");
 
 // === Helper functions for UiAutomator2 ===
-async function enterTextUiAutomator2(driver, selector, text, label) {
-  console.log(`⏳ Waiting for ${label}...`);
-  const element = await driver.$(selector);
-  await element.waitForDisplayed({ timeout: 15000 });
-  
-  console.log(`🖱️ Clicking ${label}...`);
-  await element.click();
-  await driver.pause(500);
-
-  console.log(`⌨️ Typing into ${label}: ${text}`);
-  await element.clearValue();
-  await element.setValue(text);
-  await driver.pause(1000);
-  console.log(`✅ Done typing ${label}`);
-}
-
 async function findElementByText(driver, text, timeout = 10000) {
   const xpath = `//*[contains(@text, "${text}") or contains(@content-desc, "${text}")]`;
   const element = await driver.$(xpath);
@@ -25,7 +9,7 @@ async function findElementByText(driver, text, timeout = 10000) {
 }
 
 // === Main test ===
-describe("Phase 4: Schedule Overview Screen", function () {
+describe("Phase 5: Announcements Screen", function () {
   this.timeout(180000);
   let driver;
 
@@ -59,8 +43,8 @@ describe("Phase 4: Schedule Overview Screen", function () {
   after(async () => {
     if (driver) {
       try {
-      await driver.deleteSession();
-      console.log("🧹 Session closed.");
+        await driver.deleteSession();
+        console.log("🧹 Session closed.");
       } catch (error) {
         // Session may already be closed by WebdriverIO - this is OK
         if (error.message && (
@@ -78,7 +62,7 @@ describe("Phase 4: Schedule Overview Screen", function () {
     }
   });
 
-  it("should navigate to schedule overview and view schedules", async () => {
+  it("should navigate to Announcements and view events", async () => {
     try {
       // === LOGIN SCREEN ===
       console.log("⏳ Waiting for login screen to load...");
@@ -274,42 +258,38 @@ describe("Phase 4: Schedule Overview Screen", function () {
         console.log("⚠️ Could not verify home screen, but continuing...");
       }
       
-      // === NAVIGATE TO MY SCHEDULE CARD ===
-      console.log("➡️ Navigating to 'My Schedule' card on home screen...");
+      // === NAVIGATE TO ANNOUNCEMENTS CARD ===
+      console.log("➡️ Navigating to 'Announcements' card on home screen...");
       
-      // Use the actual content-desc that appears in Android view tree
-      // Flutter exposes it as "My Schedule\nSee upcoming shifts" or just "My Schedule"
-      // Also search by text since content-desc might not be exposed
-      const cardTitle = "My Schedule";
-      const cardSubtitle = "See upcoming shifts";
+      const cardTitle = "Announcements";
+      const cardSubtitle = "View latest events";
       let cardFound = false;
       let cardContainer = null;
       const maxScrolls = 10;
       
       // Check if already visible - try multiple strategies
-      console.log("🔍 Checking if 'My Schedule' card is already visible...");
+      console.log("🔍 Checking if 'Announcements' card is already visible...");
       
       // Strategy 1: Exact content-desc match
       try {
-        cardContainer = await driver.$('//*[@content-desc="My Schedule\nSee upcoming shifts"]');
+        cardContainer = await driver.$('//*[@content-desc="Announcements\nView latest events"]');
         await cardContainer.waitForDisplayed({ timeout: 2000 });
         cardFound = true;
-        console.log(`✅ Found 'My Schedule' card by exact content-desc - already visible`);
+        console.log(`✅ Found 'Announcements' card by exact content-desc - already visible`);
       } catch (e) {
         // Strategy 2: Contains content-desc
         try {
           cardContainer = await driver.$(`//*[contains(@content-desc, "${cardTitle}")]`);
           await cardContainer.waitForDisplayed({ timeout: 2000 });
           cardFound = true;
-          console.log(`✅ Found 'My Schedule' card by content-desc (contains) - already visible`);
+          console.log(`✅ Found 'Announcements' card by content-desc (contains) - already visible`);
         } catch (e2) {
-          // Strategy 3: Search by text - find element containing "My Schedule" text
+          // Strategy 3: Search by text
           try {
             cardContainer = await driver.$(`//*[@text="${cardTitle}" or contains(@text, "${cardTitle}")]`);
             await cardContainer.waitForDisplayed({ timeout: 2000 });
-            // Verify it also has the subtitle nearby or is in a card container
             cardFound = true;
-            console.log(`✅ Found 'My Schedule' card by text - already visible`);
+            console.log(`✅ Found 'Announcements' card by text - already visible`);
           } catch (e3) {
             console.log("📜 Card not visible, scrolling to find it...");
           }
@@ -368,47 +348,39 @@ describe("Phase 4: Schedule Overview Screen", function () {
             await driver.pause(1000);
           }
           
-          // Check if card is now visible - try multiple strategies
-          // Strategy 1: Exact content-desc
+          // Check if card is now visible
           try {
-            cardContainer = await driver.$('//*[@content-desc="My Schedule\nSee upcoming shifts"]');
+            cardContainer = await driver.$('//*[@content-desc="Announcements\nView latest events"]');
             await cardContainer.waitForDisplayed({ timeout: 1000 });
             cardFound = true;
-            console.log(`✅ Found 'My Schedule' card after scroll ${scroll + 1} (exact content-desc)`);
+            console.log(`✅ Found 'Announcements' card after scroll ${scroll + 1} (exact content-desc)`);
             break;
           } catch (e) {
-            // Strategy 2: Contains content-desc
             try {
               cardContainer = await driver.$(`//*[contains(@content-desc, "${cardTitle}")]`);
               await cardContainer.waitForDisplayed({ timeout: 1000 });
               cardFound = true;
-              console.log(`✅ Found 'My Schedule' card after scroll ${scroll + 1} (contains content-desc)`);
+              console.log(`✅ Found 'Announcements' card after scroll ${scroll + 1} (contains content-desc)`);
               break;
             } catch (e2) {
-              // Strategy 3: Search by text
               try {
-                // Find element with "My Schedule" text, then find its parent container (card)
                 const textElement = await driver.$(`//*[@text="${cardTitle}" or contains(@text, "${cardTitle}")]`);
                 await textElement.waitForDisplayed({ timeout: 1000 });
                 
-                // Try to find the card container (parent or ancestor that's clickable)
-                // The card should be a clickable container
                 try {
-                  // Get parent elements
                   const parent = await textElement.$('./..');
                   if (await parent.isDisplayed()) {
                     cardContainer = parent;
                     cardFound = true;
-                    console.log(`✅ Found 'My Schedule' card after scroll ${scroll + 1} (by text, using parent)`);
+                    console.log(`✅ Found 'Announcements' card after scroll ${scroll + 1} (by text, using parent)`);
                     break;
                   }
                 } catch (e3) {
-                  // If parent doesn't work, use the text element itself if it's clickable
                   const isClickable = await textElement.getAttribute('clickable');
                   if (isClickable === 'true') {
                     cardContainer = textElement;
                     cardFound = true;
-                    console.log(`✅ Found 'My Schedule' card after scroll ${scroll + 1} (by text, clickable)`);
+                    console.log(`✅ Found 'Announcements' card after scroll ${scroll + 1} (by text, clickable)`);
                     break;
                   }
                 }
@@ -417,67 +389,20 @@ describe("Phase 4: Schedule Overview Screen", function () {
               }
             }
           }
-          
-          // Debug every 3 scrolls
-          if ((scroll + 1) % 3 === 0) {
-            console.log(`🔍 After ${scroll + 1} scrolls, checking visible content-desc...`);
-            try {
-              const descElements = await driver.$$('//*[@content-desc]');
-              const visibleDescs = [];
-              for (let i = 0; i < Math.min(descElements.length, 30); i++) {
-                try {
-                  const element = descElements[i];
-                  if (await element.isDisplayed()) {
-                    const desc = await element.getAttribute('content-desc');
-                    if (desc && desc.trim().length > 0 && desc.length < 100) {
-                      visibleDescs.push(desc);
-                    }
-                  }
-                } catch (e) {
-                  // Continue
-                }
-              }
-              console.log(`📋 Visible content-desc (${visibleDescs.length}): ${visibleDescs.slice(0, 10).join(", ")}`);
-            } catch (e) {
-              console.log("⚠️ Could not list visible content-desc");
-            }
-          }
         }
       }
       
       if (!cardFound || !cardContainer) {
         try {
-          await driver.saveScreenshot('./error-my-schedule-card-not-found.png');
-          console.log("📸 Screenshot saved: error-my-schedule-card-not-found.png");
-          
-          const descElements = await driver.$$('//*[@content-desc]');
-          const visibleDescs = [];
-          for (let i = 0; i < Math.min(descElements.length, 50); i++) {
-            try {
-              const element = descElements[i];
-              if (await element.isDisplayed()) {
-                const desc = await element.getAttribute('content-desc');
-                if (desc && desc.trim().length > 0 && desc.length < 100) {
-                  visibleDescs.push(desc);
-                }
-              }
-            } catch (e) {
-              // Continue
-            }
-          }
-          console.log(`📋 All visible content-desc on screen (${visibleDescs.length}):`);
-          visibleDescs.forEach((desc, idx) => {
-            console.log(`  ${idx + 1}. "${desc}"`);
-          });
-        } catch (e) {
-          console.log("⚠️ Could not take screenshot or list content-desc");
-        }
-        throw new Error(`Could not find 'My Schedule' card by content-desc or text after ${maxScrolls} scrolls.`);
+          await driver.saveScreenshot('./error-announcements-card-not-found.png');
+          console.log("📸 Screenshot saved: error-announcements-card-not-found.png");
+        } catch (e) {}
+        throw new Error(`Could not find 'Announcements' card by content-desc or text after ${maxScrolls} scrolls.`);
       }
       
       await driver.pause(1000);
       
-      // VERIFY: Before clicking, ensure we have the correct card by checking its text/content
+      // VERIFY: Before clicking, ensure we have the correct card
       console.log(`🔍 Verifying card content before clicking...`);
       try {
         const cardText = await cardContainer.getText();
@@ -485,19 +410,18 @@ describe("Phase 4: Schedule Overview Screen", function () {
         console.log(`📋 Card text: "${cardText}"`);
         console.log(`📋 Card content-desc: "${cardContentDesc}"`);
         
-        // Verify the card contains "My Schedule" text
-        const hasCorrectText = (cardText && (cardText.includes("My Schedule") || cardText.includes("See upcoming shifts"))) ||
-                              (cardContentDesc && (cardContentDesc.includes("My Schedule") || cardContentDesc.includes("See upcoming shifts")));
+        const hasCorrectText = (cardText && (cardText.includes("Announcements") || cardText.includes("View latest events"))) ||
+                              (cardContentDesc && (cardContentDesc.includes("Announcements") || cardContentDesc.includes("View latest events")));
         
         if (!hasCorrectText) {
-          throw new Error(`❌ CARD VERIFICATION FAILED: Found card with text "${cardText}" and content-desc "${cardContentDesc}", but it does not contain "My Schedule". This is likely the wrong card.`);
+          throw new Error(`❌ CARD VERIFICATION FAILED: Found card with text "${cardText}" and content-desc "${cardContentDesc}", but it does not contain "Announcements". This is likely the wrong card.`);
         }
-        console.log(`✅ Verified: Card contains "My Schedule" text`);
+        console.log(`✅ Verified: Card contains "Announcements" text`);
       } catch (e) {
         if (e.message && e.message.includes("CARD VERIFICATION FAILED")) {
           try {
-            await driver.saveScreenshot('./error-wrong-card-selected.png');
-            console.log("📸 Screenshot saved: error-wrong-card-selected.png");
+            await driver.saveScreenshot('./error-wrong-announcements-card-selected.png');
+            console.log("📸 Screenshot saved: error-wrong-announcements-card-selected.png");
           } catch (e2) {}
           throw e;
         }
@@ -505,12 +429,11 @@ describe("Phase 4: Schedule Overview Screen", function () {
       }
       
       // Click the card container
-      console.log(`👆 Clicking 'My Schedule' card container...`);
+      console.log(`👆 Clicking 'Announcements' card container...`);
       try {
         await cardContainer.click();
-        console.log(`✅ Clicked 'My Schedule' card container`);
+        console.log(`✅ Clicked 'Announcements' card container`);
       } catch (clickError) {
-        // If click fails, try alternative click methods
         console.log(`⚠️ Standard click failed, trying alternative methods...`);
         try {
           await cardContainer.touchAction('tap');
@@ -534,33 +457,29 @@ describe("Phase 4: Schedule Overview Screen", function () {
             }]);
             console.log(`✅ Clicked using performActions at (${x}, ${y})`);
           } catch (e3) {
-            throw new Error(`❌ CLICK FAILED: Could not click 'My Schedule' card using any method. Error: ${clickError.message}`);
+            throw new Error(`❌ CLICK FAILED: Could not click 'Announcements' card using any method. Error: ${clickError.message}`);
           }
         }
       }
       await driver.pause(3000);
       
-      // STRICT CHECK: Verify we landed on the correct screen - FAIL LOUDLY IF WRONG
-      console.log("🔍 STRICT CHECK: Verifying we landed on 'Weekly Schedule' screen...");
-      await driver.pause(2000); // Give screen time to load
+      // STRICT CHECK: Verify we landed on the correct screen
+      console.log("🔍 STRICT CHECK: Verifying we landed on 'Announcements' screen...");
+      await driver.pause(2000);
       
       let onCorrectScreen = false;
-      let screenTitleFound = false;
-      
-      // First, check for the correct screen title
       const correctScreenIndicators = [
-        '//*[@text="Weekly Schedule"]',
-        '//*[contains(@text, "Weekly Schedule")]',
-        '//*[contains(@content-desc, "Weekly Schedule")]',
+        '//*[@text="Announcements"]',
+        '//*[contains(@text, "Announcements")]',
+        '//*[contains(@content-desc, "Announcements")]',
       ];
       
       for (const indicator of correctScreenIndicators) {
         try {
           const element = await driver.$(indicator);
           await element.waitForDisplayed({ timeout: 5000 });
-          screenTitleFound = true;
           onCorrectScreen = true;
-          console.log(`✅ Confirmed: Found 'Weekly Schedule' screen title using: ${indicator}`);
+          console.log(`✅ Confirmed: Found 'Announcements' screen title using: ${indicator}`);
           break;
         } catch (e) {
           // Continue to next indicator
@@ -569,74 +488,48 @@ describe("Phase 4: Schedule Overview Screen", function () {
       
       // If we didn't find the correct screen, check for wrong screens and FAIL
       if (!onCorrectScreen) {
-        console.log("❌ Did not find 'Weekly Schedule' screen title. Checking for wrong screens...");
+        console.log("❌ Did not find 'Announcements' screen title. Checking for wrong screens...");
         
         const wrongScreens = [
-          { text: "Profile", name: "Profile Screen", selectors: [
-            '//*[@text="Profile" or contains(@text, "Profile")]',
-            '//*[contains(@content-desc, "Profile")]',
-          ]},
-          { text: "My Feedback", name: "My Feedback Screen", selectors: [
-            '//*[@text="My Feedback" or contains(@text, "My Feedback")]',
-            '//*[contains(@content-desc, "My Feedback")]',
-          ]},
-          { text: "Submit Feedback", name: "Submit Feedback Screen", selectors: [
-            '//*[@text="Submit Feedback" or contains(@text, "Submit Feedback")]',
-            '//*[contains(@content-desc, "Submit Feedback")]',
-          ]},
-          { text: "KPI Dashboard", name: "KPI Dashboard Screen", selectors: [
-            '//*[@text="KPI Dashboard" or contains(@text, "KPI Dashboard")]',
-            '//*[contains(@content-desc, "KPI Dashboard")]',
-          ]},
-          { text: "Training", name: "Training Screen", selectors: [
-            '//*[@text="My Training" or contains(@text, "Training")]',
-            '//*[contains(@content-desc, "Training")]',
-          ]},
+          { text: "Profile", name: "Profile Screen" },
+          { text: "My Schedule", name: "Schedule Screen" },
+          { text: "My Feedback", name: "Feedback Screen" },
+          { text: "KPI Dashboard", name: "KPI Dashboard Screen" },
+          { text: "My Training", name: "Training Screen" },
         ];
         
         for (const screen of wrongScreens) {
-          for (const selector of screen.selectors) {
+          try {
+            const wrongScreenElement = await driver.$(`//*[@text="${screen.text}" or contains(@text, "${screen.text}")]`);
+            await wrongScreenElement.waitForDisplayed({ timeout: 2000 });
             try {
-              const wrongScreenElement = await driver.$(selector);
-              await wrongScreenElement.waitForDisplayed({ timeout: 2000 });
-              // Take screenshot before failing
-              try {
-                await driver.saveScreenshot('./error-wrong-screen-navigation.png');
-                console.log("📸 Screenshot saved: error-wrong-screen-navigation.png");
-              } catch (e) {}
-              
-              throw new Error(`❌ NAVIGATION FAILED: Clicked 'My Schedule' card but landed on '${screen.name}' instead. Expected 'Weekly Schedule' screen.`);
-            } catch (e) {
-              if (e.message && e.message.includes("NAVIGATION FAILED")) {
-                throw e; // Re-throw navigation errors
-              }
-              // Continue checking other wrong screens
+              await driver.saveScreenshot('./error-wrong-announcements-screen-navigation.png');
+              console.log("📸 Screenshot saved: error-wrong-announcements-screen-navigation.png");
+            } catch (e) {}
+            throw new Error(`❌ NAVIGATION FAILED: Clicked 'Announcements' card but landed on '${screen.name}' instead. Expected 'Announcements' screen.`);
+          } catch (e) {
+            if (e.message && e.message.includes("NAVIGATION FAILED")) {
+              throw e;
             }
           }
         }
         
-        // If we didn't find any wrong screen but also didn't find the correct one, fail
         try {
-          await driver.saveScreenshot('./error-screen-verification-failed.png');
-          console.log("📸 Screenshot saved: error-screen-verification-failed.png");
+          await driver.saveScreenshot('./error-announcements-screen-verification-failed.png');
+          console.log("📸 Screenshot saved: error-announcements-screen-verification-failed.png");
         } catch (e) {}
-        
-        throw new Error(`❌ NAVIGATION VERIFICATION FAILED: Could not verify we are on 'Weekly Schedule' screen after clicking 'My Schedule' card. The screen title was not found.`);
+        throw new Error(`❌ NAVIGATION VERIFICATION FAILED: Could not verify we are on 'Announcements' screen after clicking 'Announcements' card.`);
       }
       
-      // === SCHEDULE OVERVIEW SCREEN - ACTUAL AUTOMATION ===
-      // Since navigation check passed, we know we're on the correct screen
-      // Now we just need to verify the screen has loaded and has content
-      console.log("➡️ On Schedule Overview screen - verifying screen has loaded...");
-      await driver.pause(3000); // Give time for screen to load
+      // === ANNOUNCEMENTS SCREEN - ACTUAL AUTOMATION ===
+      console.log("➡️ On Announcements screen - verifying screen has loaded...");
+      await driver.pause(3000);
       
-      // Wait for loading to complete (if any)
+      // Wait for loading to complete
       console.log("🔍 Waiting for screen to finish loading...");
       try {
         const loadingIndicator = await driver.$('//*[@class="android.widget.ProgressBar" or contains(@class, "ProgressBar")]');
         await loadingIndicator.waitForDisplayed({ timeout: 2000 });
-        console.log("⏳ Loading indicator found, waiting for it to disappear...");
-        // Wait for loading to complete (max 15 seconds)
         for (let i = 0; i < 15; i++) {
           await driver.pause(1000);
           try {
@@ -644,33 +537,49 @@ describe("Phase 4: Schedule Overview Screen", function () {
             console.log(`✅ Loading completed after ${i + 1} seconds`);
             break;
           } catch (e) {
-            // Still loading
             if ((i + 1) % 3 === 0) {
               console.log(`   Still loading... (${i + 1}s)`);
             }
           }
         }
       } catch (e) {
-        // No loading indicator found, screen likely already loaded
         console.log("✅ No loading indicator found, screen should be ready");
       }
       
-      await driver.pause(2000); // Additional wait after loading
+      await driver.pause(2000);
       
-      // Since we already verified navigation (found "Weekly Schedule" title), 
-      // we just need to verify the screen has some content (empty state or schedule items)
-      // This is a lighter check - we know we're on the right screen from navigation check
-      console.log("🔍 Verifying screen has content (empty state or schedule items)...");
+      // Test pull-to-refresh functionality
+      console.log("🔄 Testing pull-to-refresh functionality on Announcements screen...");
+      try {
+        await driver.performActions([
+          {
+            type: 'pointer',
+            id: 'finger1',
+            parameters: { pointerType: 'touch' },
+            actions: [
+              { type: 'pointerMove', duration: 0, x: 200, y: 400 },
+              { type: 'pointerDown', button: 0 },
+              { type: 'pause', duration: 300 },
+              { type: 'pointerMove', duration: 500, x: 200, y: 800 },
+              { type: 'pointerUp', button: 0 }
+            ]
+          }
+        ]);
+        await driver.pause(2000);
+        console.log("✅ Performed pull-to-refresh gesture on Announcements screen");
+      } catch (e) {
+        console.log("⚠️ Pull-to-refresh gesture failed on Announcements screen, but continuing...");
+      }
       
+      // Verify screen content
+      console.log("🔍 Verifying screen has content (empty state or event items)...");
       let screenContentFound = false;
       
-      // Check for empty state text
+      // Check for empty state
       try {
         const emptyStateSelectors = [
-          '//*[@text="No schedules found"]',
-          '//*[contains(@text, "No schedules found")]',
-          '//*[contains(@text, "don\'t have any scheduled shifts")]',
-          '//*[contains(@text, "scheduled shifts")]',
+          '//*[@text="No announcements yet."]',
+          '//*[contains(@text, "No announcements")]',
         ];
         
         for (const selector of emptyStateSelectors) {
@@ -680,72 +589,52 @@ describe("Phase 4: Schedule Overview Screen", function () {
             console.log(`✅ Found empty state: "${await emptyStateText.getText()}"`);
             screenContentFound = true;
             break;
-          } catch (e) {
-            // Continue to next selector
-          }
+          } catch (e) {}
         }
-      } catch (e) {
-        // Empty state not found, check for schedule items
-      }
+      } catch (e) {}
       
-      // If empty state not found, check for schedule items or any content
+      // If empty state not found, check for event items
       if (!screenContentFound) {
         try {
-          // Look for any cards or schedule-related content
           const contentIndicators = [
             '//android.widget.Card',
-            '//*[contains(@text, "Shift")]',
-            '//*[contains(@text, "schedule")]',
+            '//*[contains(@text, "Published")]',
+            '//*[contains(@class, "ExpansionTile")]',
           ];
           
           for (const indicator of contentIndicators) {
             try {
               const elements = await driver.$$(indicator);
-              let foundVisible = false;
               for (let i = 0; i < Math.min(elements.length, 5); i++) {
                 try {
                   if (await elements[i].isDisplayed()) {
-                    foundVisible = true;
                     const text = await elements[i].getText().catch(() => '');
-                    console.log(`✅ Found schedule content: ${indicator} (text: "${text.substring(0, 50)}")`);
+                    console.log(`✅ Found event content: ${indicator} (text: "${text.substring(0, 50)}")`);
+                    screenContentFound = true;
                     break;
                   }
-                } catch (e) {
-                  // Continue
-                }
+                } catch (e) {}
               }
-              if (foundVisible) {
-                screenContentFound = true;
-                break;
-              }
-            } catch (e2) {
-              // Continue to next indicator
-            }
+              if (screenContentFound) break;
+            } catch (e2) {}
           }
-        } catch (e) {
-          // Could not find content
-        }
+        } catch (e) {}
       }
       
-      // If we still haven't found content, that's OK - we already verified navigation
-      // The screen might be loading or have no content yet
-      // But we should at least verify the AppBar is still there
       if (!screenContentFound) {
-        console.log("⚠️ Could not find empty state or schedule items, but navigation was verified.");
+        console.log("⚠️ Could not find empty state or event items, but navigation was verified.");
         console.log("   This is acceptable - screen may be loading or have no content.");
-        console.log("   Test will pass since navigation to correct screen was verified.");
       } else {
-        console.log("✅ Screen content verified successfully!");
+        console.log("✅ Announcements screen content verified successfully!");
       }
       
-      // Final check: Verify we can still see the AppBar (confirm we're still on the right screen)
+      // Final check: Verify AppBar is still visible
       console.log("🔍 Final check: Verifying AppBar is still visible...");
       try {
-        const appBarCheck = await driver.$('//*[contains(@text, "Weekly Schedule")]');
+        const appBarCheck = await driver.$('//*[contains(@text, "Announcements")]');
         await appBarCheck.waitForDisplayed({ timeout: 3000 });
-        console.log("✅ AppBar 'Weekly Schedule' is still visible - confirmed on correct screen");
+        console.log("✅ AppBar 'Announcements' is still visible - confirmed on correct screen");
       } catch (e) {
-        // AppBar not found - this is concerning but navigation was already verified
         console.log("⚠️ Could not find AppBar in final check, but navigation was already verified earlier");
       }
       
