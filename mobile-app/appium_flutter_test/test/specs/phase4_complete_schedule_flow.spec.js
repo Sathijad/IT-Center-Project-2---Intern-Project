@@ -686,6 +686,18 @@ describe("Phase 4: Complete Schedule Flow (Schedule & Tasks)", function () {
       } catch (e) {
         console.log("⚠️ Could not navigate back, but continuing...");
       }
+
+      // Quick sanity: ensure we are really on Home before searching Tasks
+      try {
+        const homeCheck = await driver.$('//*[contains(@text, "Home") or contains(@content-desc, "Home")]');
+        await homeCheck.waitForDisplayed({ timeout: 5000 });
+        console.log("✅ Confirmed Home screen before Tasks navigation");
+      } catch (e) {
+        console.log("⚠️ Home indicator not found before Tasks; capturing state then failing...");
+        try { await driver.saveScreenshot('./error-not-on-home-before-tasks.png'); } catch (_) {}
+        try { console.log(await driver.getPageSource()); } catch (_) {}
+        throw new Error("Not on Home screen before searching My Tasks");
+      }
       
       // === NAVIGATE TO MY TASKS CARD ===
       console.log("➡️ Navigating to 'My Tasks' card on home screen...");
@@ -813,6 +825,12 @@ describe("Phase 4: Complete Schedule Flow (Schedule & Tasks)", function () {
           await driver.saveScreenshot('./error-my-tasks-card-not-found.png');
           console.log("📸 Screenshot saved: error-my-tasks-card-not-found.png");
         } catch (e) {}
+        try {
+          console.log("📝 Dumping page source for debugging My Tasks search...");
+          console.log(await driver.getPageSource());
+        } catch (e) {
+          console.log("⚠️ Could not dump page source:", e.message);
+        }
         throw new Error(`Could not find 'My Tasks' card by content-desc or text after ${maxTaskScrolls} scrolls.`);
       }
       

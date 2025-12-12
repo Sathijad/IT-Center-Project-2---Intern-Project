@@ -44,9 +44,9 @@ exports.config = {
   ],
   framework: 'mocha',
   reporters: ['spec'],
-    mochaOpts: {
+  mochaOpts: {
     ui: 'bdd',
-    timeout: 180000,
+    timeout: 300000, // allow slower flows + extra diagnostics
   },
   // Catch and suppress cleanup errors that occur after tests complete
   onError: function(error, context) {
