@@ -8,9 +8,26 @@ async function findElementByText(driver, text, timeout = 10000) {
   return element;
 }
 
+// Helper to check if session is still alive
+async function checkSessionAlive(driver, context = 'unknown') {
+  try {
+    await driver.getPageSource();
+    return true;
+  } catch (error) {
+    if (error.message && (
+      error.message.includes('instrumentation process') ||
+      error.message.includes('session is either terminated') ||
+      error.message.includes('not running')
+    )) {
+      throw new Error(`❌ Session crashed at ${context}. The app may have crashed or the instrumentation process stopped. Check app logs for crash details.`);
+    }
+    throw error;
+  }
+}
+
 // === Main test ===
 describe("Phase 6: Complete Performance Flow (KPI Dashboard & Training)", function () {
-  this.timeout(240000); // Increased to 4 minutes for dialog interactions
+  this.timeout(300000); // 5 minutes to accommodate slower devices and UI loads
   let driver;
   let testPassed = false; // Track if test passed
   
@@ -49,12 +66,17 @@ describe("Phase 6: Complete Performance Flow (KPI Dashboard & Training)", functi
         "C:/Users/SathijaDeshapriya/Downloads/IT Center Project 2/mobile-app/build/app/outputs/flutter-apk/app-debug.apk",
       "appium:automationName": "UiAutomator2",
       "appium:platformVersion": "13",
-      "appium:newCommandTimeout": 300,
+      "appium:newCommandTimeout": 600, // Increased from 300 to 600 seconds
       "appium:autoGrantPermissions": true,
       "appium:noReset": false,
       "appium:waitForIdleTimeout": 0,
-      "appium:androidInstallTimeout": 90000,
-      "appium:uiautomator2ServerLaunchTimeout": 60000,
+      "appium:androidInstallTimeout": 120000, // Increased from 90 to 120 seconds
+      "appium:uiautomator2ServerLaunchTimeout": 90000, // Increased from 60 to 90 seconds
+      "appium:uiautomator2ServerInstallTimeout": 90000, // Added for server install
+      "appium:adbExecTimeout": 60000, // Added for adb command timeout
+      "appium:androidDeviceReadyTimeout": 60, // Timeout for device to be ready
+      "appium:shouldTerminateApp": false, // Don't terminate app between tests
+      "appium:disableWindowAnimation": true, // Disable animations for more stable tests
     },
   };
 
@@ -291,7 +313,7 @@ describe("Phase 6: Complete Performance Flow (KPI Dashboard & Training)", functi
       const cardSubtitle = "View performance";
       let cardFound = false;
       let cardContainer = null;
-      const maxScrolls = 10;
+      const maxScrolls = 5; // Reduced from 6 to 5 to prevent app crashes from excessive scrolling
       
       // Check if already visible - try multiple strategies
       console.log("🔍 Checking if 'KPI Dashboard' card is already visible...");
@@ -431,6 +453,12 @@ describe("Phase 6: Complete Performance Flow (KPI Dashboard & Training)", functi
           await driver.saveScreenshot('./error-kpi-dashboard-card-not-found.png');
           console.log("📸 Screenshot saved: error-kpi-dashboard-card-not-found.png");
         } catch (e) {}
+        try {
+          console.log("📝 Dumping page source for KPI card search...");
+          console.log(await driver.getPageSource());
+        } catch (e) {
+          console.log("⚠️ Could not dump page source:", e.message);
+        }
         throw new Error(`Could not find 'KPI Dashboard' card by content-desc or text after ${maxScrolls} scrolls.`);
       }
       
@@ -463,17 +491,33 @@ describe("Phase 6: Complete Performance Flow (KPI Dashboard & Training)", functi
         console.log(`⚠️ Could not verify card text, but continuing...`);
       }
       
-      // Click the card container
+      // Click the card container with session crash detection
       console.log(`👆 Clicking 'KPI Dashboard' card container...`);
       try {
+        // Verify session is still active before clicking
+        await checkSessionAlive(driver, 'before clicking KPI Dashboard card');
+
         await cardContainer.click();
         console.log(`✅ Clicked 'KPI Dashboard' card container`);
+
+        // Add longer pause after click to allow navigation to complete
+        await driver.pause(5000);
+
+        // Verify session is still active after click
+        await checkSessionAlive(driver, 'after clicking KPI Dashboard card');
       } catch (clickError) {
         // If click fails, try alternative click methods
-        console.log(`⚠️ Standard click failed, trying alternative methods...`);
+        console.log(`⚠️ Standard click failed: ${clickError.message}`);
+
+        if (clickError.message && clickError.message.includes('crashed')) {
+          throw clickError; // Re-throw crash errors
+        }
+
+        console.log(`⚠️ Trying alternative methods...`);
         try {
           await cardContainer.touchAction('tap');
           console.log(`✅ Clicked using touchAction`);
+          await driver.pause(5000);
         } catch (e2) {
           try {
             const location = await cardContainer.getLocation();
@@ -492,12 +536,12 @@ describe("Phase 6: Complete Performance Flow (KPI Dashboard & Training)", functi
               ]
             }]);
             console.log(`✅ Clicked using performActions at (${x}, ${y})`);
+            await driver.pause(5000);
           } catch (e3) {
             throw new Error(`❌ CLICK FAILED: Could not click 'KPI Dashboard' card using any method. Error: ${clickError.message}`);
           }
         }
       }
-      await driver.pause(3000);
       
       // STRICT CHECK: Verify we landed on the correct screen - FAIL LOUDLY IF WRONG
       console.log("🔍 STRICT CHECK: Verifying we landed on 'KPI Dashboard' screen...");
@@ -695,7 +739,7 @@ describe("Phase 6: Complete Performance Flow (KPI Dashboard & Training)", functi
       const trainingCardSubtitle = "My courses";
       let trainingCardFound = false;
       let trainingCardContainer = null;
-      const maxTrainingScrolls = 10;
+      const maxTrainingScrolls = 5; // Reduced from 10 to 5 to prevent app crashes from excessive scrolling
       
       // Check if already visible
       console.log("🔍 Checking if 'Training' card is already visible...");
@@ -814,6 +858,12 @@ describe("Phase 6: Complete Performance Flow (KPI Dashboard & Training)", functi
           await driver.saveScreenshot('./error-training-card-not-found.png');
           console.log("📸 Screenshot saved: error-training-card-not-found.png");
         } catch (e) {}
+        try {
+          console.log("📝 Dumping page source for Training card search...");
+          console.log(await driver.getPageSource());
+        } catch (e) {
+          console.log("⚠️ Could not dump page source:", e.message);
+        }
         throw new Error(`Could not find 'Training' card by content-desc or text after ${maxTrainingScrolls} scrolls.`);
       }
       
@@ -845,16 +895,32 @@ describe("Phase 6: Complete Performance Flow (KPI Dashboard & Training)", functi
         console.log(`⚠️ Could not verify card text, but continuing...`);
       }
       
-      // Click the training card
+      // Click the training card with session crash detection
       console.log(`👆 Clicking 'Training' card container...`);
       try {
+        // Verify session is still active before clicking
+        await checkSessionAlive(driver, 'before clicking Training card');
+
         await trainingCardContainer.click();
         console.log(`✅ Clicked 'Training' card container`);
+
+        // Add longer pause after click to allow navigation to complete
+        await driver.pause(5000);
+
+        // Verify session is still active after click
+        await checkSessionAlive(driver, 'after clicking Training card');
       } catch (clickError) {
-        console.log(`⚠️ Standard click failed, trying alternative methods...`);
+        console.log(`⚠️ Standard click failed: ${clickError.message}`);
+
+        if (clickError.message && clickError.message.includes('crashed')) {
+          throw clickError; // Re-throw crash errors
+        }
+
+        console.log(`⚠️ Trying alternative methods...`);
         try {
           await trainingCardContainer.touchAction('tap');
           console.log(`✅ Clicked using touchAction`);
+          await driver.pause(5000);
         } catch (e2) {
           try {
             const location = await trainingCardContainer.getLocation();
@@ -873,12 +939,12 @@ describe("Phase 6: Complete Performance Flow (KPI Dashboard & Training)", functi
               ]
             }]);
             console.log(`✅ Clicked using performActions at (${x}, ${y})`);
+            await driver.pause(5000);
           } catch (e3) {
             throw new Error(`❌ CLICK FAILED: Could not click 'Training' card using any method. Error: ${clickError.message}`);
           }
         }
       }
-      await driver.pause(3000);
       
       // STRICT CHECK: Verify we landed on the correct Training screen
       console.log("🔍 STRICT CHECK: Verifying we landed on 'My Training' screen...");

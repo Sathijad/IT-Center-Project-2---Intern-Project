@@ -1399,7 +1399,7 @@ describe("Phase 4: Complete Schedule Flow (Schedule & Tasks)", function () {
       } else {
         console.log("ℹ️ No tasks found, skipping comment functionality test");
       }
-      
+
       // Final check: Verify AppBar is still visible
       console.log("🔍 Final check: Verifying AppBar is still visible...");
       try {
