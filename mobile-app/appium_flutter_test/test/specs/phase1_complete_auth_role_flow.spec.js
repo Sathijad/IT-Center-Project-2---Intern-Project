@@ -8,9 +8,26 @@ async function findElementByText(driver, text, timeout = 10000) {
   return element;
 }
 
+// Helper to check if session is still alive
+async function checkSessionAlive(driver, context = 'unknown') {
+  try {
+    await driver.getPageSource();
+    return true;
+  } catch (error) {
+    if (error.message && (
+      error.message.includes('instrumentation process') ||
+      error.message.includes('session is either terminated') ||
+      error.message.includes('not running')
+    )) {
+      throw new Error(`❌ Session crashed at ${context}. The app may have crashed or the instrumentation process stopped. Check app logs for crash details.`);
+    }
+    throw error;
+  }
+}
+
 // === Main test ===
 describe("Phase 1: Complete Authentication & Role Management Flow (Staff Authentication & Role Management)", function () {
-  this.timeout(240000); // 4 minutes
+  this.timeout(300000); // 5 minutes (increased from 4 minutes)
   let driver;
 
   const opts = {
@@ -25,12 +42,17 @@ describe("Phase 1: Complete Authentication & Role Management Flow (Staff Authent
         "C:/Users/SathijaDeshapriya/Downloads/IT Center Project 2/mobile-app/build/app/outputs/flutter-apk/app-debug.apk",
       "appium:automationName": "UiAutomator2",
       "appium:platformVersion": "13",
-      "appium:newCommandTimeout": 300,
+      "appium:newCommandTimeout": 600, // Increased from 300 to 600 seconds
       "appium:autoGrantPermissions": true,
       "appium:noReset": false,
       "appium:waitForIdleTimeout": 0,
-      "appium:androidInstallTimeout": 90000,
-      "appium:uiautomator2ServerLaunchTimeout": 60000,
+      "appium:androidInstallTimeout": 120000, // Increased from 90 to 120 seconds
+      "appium:uiautomator2ServerLaunchTimeout": 90000, // Increased from 60 to 90 seconds
+      "appium:uiautomator2ServerInstallTimeout": 90000, // Added for server install
+      "appium:adbExecTimeout": 60000, // Added for adb command timeout
+      "appium:androidDeviceReadyTimeout": 60, // Timeout for device to be ready
+      "appium:shouldTerminateApp": false, // Don't terminate app between tests
+      "appium:disableWindowAnimation": true, // Disable animations for more stable tests
     },
   };
 
@@ -248,14 +270,41 @@ describe("Phase 1: Complete Authentication & Role Management Flow (Staff Authent
       // === HOME SCREEN ===
       console.log("⏳ Waiting for Home screen to load...");
       await driver.pause(5000);
-      
+
       try {
-        const homeIndicator = await findElementByText(driver, "Home", 10000);
+        await findElementByText(driver, "Home", 10000);
         console.log("🏠 On Home screen");
       } catch (e) {
         console.log("⚠️ Could not verify home screen, but continuing...");
       }
-      
+
+      // Add extra wait for home screen cards to fully render
+      console.log("⏳ Waiting for home screen cards to fully render...");
+      await driver.pause(3000);
+
+      // Try pull-to-refresh gesture to ensure cards are loaded
+      console.log("🔄 Performing pull-to-refresh gesture to ensure cards are loaded...");
+      try {
+        await driver.performActions([
+          {
+            type: 'pointer',
+            id: 'finger1',
+            parameters: { pointerType: 'touch' },
+            actions: [
+              { type: 'pointerMove', duration: 0, x: 200, y: 300 },
+              { type: 'pointerDown', button: 0 },
+              { type: 'pause', duration: 100 },
+              { type: 'pointerMove', duration: 500, x: 200, y: 700 },
+              { type: 'pointerUp', button: 0 }
+            ]
+          }
+        ]);
+        await driver.pause(3000);
+        console.log("✅ Performed pull-to-refresh gesture");
+      } catch (e) {
+        console.log("⚠️ Pull-to-refresh gesture failed, but continuing...");
+      }
+
       // === NAVIGATE TO PROFILE CARD ===
       console.log("➡️ Navigating to 'Profile' card on home screen...");
       
@@ -263,7 +312,7 @@ describe("Phase 1: Complete Authentication & Role Management Flow (Staff Authent
       const cardSubtitle = "Manage account";
       let cardFound = false;
       let cardContainer = null;
-      const maxScrolls = 10;
+      const maxScrolls = 5; // Reduced from 10 to 5 to prevent app crashes from excessive scrolling
       
       // Check if already visible - try multiple strategies
       console.log("🔍 Checking if 'Profile' card is already visible...");
@@ -426,16 +475,32 @@ describe("Phase 1: Complete Authentication & Role Management Flow (Staff Authent
         console.log(`⚠️ Could not verify card text, but continuing...`);
       }
       
-      // Click the card container
+      // Click the card container with session crash detection
       console.log(`👆 Clicking 'Profile' card container...`);
       try {
+        // Verify session is still active before clicking
+        await checkSessionAlive(driver, 'before clicking Profile card');
+
         await cardContainer.click();
         console.log(`✅ Clicked 'Profile' card container`);
+
+        // Add longer pause after click to allow navigation to complete
+        await driver.pause(5000);
+
+        // Verify session is still active after click
+        await checkSessionAlive(driver, 'after clicking Profile card');
       } catch (clickError) {
-        console.log(`⚠️ Standard click failed, trying alternative methods...`);
+        console.log(`⚠️ Standard click failed: ${clickError.message}`);
+
+        if (clickError.message && clickError.message.includes('crashed')) {
+          throw clickError; // Re-throw crash errors
+        }
+
+        console.log(`⚠️ Trying alternative methods...`);
         try {
           await cardContainer.touchAction('tap');
           console.log(`✅ Clicked using touchAction`);
+          await driver.pause(5000);
         } catch (e2) {
           try {
             const location = await cardContainer.getLocation();
@@ -454,12 +519,12 @@ describe("Phase 1: Complete Authentication & Role Management Flow (Staff Authent
               ]
             }]);
             console.log(`✅ Clicked using performActions at (${x}, ${y})`);
+            await driver.pause(5000);
           } catch (e3) {
             throw new Error(`❌ CLICK FAILED: Could not click 'Profile' card using any method. Error: ${clickError.message}`);
           }
         }
       }
-      await driver.pause(3000);
       
       // STRICT CHECK: Verify we landed on the correct screen
       console.log("🔍 STRICT CHECK: Verifying we landed on 'Profile' screen...");
@@ -846,7 +911,7 @@ describe("Phase 1: Complete Authentication & Role Management Flow (Staff Authent
       const roleCardSubtitle = "Manage roles";
       let roleCardFound = false;
       let roleCardContainer = null;
-      const maxRoleScrolls = 10;
+      const maxRoleScrolls = 5; // Reduced from 10 to 5 to prevent app crashes from excessive scrolling
       
       // Check if already visible
       console.log("🔍 Checking if 'Role Management' card is already visible...");
@@ -996,16 +1061,32 @@ describe("Phase 1: Complete Authentication & Role Management Flow (Staff Authent
         console.log(`⚠️ Could not verify card text, but continuing...`);
       }
       
-      // Click the role card
+      // Click the role card with session crash detection
       console.log(`👆 Clicking 'Role Management' card container...`);
       try {
+        // Verify session is still active before clicking
+        await checkSessionAlive(driver, 'before clicking Role Management card');
+
         await roleCardContainer.click();
         console.log(`✅ Clicked 'Role Management' card container`);
+
+        // Add longer pause after click to allow navigation to complete
+        await driver.pause(5000);
+
+        // Verify session is still active after click
+        await checkSessionAlive(driver, 'after clicking Role Management card');
       } catch (clickError) {
-        console.log(`⚠️ Standard click failed, trying alternative methods...`);
+        console.log(`⚠️ Standard click failed: ${clickError.message}`);
+
+        if (clickError.message && clickError.message.includes('crashed')) {
+          throw clickError; // Re-throw crash errors
+        }
+
+        console.log(`⚠️ Trying alternative methods...`);
         try {
           await roleCardContainer.touchAction('tap');
           console.log(`✅ Clicked using touchAction`);
+          await driver.pause(5000);
         } catch (e2) {
           try {
             const location = await roleCardContainer.getLocation();
@@ -1024,12 +1105,12 @@ describe("Phase 1: Complete Authentication & Role Management Flow (Staff Authent
               ]
             }]);
             console.log(`✅ Clicked using performActions at (${x}, ${y})`);
+            await driver.pause(5000);
           } catch (e3) {
             throw new Error(`❌ CLICK FAILED: Could not click 'Role Management' card using any method. Error: ${clickError.message}`);
           }
         }
       }
-      await driver.pause(3000);
       
       // STRICT CHECK: Verify we landed on the correct Role Management screen
       console.log("🔍 STRICT CHECK: Verifying we landed on 'Role Management' screen...");

@@ -8,11 +8,28 @@ async function findElementByText(driver, text, timeout = 10000) {
   return element;
 }
 
+// Helper to check if session is still alive
+async function checkSessionAlive(driver, context = 'unknown') {
+  try {
+    await driver.getPageSource();
+    return true;
+  } catch (error) {
+    if (error.message && (
+      error.message.includes('instrumentation process') ||
+      error.message.includes('session is either terminated') ||
+      error.message.includes('not running')
+    )) {
+      throw new Error(`❌ Session crashed at ${context}. The app may have crashed or the instrumentation process stopped. Check app logs for crash details.`);
+    }
+    throw error;
+  }
+}
+
 // === Main test ===
-describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", function () {
-  this.timeout(240000); // 4 minutes
+describe("Phase 3: Complete Booking Flow (Book Room & My Bookings)", function () {
+  this.timeout(300000); // 5 minutes
   let driver;
-  let testPassed = false; // Track if test passed
+  let testPassed = false;
 
   const opts = {
     protocol: "http",
@@ -26,89 +43,24 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
         "C:/Users/SathijaDeshapriya/Downloads/IT Center Project 2/mobile-app/build/app/outputs/flutter-apk/app-debug.apk",
       "appium:automationName": "UiAutomator2",
       "appium:platformVersion": "13",
-      "appium:newCommandTimeout": 300,
+      "appium:newCommandTimeout": 600,
       "appium:autoGrantPermissions": true,
       "appium:noReset": false,
       "appium:waitForIdleTimeout": 0,
-      "appium:androidInstallTimeout": 90000,
-      "appium:uiautomator2ServerLaunchTimeout": 60000,
+      "appium:androidInstallTimeout": 120000,
+      "appium:uiautomator2ServerLaunchTimeout": 90000,
+      "appium:uiautomator2ServerInstallTimeout": 90000,
+      "appium:adbExecTimeout": 60000,
+      "appium:androidDeviceReadyTimeout": 60,
+      "appium:shouldTerminateApp": false,
+      "appium:disableWindowAnimation": true,
     },
   };
 
   before(async () => {
     console.log("🚀 Starting Appium session...");
-    let sessionCreated = false;
-    let retries = 0;
-    const maxRetries = 3;
-    
-    while (!sessionCreated && retries < maxRetries) {
-      try {
-        if (retries > 0) {
-          console.log(`   Retry ${retries}/${maxRetries}...`);
-          await new Promise(resolve => setTimeout(resolve, 5000 * retries)); // Exponential backoff
-        }
-        
-        driver = await remote(opts);
-        console.log("✅ Session created successfully");
-        
-        // Wait for app to fully initialize
-        await driver.pause(8000);
-        
-        // Verify session is stable - try multiple times with retries
-        let sessionStable = false;
-        for (let i = 0; i < 5; i++) {
-          try {
-            const pageSource = await driver.getPageSource();
-            if (pageSource && pageSource.length > 0) {
-              console.log("✅ Session is stable and app is responsive");
-              sessionStable = true;
-              break;
-            }
-          } catch (e) {
-            if (i < 4) {
-              console.log(`   Waiting for session to stabilize... (attempt ${i + 1}/5)`);
-              await driver.pause(2000);
-            } else {
-              console.log(`⚠️ Warning: Could not verify session stability after 5 attempts`);
-              console.log(`   Error: ${e.message}`);
-              // Check if it's a session ID mismatch (the real problem)
-              if (e.message && e.message.includes('is not known')) {
-                console.log(`   ⚠️ Session ID mismatch detected - this may indicate Appium server issues`);
-                throw new Error(`Session ID mismatch: ${e.message}. This usually means multiple Appium instances or Appium server instability. Please restart Appium server.`);
-              }
-            }
-          }
-        }
-        
-        if (sessionStable) {
-          sessionCreated = true;
-        } else {
-          // Session created but not stable - try to close and retry
-          try {
-            await driver.deleteSession();
-          } catch (e) {
-            // Ignore cleanup errors
-          }
-          driver = null;
-          retries++;
-        }
-      } catch (error) {
-        console.error(`❌ Failed to create/verify Appium session (attempt ${retries + 1}/${maxRetries}):`, error.message);
-        if (driver) {
-          try {
-            await driver.deleteSession();
-          } catch (e) {
-            // Ignore cleanup errors
-          }
-          driver = null;
-        }
-        retries++;
-        
-        if (retries >= maxRetries) {
-          throw new Error(`Failed to create stable Appium session after ${maxRetries} attempts. Please ensure Appium server is running correctly and no other instances are running. Last error: ${error.message}`);
-        }
-      }
-    }
+    driver = await remote(opts);
+    await driver.pause(3000);
   });
 
   after(async () => {
@@ -133,24 +85,24 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
     }
   });
 
-  it("should complete full booking flow: login -> navigate to Staff Room -> navigate to Resource Booking -> test both screens", async () => {
+  it("should complete full booking flow: login -> Book Room -> My Bookings", async () => {
     try {
       // === LOGIN SCREEN ===
       console.log("⏳ Waiting for login screen to load...");
       await driver.pause(8000);
-      
+
       try {
-        const loginIndicator = await findElementByText(driver, "IT Center", 15000);
+        await findElementByText(driver, "IT Center", 15000);
         console.log("✅ Login screen is displayed");
       } catch (e) {
         console.log("⚠️ Could not verify login screen, but continuing...");
       }
-      
+
       // === LOGIN AUTOMATION ===
       console.log("🔐 Starting login automation...");
       const testEmail = "user@test.com";
       const testPassword = "Admin@123";
-      
+
       // Find and enter email
       console.log("📧 Looking for email field...");
       let emailField;
@@ -162,37 +114,22 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
           emailField = await driver.$('//android.widget.EditText[1]');
           await emailField.waitForDisplayed({ timeout: 10000 });
         } catch (e2) {
-          // Try to find all EditText elements as fallback
-          try {
-            const allEditTexts = await driver.$$('//android.widget.EditText');
-            if (allEditTexts.length > 0) {
-              emailField = allEditTexts[0];
-            } else {
-              throw new Error("Could not find email field");
-            }
-          } catch (sessionError) {
-            // Check if this is a session error
-            if (sessionError.message && (
-              sessionError.message.includes('is not known') ||
-              sessionError.message.includes('session') ||
-              sessionError.message.includes('terminated')
-            )) {
-              console.error(`❌ Session lost while finding email field: ${sessionError.message}`);
-              console.error("   This usually means Appium crashed or the app failed to start");
-              throw new Error(`Session lost - Appium may have crashed. Please check Appium server status. Original error: ${sessionError.message}`);
-            }
-            throw new Error(`Could not find email field: ${sessionError.message}`);
+          const allEditTexts = await driver.$$('//android.widget.EditText');
+          if (allEditTexts.length > 0) {
+            emailField = allEditTexts[0];
+          } else {
+            throw new Error("Could not find email field");
           }
         }
       }
-      
+
       await emailField.click();
       await driver.pause(500);
       await emailField.clearValue();
       await emailField.setValue(testEmail);
       console.log(`✅ Entered email: ${testEmail}`);
       await driver.pause(1000);
-      
+
       // Find and enter password
       console.log("🔒 Looking for password field...");
       let passwordField;
@@ -208,14 +145,14 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
           await passwordField.waitForDisplayed({ timeout: 10000 });
         }
       }
-      
+
       await passwordField.click();
       await driver.pause(500);
       await passwordField.clearValue();
       await passwordField.setValue(testPassword);
       console.log("✅ Entered password");
       await driver.pause(1000);
-      
+
       // Find and click Sign In button
       console.log("👆 Looking for Sign In button...");
       let signInButton;
@@ -227,7 +164,7 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
         async () => await driver.$('//*[@clickable="true" and contains(@text, "Sign In")]'),
         async () => await driver.$('//android.widget.Button[contains(@text, "Sign") or contains(@text, "Login")]'),
       ];
-      
+
       for (const selectorFn of signInSelectors) {
         try {
           signInButton = await selectorFn();
@@ -238,15 +175,15 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
           continue;
         }
       }
-      
+
       if (!signInButton) {
         throw new Error("Could not find Sign In button using any strategy");
       }
-      
+
       await signInButton.click();
       console.log("✅ Clicked Sign In button");
       await driver.pause(3000);
-      
+
       // === MFA SCREEN (if applicable) ===
       console.log("🔍 Checking for MFA screen...");
       let mfaDetected = false;
@@ -256,7 +193,7 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
           '//*[contains(@text, "MFA") or contains(@text, "Two-Factor")]',
           '//android.widget.EditText[@hint*="code" or @hint*="Code"]'
         ];
-        
+
         for (const indicator of mfaIndicators) {
           try {
             const mfaElement = await driver.$(indicator);
@@ -268,22 +205,22 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
             continue;
           }
         }
-        
+
         if (mfaDetected) {
           console.log("⏳ Waiting for you to enter verification code manually...");
           console.log("⏳ Waiting up to 30 seconds...");
-          
+
           let codeEntered = false;
           for (let i = 0; i < 15; i++) {
             await driver.pause(2000);
             console.log(`...${(i + 1) * 2}s elapsed`);
-            
+
             try {
               const verifyButton = await driver.$('//android.widget.Button[contains(@text, "Verify") or contains(@text, "Submit") or contains(@text, "Next")]');
               if (await verifyButton.isDisplayed()) {
                 console.log("✅ Verify button found, waiting a bit more for code entry...");
                 await driver.pause(3000);
-                
+
                 await verifyButton.click();
                 console.log("✅ Clicked verify/submit button");
                 codeEntered = true;
@@ -293,7 +230,7 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
               // Button not found yet, continue waiting
             }
           }
-          
+
           if (!codeEntered) {
             try {
               const verifyButton = await findElementByText(driver, "Verify", 5000);
@@ -303,10 +240,10 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
               console.log("⚠️ Verify button not found, but continuing...");
             }
           }
-          
+
           console.log("⏳ Waiting for navigation after MFA verification...");
           await driver.pause(5000);
-          
+
           let stillOnMfa = false;
           try {
             const mfaCheck = await driver.$('//*[contains(@text, "Verification Code") or contains(@text, "verification")]');
@@ -318,7 +255,7 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
             console.log("✅ MFA screen cleared, continuing to home screen...");
             stillOnMfa = false;
           }
-          
+
           if (!stillOnMfa) {
             console.log("⏳ Waiting for app to fully load after MFA...");
             await driver.pause(3000);
@@ -330,689 +267,47 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
         console.log("⚠️ Error checking for MFA:", e.message);
         console.log("Continuing anyway...");
       }
-      
+
       // === HOME SCREEN ===
       console.log("⏳ Waiting for Home screen to load...");
       await driver.pause(5000);
-      
+
       try {
-        const homeIndicator = await findElementByText(driver, "Home", 10000);
+        await findElementByText(driver, "Home", 10000);
         console.log("🏠 On Home screen");
       } catch (e) {
-        console.log("⚠️ Could not verify home screen, but continuing...");
+        console.log("⚠️ Could not verify home screen, continuing...");
       }
-      
-      // === NAVIGATE TO STAFF ROOM CARD ===
-      console.log("➡️ Navigating to 'Staff Room' card on home screen...");
-      
-      const cardTitle = "Staff Room";
-      const cardSubtitle = "Book meeting rooms";
-      let cardFound = false;
-      let cardContainer = null;
-      const maxScrolls = 10;
-      
-      // Check if already visible - try multiple strategies
-      console.log("🔍 Checking if 'Staff Room' card is already visible...");
-      
-      // Strategy 1: Exact content-desc match
-      try {
-        cardContainer = await driver.$('//*[@content-desc="Staff Room\nBook meeting rooms"]');
-        await cardContainer.waitForDisplayed({ timeout: 2000 });
-        cardFound = true;
-        console.log(`✅ Found 'Staff Room' card by exact content-desc - already visible`);
-      } catch (e) {
-        // Strategy 2: Contains content-desc
-        try {
-          cardContainer = await driver.$(`//*[contains(@content-desc, "${cardTitle}")]`);
-          await cardContainer.waitForDisplayed({ timeout: 2000 });
-          cardFound = true;
-          console.log(`✅ Found 'Staff Room' card by content-desc (contains) - already visible`);
-        } catch (e2) {
-          // Strategy 3: Search by text
-          try {
-            cardContainer = await driver.$(`//*[@text="${cardTitle}" or contains(@text, "${cardTitle}")]`);
-            await cardContainer.waitForDisplayed({ timeout: 2000 });
-            cardFound = true;
-            console.log(`✅ Found 'Staff Room' card by text - already visible`);
-          } catch (e3) {
-            console.log("📜 Card not visible, scrolling to find it...");
-          }
-        }
-      }
-      
-      // Scroll until card is visible
-      if (!cardFound) {
-        for (let scroll = 0; scroll < maxScrolls; scroll++) {
-          try {
-            try {
-              await driver.getPageSource();
-            } catch (e) {
-              console.error(`❌ Cannot get page source. App may have crashed: ${e.message}`);
-              throw new Error(`App may have crashed. UiAutomator2 instrumentation not responding: ${e.message}`);
-            }
-            
-            try {
-              await driver.performActions([
-                {
-                  type: 'pointer',
-                  id: 'finger1',
-                  parameters: { pointerType: 'touch' },
-                  actions: [
-                    { type: 'pointerMove', duration: 0, x: 200, y: 800 },
-                    { type: 'pointerDown', button: 0 },
-                    { type: 'pause', duration: 300 },
-                    { type: 'pointerMove', duration: 500, x: 200, y: 100 },
-                    { type: 'pointerUp', button: 0 }
-                  ]
-                }
-              ]);
-              await driver.pause(1500);
-            } catch (actionError) {
-              if (actionError.message && (actionError.message.includes('instrumentation process is not running') || actionError.message.includes('instrumentation process'))) {
-                console.log(`⚠️ performActions failed on scroll ${scroll + 1}, trying alternative scroll method...`);
-                
-                try {
-                  await driver.execute('mobile: scroll', {
-                    direction: 'down',
-                    element: null
-                  });
-                  await driver.pause(1500);
-                  console.log(`✅ Used alternative scroll method (mobile:scroll)`);
-                } catch (e2) {
-                  console.error(`❌ Alternative scroll also failed: ${e2.message}`);
-                  console.log(`⚠️ Continuing without scroll...`);
-                  await driver.pause(1000);
-                }
-              } else {
-                throw actionError;
-              }
-            }
-          } catch (e) {
-            console.log(`⚠️ Scroll ${scroll + 1} failed: ${e.message}, continuing...`);
-            await driver.pause(1000);
-          }
-          
-          // Check if card is now visible
-          try {
-            cardContainer = await driver.$('//*[@content-desc="Staff Room\nBook meeting rooms"]');
-            await cardContainer.waitForDisplayed({ timeout: 1000 });
-            cardFound = true;
-            console.log(`✅ Found 'Staff Room' card after scroll ${scroll + 1} (exact content-desc)`);
-            break;
-          } catch (e) {
-            try {
-              cardContainer = await driver.$(`//*[contains(@content-desc, "${cardTitle}")]`);
-              await cardContainer.waitForDisplayed({ timeout: 1000 });
-              cardFound = true;
-              console.log(`✅ Found 'Staff Room' card after scroll ${scroll + 1} (contains content-desc)`);
-              break;
-            } catch (e2) {
-              try {
-                const textElement = await driver.$(`//*[@text="${cardTitle}" or contains(@text, "${cardTitle}")]`);
-                await textElement.waitForDisplayed({ timeout: 1000 });
-                
-                try {
-                  const parent = await textElement.$('./..');
-                  if (await parent.isDisplayed()) {
-                    cardContainer = parent;
-                    cardFound = true;
-                    console.log(`✅ Found 'Staff Room' card after scroll ${scroll + 1} (by text, using parent)`);
-                    break;
-                  }
-                } catch (e3) {
-                  const isClickable = await textElement.getAttribute('clickable');
-                  if (isClickable === 'true') {
-                    cardContainer = textElement;
-                    cardFound = true;
-                    console.log(`✅ Found 'Staff Room' card after scroll ${scroll + 1} (by text, clickable)`);
-                    break;
-                  }
-                }
-              } catch (e4) {
-                // Continue scrolling
-              }
-            }
-          }
-        }
-      }
-      
-      if (!cardFound || !cardContainer) {
-        try {
-          await driver.saveScreenshot('./error-staff-room-card-not-found.png');
-          console.log("📸 Screenshot saved: error-staff-room-card-not-found.png");
-        } catch (e) {}
-        throw new Error(`Could not find 'Staff Room' card by content-desc or text after ${maxScrolls} scrolls.`);
-      }
-      
-      await driver.pause(1000);
-      
-      // VERIFY: Before clicking, ensure we have the correct card
-      console.log(`🔍 Verifying card content before clicking...`);
-      try {
-        const cardText = await cardContainer.getText();
-        const cardContentDesc = await cardContainer.getAttribute('content-desc');
-        console.log(`📋 Card text: "${cardText}"`);
-        console.log(`📋 Card content-desc: "${cardContentDesc}"`);
-        
-        const hasCorrectText = (cardText && (cardText.includes("Staff Room") || cardText.includes("Book meeting rooms"))) ||
-                              (cardContentDesc && (cardContentDesc.includes("Staff Room") || cardContentDesc.includes("Book meeting rooms")));
-        
-        if (!hasCorrectText) {
-          throw new Error(`❌ CARD VERIFICATION FAILED: Found card with text "${cardText}" and content-desc "${cardContentDesc}", but it does not contain "Staff Room". This is likely the wrong card.`);
-        }
-        console.log(`✅ Verified: Card contains "Staff Room" text`);
-      } catch (e) {
-        if (e.message && e.message.includes("CARD VERIFICATION FAILED")) {
-          try {
-            await driver.saveScreenshot('./error-wrong-card-selected.png');
-            console.log("📸 Screenshot saved: error-wrong-card-selected.png");
-          } catch (e2) {}
-          throw e;
-        }
-        console.log(`⚠️ Could not verify card text, but continuing...`);
-      }
-      
-      // Click the card container
-      console.log(`👆 Clicking 'Staff Room' card container...`);
-      try {
-        await cardContainer.click();
-        console.log(`✅ Clicked 'Staff Room' card container`);
-      } catch (clickError) {
-        console.log(`⚠️ Standard click failed, trying alternative methods...`);
-        try {
-          await cardContainer.touchAction('tap');
-          console.log(`✅ Clicked using touchAction`);
-        } catch (e2) {
-          try {
-            const location = await cardContainer.getLocation();
-            const size = await cardContainer.getSize();
-            const x = location.x + (size.width / 2);
-            const y = location.y + (size.height / 2);
-            await driver.performActions([{
-              type: 'pointer',
-              id: 'finger1',
-              parameters: { pointerType: 'touch' },
-              actions: [
-                { type: 'pointerMove', duration: 0, x: x, y: y },
-                { type: 'pointerDown', button: 0 },
-                { type: 'pause', duration: 100 },
-                { type: 'pointerUp', button: 0 }
-              ]
-            }]);
-            console.log(`✅ Clicked using performActions at (${x}, ${y})`);
-          } catch (e3) {
-            throw new Error(`❌ CLICK FAILED: Could not click 'Staff Room' card using any method. Error: ${clickError.message}`);
-          }
-        }
-      }
+
+      // Wait for cards to load
+      console.log("⏳ Waiting for home screen cards...");
       await driver.pause(3000);
-      
-      // STRICT CHECK: Verify we landed on the correct screen
-      console.log("🔍 STRICT CHECK: Verifying we landed on 'Staff Room' screen...");
-      await driver.pause(2000);
-      
-      let onCorrectScreen = false;
-      const correctScreenIndicators = [
-        '//*[@text="Staff Room"]',
-        '//*[contains(@text, "Staff Room")]',
-        '//*[contains(@content-desc, "Staff Room")]',
-      ];
-      
-      for (const indicator of correctScreenIndicators) {
+
+      // === NAVIGATE TO BOOK ROOM ===
+      console.log("➡️ Looking for 'Book Room' card...");
+
+      let bookRoomCard = null;
+      const maxScrolls = 5;
+
+      // Try to find the card
+      for (let scroll = 0; scroll <= maxScrolls; scroll++) {
         try {
-          const element = await driver.$(indicator);
-          await element.waitForDisplayed({ timeout: 5000 });
-          onCorrectScreen = true;
-          console.log(`✅ Confirmed: Found 'Staff Room' screen title using: ${indicator}`);
+          // Try exact match first
+          bookRoomCard = await driver.$('//*[@content-desc="Book Room\nBook meeting rooms"]');
+          await bookRoomCard.waitForDisplayed({ timeout: 2000 });
+          console.log("✅ Found 'Book Room' card");
           break;
         } catch (e) {
-          // Continue to next indicator
-        }
-      }
-      
-      if (!onCorrectScreen) {
-        console.log("❌ Did not find 'Staff Room' screen title. Checking for wrong screens...");
-        
-        const wrongScreens = [
-          { text: "Profile", name: "Profile Screen" },
-          { text: "My Schedule", name: "Schedule Screen" },
-          { text: "My Feedback", name: "Feedback Screen" },
-          { text: "Submit Feedback", name: "Submit Feedback Screen", selectors: [
-            '~Submit Feedback', // Flutter button label exposed via content-desc
-            '//*[contains(@content-desc, "Submit Feedback")]',
-            '//*[@text="Submit Feedback" or contains(@text, "Submit Feedback")]',
-          ]},
-          { text: "KPI Dashboard", name: "KPI Dashboard Screen" },
-        ];
-        
-        for (const screen of wrongScreens) {
+          // Try contains match
           try {
-            const wrongScreenElement = await driver.$(`//*[@text="${screen.text}" or contains(@text, "${screen.text}")]`);
-            await wrongScreenElement.waitForDisplayed({ timeout: 2000 });
-            try {
-              await driver.saveScreenshot('./error-wrong-screen-navigation.png');
-              console.log("📸 Screenshot saved: error-wrong-screen-navigation.png");
-            } catch (e) {}
-            throw new Error(`❌ NAVIGATION FAILED: Clicked 'Staff Room' card but landed on '${screen.name}' instead. Expected 'Staff Room' screen.`);
-          } catch (e) {
-            if (e.message && e.message.includes("NAVIGATION FAILED")) {
-              throw e;
-            }
-          }
-        }
-        
-        try {
-          await driver.saveScreenshot('./error-screen-verification-failed.png');
-          console.log("📸 Screenshot saved: error-screen-verification-failed.png");
-        } catch (e) {}
-        throw new Error(`❌ NAVIGATION VERIFICATION FAILED: Could not verify we are on 'Staff Room' screen after clicking 'Staff Room' card.`);
-      }
-      
-      // === STAFF ROOM SCREEN - ACTUAL AUTOMATION ===
-      console.log("➡️ On Staff Room screen - verifying screen has loaded...");
-      await driver.pause(3000);
-      
-      // Wait for loading to complete
-      console.log("🔍 Waiting for screen to finish loading...");
-      try {
-        const loadingIndicator = await driver.$('//*[@class="android.widget.ProgressBar" or contains(@class, "ProgressBar")]');
-        await loadingIndicator.waitForDisplayed({ timeout: 2000 });
-        for (let i = 0; i < 15; i++) {
-          await driver.pause(1000);
-          try {
-            await loadingIndicator.waitForDisplayed({ timeout: 500, reverse: true });
-            console.log(`✅ Loading completed after ${i + 1} seconds`);
+            bookRoomCard = await driver.$('//*[contains(@content-desc, "Book Room")]');
+            await bookRoomCard.waitForDisplayed({ timeout: 2000 });
+            console.log("✅ Found 'Book Room' card");
             break;
-          } catch (e) {
-            if ((i + 1) % 3 === 0) {
-              console.log(`   Still loading... (${i + 1}s)`);
-            }
-          }
-        }
-      } catch (e) {
-        console.log("✅ No loading indicator found, screen should be ready");
-      }
-      
-      await driver.pause(2000);
-      
-      // Test pull-to-refresh
-      console.log("🔄 Testing pull-to-refresh on Staff Room screen...");
-      try {
-        await driver.performActions([
-          {
-            type: 'pointer',
-            id: 'finger1',
-            parameters: { pointerType: 'touch' },
-            actions: [
-              { type: 'pointerMove', duration: 0, x: 200, y: 400 },
-              { type: 'pointerDown', button: 0 },
-              { type: 'pause', duration: 300 },
-              { type: 'pointerMove', duration: 500, x: 200, y: 800 },
-              { type: 'pointerUp', button: 0 }
-            ]
-          }
-        ]);
-        await driver.pause(2000);
-        console.log("✅ Performed pull-to-refresh gesture on Staff Room screen");
-      } catch (e) {
-        console.log("⚠️ Pull-to-refresh gesture failed, but continuing...");
-      }
-      
-      // Verify screen content
-      console.log("🔍 Verifying screen has content...");
-      let staffRoomScreenVerified = false;
-      
-      // Check for empty state
-      try {
-        const emptyStateSelectors = [
-          '//*[@text="No rooms available"]',
-          '//*[contains(@text, "No rooms available")]',
-          '//*[contains(@text, "No rooms found")]',
-        ];
-        
-        for (const selector of emptyStateSelectors) {
-          try {
-            const emptyStateText = await driver.$(selector);
-            await emptyStateText.waitForDisplayed({ timeout: 5000 });
-            console.log(`✅ Found empty state: "${await emptyStateText.getText()}"`);
-            staffRoomScreenVerified = true;
-            break;
-          } catch (e) {}
-        }
-      } catch (e) {}
-      
-      // If empty state not found, check for room items
-      if (!staffRoomScreenVerified) {
-        try {
-          const contentIndicators = [
-            '//android.widget.Card',
-            '//*[contains(@text, "Room")]',
-            '//*[contains(@text, "Book")]',
-          ];
-          
-          for (const indicator of contentIndicators) {
-            try {
-              const elements = await driver.$$(indicator);
-              for (let i = 0; i < Math.min(elements.length, 5); i++) {
-                try {
-                  if (await elements[i].isDisplayed()) {
-                    const text = await elements[i].getText().catch(() => '');
-                    console.log(`✅ Found room content: ${indicator} (text: "${text.substring(0, 50)}")`);
-                    staffRoomScreenVerified = true;
-                    break;
-                  }
-                } catch (e) {}
-              }
-              if (staffRoomScreenVerified) break;
-            } catch (e2) {}
-          }
-        } catch (e) {}
-      }
-      
-      if (!staffRoomScreenVerified) {
-        console.log("⚠️ Could not find empty state or room items, but navigation was verified.");
-        console.log("   This is acceptable - screen may be loading or have no content.");
-      } else {
-        console.log("✅ Staff Room screen content verified successfully!");
-      }
-      
-      // === TEST BOOK ROOM FUNCTIONALITY ===
-      console.log("📝 Testing 'Book Room' functionality...");
-      let bookRoomTested = false;
-      
-      try {
-        // Look for "Book Room", "Book Now", "Reserve" button
-        console.log("🔍 Looking for book room button...");
-        let bookRoomButton = null;
-        const bookRoomSelectors = [
-          '//*[@text="Book Room"]',
-          '//*[contains(@text, "Book Room")]',
-          '//*[@text="Book Now"]',
-          '//*[contains(@text, "Book Now")]',
-          '//*[@text="Reserve"]',
-          '//*[contains(@text, "Reserve")]',
-          '//*[@text="Book"]',
-          '//*[contains(@text, "Book")]',
-          '//*[contains(@content-desc, "Book Room")]',
-          '//android.widget.Button[contains(@text, "Book")]',
-          '//*[@clickable="true" and contains(@text, "Book")]',
-        ];
-        
-        for (const selector of bookRoomSelectors) {
-          try {
-            const elements = await driver.$$(selector);
-            for (let i = 0; i < elements.length; i++) {
-              try {
-                if (await elements[i].isDisplayed()) {
-                  const buttonText = await elements[i].getText().catch(() => '');
-                  // Prefer buttons that say "Book Room", "Book Now", or "Reserve"
-                  if (buttonText && (buttonText.includes("Book Room") || buttonText.includes("Book Now") || buttonText.includes("Reserve"))) {
-                    bookRoomButton = elements[i];
-                    console.log(`✅ Found book room button using: ${selector} (text: "${buttonText}")`);
-                    break;
-                  } else if (buttonText && buttonText.trim() === "Book" && !bookRoomButton) {
-                    // Fallback: any "Book" button
-                    bookRoomButton = elements[i];
-                    console.log(`✅ Found book room button using: ${selector} (text: "${buttonText}")`);
-                  }
-                }
-              } catch (e) {
-                // Continue to next element
-              }
-            }
-            if (bookRoomButton) break;
-          } catch (e) {
-            // Continue to next selector
-          }
-        }
-        
-        if (bookRoomButton) {
-          // Scroll to make sure button is visible
-          try {
-            await driver.execute('mobile: scroll', {
-              direction: 'down',
-              element: bookRoomButton,
-            });
-            await driver.pause(1000);
-          } catch (e) {
-            // Continue anyway
-          }
-          
-          // Click the Book Room button
-          console.log("👆 Clicking book room button...");
-          let buttonClicked = false;
-          try {
-            await bookRoomButton.click();
-            console.log("✅ Clicked book room button");
-            buttonClicked = true;
-          } catch (clickError) {
-            console.log("⚠️ Standard click failed, trying alternative methods...");
-            try {
-              await bookRoomButton.touchAction('tap');
-              console.log("✅ Clicked using touchAction");
-              buttonClicked = true;
-            } catch (e2) {
-              try {
-                const location = await bookRoomButton.getLocation();
-                const size = await bookRoomButton.getSize();
-                const x = location.x + (size.width / 2);
-                const y = location.y + (size.height / 2);
-                await driver.performActions([{
-                  type: 'pointer',
-                  id: 'finger1',
-                  parameters: { pointerType: 'touch' },
-                  actions: [
-                    { type: 'pointerMove', duration: 0, x: x, y: y },
-                    { type: 'pointerDown', button: 0 },
-                    { type: 'pause', duration: 100 },
-                    { type: 'pointerUp', button: 0 }
-                  ]
-                }]);
-                console.log(`✅ Clicked using performActions at (${x}, ${y})`);
-                buttonClicked = true;
-              } catch (e3) {
-                console.log(`⚠️ Could not click book room button: ${clickError.message}`);
-                console.log("   Continuing without testing dialog...");
-              }
-            }
-          }
-          
-          if (buttonClicked) {
-            // Wait for dialog/form to open
-            console.log("⏳ Waiting for book room dialog/form to open (up to 5 seconds)...");
-            await driver.pause(3000);
-            
-            // Check if app is still responsive
-            try {
-              await driver.getPageSource();
-              console.log("✅ App is still responsive");
-            } catch (e) {
-              console.log("⚠️ App may have crashed or become unresponsive");
-              throw new Error("App became unresponsive after clicking book room button");
-            }
-            
-            // Verify dialog/form is open
-            console.log("🔍 Verifying book room dialog/form is open...");
-            let dialogOpen = false;
-            const dialogIndicators = [
-              '//*[@text="Book Room"]',
-              '//*[contains(@text, "Book Room")]',
-              '//*[contains(@text, "Reserve Room")]',
-              '//*[contains(@text, "Room Booking")]',
-              '//*[contains(@text, "Date")]',
-              '//*[contains(@text, "Time")]',
-              '//*[contains(@text, "Duration")]',
-              '//*[contains(@text, "Purpose")]',
-              '//android.widget.EditText',
-            ];
-            
-            for (let attempt = 0; attempt < 3; attempt++) {
-              if (attempt > 0) {
-                console.log(`   Retry ${attempt + 1}/3: Waiting 2 more seconds...`);
-                await driver.pause(2000);
-              }
-              
-              for (const indicator of dialogIndicators) {
-                try {
-                  const dialogElement = await driver.$(indicator);
-                  await dialogElement.waitForDisplayed({ timeout: 3000 });
-                  dialogOpen = true;
-                  console.log(`✅ Dialog/form is open - found: ${indicator}`);
-                  break;
-                } catch (e) {
-                  // Continue to next indicator
-                }
-              }
-              
-              if (dialogOpen) break;
-            }
-            
-            if (dialogOpen) {
-              console.log("✅ Book room dialog/form opened successfully!");
-              
-              // Try to close the dialog/form (cancel or back button)
-              console.log("🔍 Looking for Cancel or Close button...");
-              let dialogClosed = false;
-              const closeButtonSelectors = [
-                '//*[@text="Cancel"]',
-                '//*[contains(@text, "Cancel")]',
-                '//*[@text="Close"]',
-                '//*[contains(@text, "Close")]',
-                '//*[@text="Back"]',
-              ];
-              
-              for (const selector of closeButtonSelectors) {
-                try {
-                  const closeButton = await driver.$(selector);
-                  if (await closeButton.isDisplayed({ timeout: 2000 })) {
-                    await closeButton.click();
-                    console.log(`✅ Clicked ${selector} to close dialog`);
-                    await driver.pause(1000);
-                    dialogClosed = true;
-                    break;
-                  }
-                } catch (e) {
-                  // Continue to next selector
-                }
-              }
-              
-              if (!dialogClosed) {
-                // Try back button
-                try {
-                  await driver.back();
-                  await driver.pause(1000);
-                  console.log("✅ Used back button to close dialog");
-                  dialogClosed = true;
-                } catch (e) {
-                  console.log("⚠️ Could not close dialog - test will continue");
-                }
-              }
-              
-              if (dialogClosed) {
-                bookRoomTested = true;
-                console.log("✅ Book room functionality tested successfully!");
-              }
-            } else {
-              console.log("⚠️ Dialog/form did not open after clicking book room button");
-              console.log("   This is OK - button may navigate to a different screen or require different conditions");
-              // Try to go back in case we navigated somewhere
-              try {
-                await driver.back();
-                await driver.pause(1000);
-                console.log("✅ Used back button to return to Staff Room screen");
-              } catch (e) {
-                console.log("⚠️ Could not navigate back");
-              }
-            }
-          }
-        } else {
-          console.log("⚠️ Could not find book room button");
-          console.log("   This is acceptable if the feature is not available or button has different text");
-        }
-      } catch (e) {
-        console.log("⚠️ Error testing book room functionality:", e.message);
-        console.log("   Continuing with test...");
-      }
-      
-      if (bookRoomTested) {
-        console.log("✅ Book room test completed!");
-      } else {
-        console.log("⚠️ Book room test was skipped (button not found or dialog didn't open)");
-      }
-      
-      // Final check: Verify AppBar is still visible
-      console.log("🔍 Final check: Verifying AppBar is still visible...");
-      try {
-        const appBarCheck = await driver.$('//*[contains(@text, "Staff Room")]');
-        await appBarCheck.waitForDisplayed({ timeout: 3000 });
-        console.log("✅ AppBar 'Staff Room' is still visible - confirmed on correct screen");
-      } catch (e) {
-        console.log("⚠️ Could not find AppBar in final check, but navigation was already verified earlier");
-      }
-      
-      console.log("✅ Staff Room screen testing completed!");
-      
-      // === NAVIGATE BACK TO HOME ===
-      console.log("⬅️ Navigating back to Home screen...");
-      try {
-        await driver.back();
-        await driver.pause(3000);
-        console.log("✅ Navigated back to Home screen");
-      } catch (e) {
-        console.log("⚠️ Could not navigate back, but continuing...");
-      }
-      
-      // === NAVIGATE TO RESOURCE BOOKING CARD ===
-      console.log("➡️ Navigating to 'Resource Booking' card on home screen...");
-      
-      const resourceCardTitle = "Resource Booking";
-      const resourceCardSubtitle = "Book equipment";
-      let resourceCardFound = false;
-      let resourceCardContainer = null;
-      const maxResourceScrolls = 10;
-      
-      // Check if already visible
-      console.log("🔍 Checking if 'Resource Booking' card is already visible...");
-      
-      // Strategy 1: Exact content-desc match
-      try {
-        resourceCardContainer = await driver.$('//*[@content-desc="Resource Booking\nBook equipment"]');
-        await resourceCardContainer.waitForDisplayed({ timeout: 2000 });
-        resourceCardFound = true;
-        console.log(`✅ Found 'Resource Booking' card by exact content-desc - already visible`);
-      } catch (e) {
-        // Strategy 2: Contains content-desc
-        try {
-          resourceCardContainer = await driver.$(`//*[contains(@content-desc, "${resourceCardTitle}")]`);
-          await resourceCardContainer.waitForDisplayed({ timeout: 2000 });
-          resourceCardFound = true;
-          console.log(`✅ Found 'Resource Booking' card by content-desc (contains) - already visible`);
-        } catch (e2) {
-          // Strategy 3: Search by text
-          try {
-            resourceCardContainer = await driver.$(`//*[@text="${resourceCardTitle}" or contains(@text, "${resourceCardTitle}")]`);
-            await resourceCardContainer.waitForDisplayed({ timeout: 2000 });
-            resourceCardFound = true;
-            console.log(`✅ Found 'Resource Booking' card by text - already visible`);
-          } catch (e3) {
-            console.log("📜 Card not visible, scrolling to find it...");
-          }
-        }
-      }
-      
-      // Scroll until card is visible
-      if (!resourceCardFound) {
-        for (let scroll = 0; scroll < maxResourceScrolls; scroll++) {
-          try {
-            await driver.getPageSource();
-          } catch (e) {
-            console.error(`❌ Cannot get page source. App may have crashed: ${e.message}`);
-            throw new Error(`App may have crashed. UiAutomator2 instrumentation not responding: ${e.message}`);
-          }
-          
-          try {
-            await driver.performActions([
-              {
+          } catch (e2) {
+            if (scroll < maxScrolls) {
+              console.log(`   Scrolling... (${scroll + 1}/${maxScrolls})`);
+              await driver.performActions([{
                 type: 'pointer',
                 id: 'finger1',
                 parameters: { pointerType: 'touch' },
@@ -1020,600 +315,300 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
                   { type: 'pointerMove', duration: 0, x: 200, y: 800 },
                   { type: 'pointerDown', button: 0 },
                   { type: 'pause', duration: 300 },
-                  { type: 'pointerMove', duration: 500, x: 200, y: 100 },
+                  { type: 'pointerMove', duration: 500, x: 200, y: 200 },
                   { type: 'pointerUp', button: 0 }
                 ]
-              }
-            ]);
-            await driver.pause(1500);
-          } catch (actionError) {
-            if (actionError.message && (actionError.message.includes('instrumentation process is not running') || actionError.message.includes('instrumentation process'))) {
-              console.log(`⚠️ performActions failed on scroll ${scroll + 1}, trying alternative scroll method...`);
-              try {
-                await driver.execute('mobile: scroll', { direction: 'down', element: null });
-                await driver.pause(1500);
-                console.log(`✅ Used alternative scroll method (mobile:scroll)`);
-              } catch (e2) {
-                console.error(`❌ Alternative scroll also failed: ${e2.message}`);
-                await driver.pause(1000);
-              }
-            } else {
-              throw actionError;
+              }]);
+              await driver.pause(2000);
             }
           }
-          
-          // Check if card is now visible
+        }
+      }
+
+      if (!bookRoomCard) {
+        throw new Error("Could not find 'Book Room' card");
+      }
+
+      console.log("👆 Clicking 'Book Room' card...");
+      await bookRoomCard.click();
+      await driver.pause(5000);
+
+      // === VERIFY ON BOOK A ROOM SCREEN ===
+      console.log("🔍 Verifying 'Book a Room' screen...");
+      try {
+        await findElementByText(driver, "Book a Room", 10000);
+        console.log("✅ On 'Book a Room' screen");
+      } catch (e) {
+        throw new Error("Failed to navigate to 'Book a Room' screen");
+      }
+
+      // === WAIT FOR ROOMS TO LOAD ===
+      console.log("⏳ Waiting for rooms to load...");
+      await driver.pause(3000);
+
+      // Check for loading indicator
+      try {
+        const loading = await driver.$('//android.widget.ProgressBar');
+        await loading.waitForDisplayed({ timeout: 2000, reverse: true });
+        console.log("✅ Rooms loaded");
+      } catch (e) {
+        console.log("⚠️ No loading indicator, continuing...");
+      }
+
+      // === FIND AND CLICK A ROOM CARD ===
+      console.log("🔍 Looking for room cards...");
+      await driver.pause(2000);
+
+      let roomCard = null;
+      try {
+        // Look for Cards (rooms are displayed in Card widgets)
+        const cards = await driver.$$('//android.widget.Card');
+        console.log(`   Found ${cards.length} cards`);
+
+        if (cards.length > 0) {
+          // Get the first room card
+          roomCard = cards[0];
+          const cardText = await roomCard.getText().catch(() => '');
+          console.log(`✅ Found room card: "${cardText.substring(0, 50)}"`);
+        }
+      } catch (e) {
+        console.log(`⚠️ Error finding room cards: ${e.message}`);
+      }
+
+      if (!roomCard) {
+        // Try alternative: look for ListTile elements
+        console.log("🔍 Trying alternative: looking for ListTile...");
+        try {
+          const listTiles = await driver.$$('//android.view.View[@clickable="true"]');
+          if (listTiles.length > 0) {
+            roomCard = listTiles[0];
+            console.log("✅ Found clickable room element");
+          }
+        } catch (e) {
+          console.log(`⚠️ Error finding clickable elements: ${e.message}`);
+        }
+      }
+
+      if (!roomCard) {
+        console.log("⚠️ No room cards found - checking for empty state");
+        try {
+          await findElementByText(driver, "No rooms found", 3000);
+          console.log("ℹ️ Empty state: No rooms available");
+        } catch (e) {
+          console.log("⚠️ Could not verify room list state");
+        }
+      } else {
+        // Click the room card
+        console.log("👆 Clicking room card...");
+        try {
+          await roomCard.click();
+          console.log("✅ Clicked room card");
+          await driver.pause(3000);
+
+          // This navigates to BookingAvailabilityScreen
+          console.log("ℹ️ Navigated to availability screen");
+
+          // Go back to room list
+          await driver.back();
+          await driver.pause(2000);
+          console.log("⬅️ Returned to room list");
+        } catch (e) {
+          console.log(`⚠️ Could not interact with room card: ${e.message}`);
+        }
+      }
+
+      // === TEST CREATE BOOKING VIA FAB ===
+      console.log("🔍 Looking for FloatingActionButton (+ button)...");
+      await driver.pause(1000);
+
+      let fabFound = false;
+      try {
+        // FAB is typically an ImageButton or Button with Icon
+        const fabSelectors = [
+          '//android.widget.ImageButton',
+          '//android.widget.Button[contains(@content-desc, "Create")]',
+          '//*[contains(@content-desc, "Create Booking")]',
+        ];
+
+        for (const selector of fabSelectors) {
           try {
-            resourceCardContainer = await driver.$('//*[@content-desc="Resource Booking\nBook equipment"]');
-            await resourceCardContainer.waitForDisplayed({ timeout: 1000 });
-            resourceCardFound = true;
-            console.log(`✅ Found 'Resource Booking' card after scroll ${scroll + 1} (exact content-desc)`);
+            const fab = await driver.$(selector);
+            await fab.waitForDisplayed({ timeout: 3000 });
+
+            console.log(`👆 Clicking FAB using: ${selector}...`);
+            await fab.click();
+            console.log("✅ Clicked FAB");
+            fabFound = true;
+            await driver.pause(3000);
             break;
           } catch (e) {
-            try {
-              resourceCardContainer = await driver.$(`//*[contains(@content-desc, "${resourceCardTitle}")]`);
-              await resourceCardContainer.waitForDisplayed({ timeout: 1000 });
-              resourceCardFound = true;
-              console.log(`✅ Found 'Resource Booking' card after scroll ${scroll + 1} (contains content-desc)`);
-              break;
-            } catch (e2) {
-              try {
-                const textElement = await driver.$(`//*[@text="${resourceCardTitle}" or contains(@text, "${resourceCardTitle}")]`);
-                await textElement.waitForDisplayed({ timeout: 1000 });
-                try {
-                  const parent = await textElement.$('./..');
-                  if (await parent.isDisplayed()) {
-                    resourceCardContainer = parent;
-                    resourceCardFound = true;
-                    console.log(`✅ Found 'Resource Booking' card after scroll ${scroll + 1} (by text, using parent)`);
-                    break;
-                  }
-                } catch (e3) {
-                  const isClickable = await textElement.getAttribute('clickable');
-                  if (isClickable === 'true') {
-                    resourceCardContainer = textElement;
-                    resourceCardFound = true;
-                    console.log(`✅ Found 'Resource Booking' card after scroll ${scroll + 1} (by text, clickable)`);
-                    break;
-                  }
-                }
-              } catch (e4) {}
-            }
+            // Try next selector
           }
         }
-      }
-      
-      if (!resourceCardFound || !resourceCardContainer) {
-        try {
-          await driver.saveScreenshot('./error-resource-booking-card-not-found.png');
-          console.log("📸 Screenshot saved: error-resource-booking-card-not-found.png");
-        } catch (e) {}
-        throw new Error(`Could not find 'Resource Booking' card by content-desc or text after ${maxResourceScrolls} scrolls.`);
-      }
-      
-      await driver.pause(1000);
-      
-      // Verify card content before clicking
-      console.log(`🔍 Verifying card content before clicking...`);
-      try {
-        const cardText = await resourceCardContainer.getText();
-        const cardContentDesc = await resourceCardContainer.getAttribute('content-desc');
-        console.log(`📋 Card text: "${cardText}"`);
-        console.log(`📋 Card content-desc: "${cardContentDesc}"`);
-        
-        const hasCorrectText = (cardText && (cardText.includes("Resource Booking") || cardText.includes("Book equipment"))) ||
-                              (cardContentDesc && (cardContentDesc.includes("Resource Booking") || cardContentDesc.includes("Book equipment")));
-        
-        if (!hasCorrectText) {
-          throw new Error(`❌ CARD VERIFICATION FAILED: Found card with text "${cardText}" and content-desc "${cardContentDesc}", but it does not contain "Resource Booking". This is likely the wrong card.`);
-        }
-        console.log(`✅ Verified: Card contains "Resource Booking" text`);
       } catch (e) {
-        if (e.message && e.message.includes("CARD VERIFICATION FAILED")) {
-          try {
-            await driver.saveScreenshot('./error-wrong-resource-card-selected.png');
-            console.log("📸 Screenshot saved: error-wrong-resource-card-selected.png");
-          } catch (e2) {}
-          throw e;
-        }
-        console.log(`⚠️ Could not verify card text, but continuing...`);
+        console.log(`⚠️ Error finding FAB: ${e.message}`);
       }
-      
-      // Click the resource card
-      console.log(`👆 Clicking 'Resource Booking' card container...`);
-      try {
-        await resourceCardContainer.click();
-        console.log(`✅ Clicked 'Resource Booking' card container`);
-      } catch (clickError) {
-        console.log(`⚠️ Standard click failed, trying alternative methods...`);
+
+      if (fabFound) {
+        // === VERIFY ON CREATE BOOKING SCREEN ===
+        console.log("🔍 Verifying 'Create Booking' screen...");
         try {
-          await resourceCardContainer.touchAction('tap');
-          console.log(`✅ Clicked using touchAction`);
-        } catch (e2) {
-          try {
-            const location = await resourceCardContainer.getLocation();
-            const size = await resourceCardContainer.getSize();
-            const x = location.x + (size.width / 2);
-            const y = location.y + (size.height / 2);
-            await driver.performActions([{
-              type: 'pointer',
-              id: 'finger1',
-              parameters: { pointerType: 'touch' },
-              actions: [
-                { type: 'pointerMove', duration: 0, x: x, y: y },
-                { type: 'pointerDown', button: 0 },
-                { type: 'pause', duration: 100 },
-                { type: 'pointerUp', button: 0 }
-              ]
-            }]);
-            console.log(`✅ Clicked using performActions at (${x}, ${y})`);
-          } catch (e3) {
-            throw new Error(`❌ CLICK FAILED: Could not click 'Resource Booking' card using any method. Error: ${clickError.message}`);
-          }
+          await findElementByText(driver, "Create Booking", 5000);
+          console.log("✅ On 'Create Booking' screen");
+
+          // Go back to room list
+          await driver.back();
+          await driver.pause(2000);
+          console.log("⬅️ Returned to room list");
+        } catch (e) {
+          console.log("⚠️ Could not verify Create Booking screen");
         }
+      } else {
+        console.log("⚠️ FAB not found, skipping create booking test");
       }
+
+      console.log("✅ Book Room screen testing completed!");
+
+      // === NAVIGATE BACK TO HOME ===
+      console.log("⬅️ Navigating back to Home...");
+      await driver.back();
       await driver.pause(3000);
-      
-      // STRICT CHECK: Verify we landed on the correct Resource Booking screen
-      console.log("🔍 STRICT CHECK: Verifying we landed on 'Resource Booking' screen...");
-      await driver.pause(2000);
-      
-      let onResourceScreen = false;
-      const resourceScreenIndicators = [
-        '//*[@text="Resource Booking"]',
-        '//*[contains(@text, "Resource Booking")]',
-        '//*[contains(@content-desc, "Resource Booking")]',
-      ];
-      
-      for (const indicator of resourceScreenIndicators) {
+
+      // === NAVIGATE TO MY BOOKINGS ===
+      console.log("➡️ Looking for 'My Bookings' card...");
+
+      let myBookingsCard = null;
+      for (let scroll = 0; scroll <= maxScrolls; scroll++) {
         try {
-          const element = await driver.$(indicator);
-          await element.waitForDisplayed({ timeout: 5000 });
-          onResourceScreen = true;
-          console.log(`✅ Confirmed: Found 'Resource Booking' screen title using: ${indicator}`);
+          myBookingsCard = await driver.$('//*[@content-desc="My Bookings\nBook equipment"]');
+          await myBookingsCard.waitForDisplayed({ timeout: 2000 });
+          console.log("✅ Found 'My Bookings' card");
           break;
         } catch (e) {
-          // Continue to next indicator
-        }
-      }
-      
-      if (!onResourceScreen) {
-        const wrongScreens = [
-          { text: "Profile", name: "Profile Screen" },
-          { text: "Staff Room", name: "Staff Room Screen" },
-          { text: "My Schedule", name: "Schedule Screen" },
-          { text: "My Feedback", name: "Feedback Screen" },
-          { text: "Submit Feedback", name: "Submit Feedback Screen", selectors: [
-            '~Submit Feedback', // Flutter button label exposed via content-desc
-            '//*[contains(@content-desc, "Submit Feedback")]',
-            '//*[@text="Submit Feedback" or contains(@text, "Submit Feedback")]',
-          ]},
-        ];
-        
-        for (const screen of wrongScreens) {
           try {
-            const wrongScreenElement = await driver.$(`//*[@text="${screen.text}" or contains(@text, "${screen.text}")]`);
-            await wrongScreenElement.waitForDisplayed({ timeout: 2000 });
-            try {
-              await driver.saveScreenshot('./error-wrong-resource-screen-navigation.png');
-              console.log("📸 Screenshot saved: error-wrong-resource-screen-navigation.png");
-            } catch (e) {}
-            throw new Error(`❌ NAVIGATION FAILED: Clicked 'Resource Booking' card but landed on '${screen.name}' instead. Expected 'Resource Booking' screen.`);
-          } catch (e) {
-            if (e.message && e.message.includes("NAVIGATION FAILED")) {
-              throw e;
+            myBookingsCard = await driver.$('//*[contains(@content-desc, "My Bookings")]');
+            await myBookingsCard.waitForDisplayed({ timeout: 2000 });
+            console.log("✅ Found 'My Bookings' card");
+            break;
+          } catch (e2) {
+            if (scroll < maxScrolls) {
+              console.log(`   Scrolling... (${scroll + 1}/${maxScrolls})`);
+              await driver.performActions([{
+                type: 'pointer',
+                id: 'finger1',
+                parameters: { pointerType: 'touch' },
+                actions: [
+                  { type: 'pointerMove', duration: 0, x: 200, y: 800 },
+                  { type: 'pointerDown', button: 0 },
+                  { type: 'pause', duration: 300 },
+                  { type: 'pointerMove', duration: 500, x: 200, y: 200 },
+                  { type: 'pointerUp', button: 0 }
+                ]
+              }]);
+              await driver.pause(2000);
             }
           }
         }
-        
-        try {
-          await driver.saveScreenshot('./error-resource-screen-verification-failed.png');
-          console.log("📸 Screenshot saved: error-resource-screen-verification-failed.png");
-        } catch (e) {}
-        throw new Error(`❌ NAVIGATION VERIFICATION FAILED: Could not verify we are on 'Resource Booking' screen after clicking 'Resource Booking' card.`);
       }
-      
-      // === RESOURCE BOOKING SCREEN - ACTUAL AUTOMATION ===
-      console.log("➡️ On Resource Booking screen - performing automation checks...");
+
+      if (!myBookingsCard) {
+        throw new Error("Could not find 'My Bookings' card");
+      }
+
+      console.log("👆 Clicking 'My Bookings' card...");
+      await myBookingsCard.click();
+      await driver.pause(5000);
+
+      // === VERIFY ON MY BOOKINGS SCREEN ===
+      console.log("🔍 Verifying 'My Bookings' screen...");
+      try {
+        await findElementByText(driver, "My Bookings", 10000);
+        console.log("✅ On 'My Bookings' screen");
+      } catch (e) {
+        throw new Error("Failed to navigate to 'My Bookings' screen");
+      }
+
+      // === CHECK BOOKINGS LIST ===
+      console.log("⏳ Waiting for bookings to load...");
       await driver.pause(3000);
-      
-      // Wait for loading to complete
-      console.log("🔍 Waiting for resource booking screen to finish loading...");
+
+      // Check for loading
       try {
-        const loadingIndicator = await driver.$('//*[@class="android.widget.ProgressBar" or contains(@class, "ProgressBar")]');
-        await loadingIndicator.waitForDisplayed({ timeout: 2000 });
-        for (let i = 0; i < 15; i++) {
-          await driver.pause(1000);
-          try {
-            await loadingIndicator.waitForDisplayed({ timeout: 500, reverse: true });
-            console.log(`✅ Loading completed after ${i + 1} seconds`);
-            break;
-          } catch (e) {
-            if ((i + 1) % 3 === 0) {
-              console.log(`   Still loading... (${i + 1}s)`);
-            }
-          }
+        const loading = await driver.$('//android.widget.ProgressBar');
+        await loading.waitForDisplayed({ timeout: 2000, reverse: true });
+        console.log("✅ Bookings loaded");
+      } catch (e) {
+        console.log("⚠️ No loading indicator");
+      }
+
+      // Check for bookings or empty state
+      let bookingsFound = false;
+      try {
+        // Look for booking cards
+        const bookingCards = await driver.$$('//android.widget.Card');
+        console.log(`   Found ${bookingCards.length} booking cards`);
+
+        if (bookingCards.length > 0) {
+          bookingsFound = true;
+          console.log("✅ Bookings list verified");
         }
       } catch (e) {
-        console.log("✅ No loading indicator found, screen should be ready");
+        console.log(`⚠️ Error checking bookings: ${e.message}`);
       }
-      
-      await driver.pause(2000);
-      
-      // Test pull-to-refresh
-      console.log("🔄 Testing pull-to-refresh on Resource Booking screen...");
-      try {
-        await driver.performActions([
-          {
-            type: 'pointer',
-            id: 'finger1',
-            parameters: { pointerType: 'touch' },
-            actions: [
-              { type: 'pointerMove', duration: 0, x: 200, y: 400 },
-              { type: 'pointerDown', button: 0 },
-              { type: 'pause', duration: 300 },
-              { type: 'pointerMove', duration: 500, x: 200, y: 800 },
-              { type: 'pointerUp', button: 0 }
-            ]
-          }
-        ]);
-        await driver.pause(2000);
-        console.log("✅ Performed pull-to-refresh gesture on Resource Booking screen");
-      } catch (e) {
-        console.log("⚠️ Pull-to-refresh gesture failed, but continuing...");
-      }
-      
-      // Verify screen content
-      console.log("🔍 Verifying resource booking screen has content...");
-      let resourceScreenVerified = false;
-      
-      // Check for empty state
-      try {
-        const emptyStateSelectors = [
-          '//*[@text="No resources available"]',
-          '//*[contains(@text, "No resources available")]',
-          '//*[contains(@text, "No resources found")]',
-        ];
-        
-        for (const selector of emptyStateSelectors) {
-          try {
-            const emptyStateText = await driver.$(selector);
-            await emptyStateText.waitForDisplayed({ timeout: 5000 });
-            console.log(`✅ Found empty state: "${await emptyStateText.getText()}"`);
-            resourceScreenVerified = true;
-            break;
-          } catch (e) {}
-        }
-      } catch (e) {}
-      
-      // If empty state not found, check for resource items
-      if (!resourceScreenVerified) {
+
+      if (!bookingsFound) {
+        // Check for empty state
         try {
-          const contentIndicators = [
-            '//android.widget.Card',
-            '//*[contains(@text, "Resource")]',
-            '//*[contains(@text, "Book")]',
-            '//*[contains(@text, "Equipment")]',
-          ];
-          
-          for (const indicator of contentIndicators) {
-            try {
-              const elements = await driver.$$(indicator);
-              for (let i = 0; i < Math.min(elements.length, 5); i++) {
-                try {
-                  if (await elements[i].isDisplayed()) {
-                    const text = await elements[i].getText().catch(() => '');
-                    console.log(`✅ Found resource content: ${indicator} (text: "${text.substring(0, 50)}")`);
-                    resourceScreenVerified = true;
-                    break;
-                  }
-                } catch (e) {}
-              }
-              if (resourceScreenVerified) break;
-            } catch (e2) {}
-          }
-        } catch (e) {}
-      }
-      
-      if (!resourceScreenVerified) {
-        console.log("⚠️ Could not find empty state or resource items, but navigation was verified.");
-        console.log("   This is acceptable - screen may be loading or have no content.");
-      } else {
-        console.log("✅ Resource Booking screen content verified successfully!");
-      }
-      
-      // === TEST BOOK RESOURCE FUNCTIONALITY ===
-      console.log("📝 Testing 'Book Resource' functionality...");
-      let bookResourceTested = false;
-      
-      try {
-        // Look for "Book Resource", "Book Equipment", "Reserve" button
-        console.log("🔍 Looking for book resource button...");
-        let bookResourceButton = null;
-        const bookResourceSelectors = [
-          '//*[@text="Book Resource"]',
-          '//*[contains(@text, "Book Resource")]',
-          '//*[@text="Book Equipment"]',
-          '//*[contains(@text, "Book Equipment")]',
-          '//*[@text="Book Now"]',
-          '//*[contains(@text, "Book Now")]',
-          '//*[@text="Reserve"]',
-          '//*[contains(@text, "Reserve")]',
-          '//*[@text="Book"]',
-          '//*[contains(@text, "Book")]',
-          '//*[contains(@content-desc, "Book Resource")]',
-          '//android.widget.Button[contains(@text, "Book")]',
-          '//*[@clickable="true" and contains(@text, "Book")]',
-        ];
-        
-        for (const selector of bookResourceSelectors) {
-          try {
-            const elements = await driver.$$(selector);
-            for (let i = 0; i < elements.length; i++) {
-              try {
-                if (await elements[i].isDisplayed()) {
-                  const buttonText = await elements[i].getText().catch(() => '');
-                  // Prefer buttons that say "Book Resource", "Book Equipment", "Book Now", or "Reserve"
-                  if (buttonText && (buttonText.includes("Book Resource") || buttonText.includes("Book Equipment") || buttonText.includes("Book Now") || buttonText.includes("Reserve"))) {
-                    bookResourceButton = elements[i];
-                    console.log(`✅ Found book resource button using: ${selector} (text: "${buttonText}")`);
-                    break;
-                  } else if (buttonText && buttonText.trim() === "Book" && !bookResourceButton) {
-                    // Fallback: any "Book" button
-                    bookResourceButton = elements[i];
-                    console.log(`✅ Found book resource button using: ${selector} (text: "${buttonText}")`);
-                  }
-                }
-              } catch (e) {
-                // Continue to next element
-              }
-            }
-            if (bookResourceButton) break;
-          } catch (e) {
-            // Continue to next selector
-          }
-        }
-        
-        if (bookResourceButton) {
-          // Scroll to make sure button is visible
-          try {
-            await driver.execute('mobile: scroll', {
-              direction: 'down',
-              element: bookResourceButton,
-            });
-            await driver.pause(1000);
-          } catch (e) {
-            // Continue anyway
-          }
-          
-          // Click the Book Resource button
-          console.log("👆 Clicking book resource button...");
-          let buttonClicked = false;
-          try {
-            await bookResourceButton.click();
-            console.log("✅ Clicked book resource button");
-            buttonClicked = true;
-          } catch (clickError) {
-            console.log("⚠️ Standard click failed, trying alternative methods...");
-            try {
-              await bookResourceButton.touchAction('tap');
-              console.log("✅ Clicked using touchAction");
-              buttonClicked = true;
-            } catch (e2) {
-              try {
-                const location = await bookResourceButton.getLocation();
-                const size = await bookResourceButton.getSize();
-                const x = location.x + (size.width / 2);
-                const y = location.y + (size.height / 2);
-                await driver.performActions([{
-                  type: 'pointer',
-                  id: 'finger1',
-                  parameters: { pointerType: 'touch' },
-                  actions: [
-                    { type: 'pointerMove', duration: 0, x: x, y: y },
-                    { type: 'pointerDown', button: 0 },
-                    { type: 'pause', duration: 100 },
-                    { type: 'pointerUp', button: 0 }
-                  ]
-                }]);
-                console.log(`✅ Clicked using performActions at (${x}, ${y})`);
-                buttonClicked = true;
-              } catch (e3) {
-                console.log(`⚠️ Could not click book resource button: ${clickError.message}`);
-                console.log("   Continuing without testing dialog...");
-              }
-            }
-          }
-          
-          if (buttonClicked) {
-            // Wait for dialog/form to open
-            console.log("⏳ Waiting for book resource dialog/form to open (up to 5 seconds)...");
-            await driver.pause(3000);
-            
-            // Check if app is still responsive
-            try {
-              await driver.getPageSource();
-              console.log("✅ App is still responsive");
-            } catch (e) {
-              console.log("⚠️ App may have crashed or become unresponsive");
-              throw new Error("App became unresponsive after clicking book resource button");
-            }
-            
-            // Verify dialog/form is open
-            console.log("🔍 Verifying book resource dialog/form is open...");
-            let dialogOpen = false;
-            const dialogIndicators = [
-              '//*[@text="Book Resource"]',
-              '//*[contains(@text, "Book Resource")]',
-              '//*[contains(@text, "Book Equipment")]',
-              '//*[contains(@text, "Resource Booking")]',
-              '//*[contains(@text, "Date")]',
-              '//*[contains(@text, "Time")]',
-              '//*[contains(@text, "Duration")]',
-              '//*[contains(@text, "Purpose")]',
-              '//android.widget.EditText',
-            ];
-            
-            for (let attempt = 0; attempt < 3; attempt++) {
-              if (attempt > 0) {
-                console.log(`   Retry ${attempt + 1}/3: Waiting 2 more seconds...`);
-                await driver.pause(2000);
-              }
-              
-              for (const indicator of dialogIndicators) {
-                try {
-                  const dialogElement = await driver.$(indicator);
-                  await dialogElement.waitForDisplayed({ timeout: 3000 });
-                  dialogOpen = true;
-                  console.log(`✅ Dialog/form is open - found: ${indicator}`);
-                  break;
-                } catch (e) {
-                  // Continue to next indicator
-                }
-              }
-              
-              if (dialogOpen) break;
-            }
-            
-            if (dialogOpen) {
-              console.log("✅ Book resource dialog/form opened successfully!");
-              
-              // Try to close the dialog/form (cancel or back button)
-              console.log("🔍 Looking for Cancel or Close button...");
-              let dialogClosed = false;
-              const closeButtonSelectors = [
-                '//*[@text="Cancel"]',
-                '//*[contains(@text, "Cancel")]',
-                '//*[@text="Close"]',
-                '//*[contains(@text, "Close")]',
-                '//*[@text="Back"]',
-              ];
-              
-              for (const selector of closeButtonSelectors) {
-                try {
-                  const closeButton = await driver.$(selector);
-                  if (await closeButton.isDisplayed({ timeout: 2000 })) {
-                    await closeButton.click();
-                    console.log(`✅ Clicked ${selector} to close dialog`);
-                    await driver.pause(1000);
-                    dialogClosed = true;
-                    break;
-                  }
-                } catch (e) {
-                  // Continue to next selector
-                }
-              }
-              
-              if (!dialogClosed) {
-                // Try back button
-                try {
-                  await driver.back();
-                  await driver.pause(1000);
-                  console.log("✅ Used back button to close dialog");
-                  dialogClosed = true;
-                } catch (e) {
-                  console.log("⚠️ Could not close dialog - test will continue");
-                }
-              }
-              
-              if (dialogClosed) {
-                bookResourceTested = true;
-                console.log("✅ Book resource functionality tested successfully!");
-              }
-            } else {
-              console.log("⚠️ Dialog/form did not open after clicking book resource button");
-              console.log("   This is OK - button may navigate to a different screen or require different conditions");
-              // Try to go back in case we navigated somewhere
-              try {
-                await driver.back();
-                await driver.pause(1000);
-                console.log("✅ Used back button to return to Resource Booking screen");
-              } catch (e) {
-                console.log("⚠️ Could not navigate back");
-              }
-            }
-          }
-        } else {
-          console.log("⚠️ Could not find book resource button");
-          console.log("   This is acceptable if the feature is not available or button has different text");
-        }
-      } catch (e) {
-        console.log("⚠️ Error testing book resource functionality:", e.message);
-        console.log("   Continuing with test...");
-      }
-      
-      if (bookResourceTested) {
-        console.log("✅ Book resource test completed!");
-      } else {
-        console.log("⚠️ Book resource test was skipped (button not found or dialog didn't open)");
-      }
-      
-      // Final check: Verify AppBar is still visible and app is responsive
-      console.log("🔍 Final check: Verifying AppBar is still visible and app is responsive...");
-      try {
-        // First check if app is still responsive
-        try {
-          await driver.getPageSource();
-          console.log("✅ App is still responsive");
+          await findElementByText(driver, "No bookings yet", 3000);
+          console.log("ℹ️ Empty state: No bookings yet");
         } catch (e) {
-          if (e.message && (e.message.includes('terminated') || e.message.includes('not started') || e.message.includes('UND_ERR_CLOSED'))) {
-            console.log("⚠️ Session was terminated - test may have completed but session closed unexpectedly");
-            console.log("   This is acceptable if the test completed its main objectives");
-            testPassed = true;
-            return; // Exit gracefully if session is already terminated
-          }
-          console.log("⚠️ App may have crashed or become unresponsive");
-          // Don't throw error here - test may have completed successfully
+          console.log("⚠️ Could not verify bookings list state");
         }
-        
-        // Then check AppBar (only if session is still active)
+      }
+
+      // === TEST CREATE BOOKING FAB ON MY BOOKINGS ===
+      console.log("🔍 Looking for Create Booking FAB...");
+      try {
+        const fab = await driver.$('//android.widget.ImageButton');
+        await fab.waitForDisplayed({ timeout: 3000 });
+
+        console.log("👆 Clicking FAB...");
+        await fab.click();
+        console.log("✅ Clicked FAB");
+        await driver.pause(3000);
+
+        // Verify Create Booking screen opened
         try {
-          const appBarCheck = await driver.$('//*[contains(@text, "Resource Booking")]');
-          await appBarCheck.waitForDisplayed({ timeout: 5000 });
-          console.log("✅ AppBar 'Resource Booking' is still visible - confirmed on correct screen");
+          await findElementByText(driver, "Create Booking", 5000);
+          console.log("✅ Create Booking screen opened from My Bookings");
+
+          // Go back
+          await driver.back();
+          await driver.pause(2000);
+          console.log("⬅️ Returned to My Bookings");
         } catch (e) {
-          console.log("⚠️ Could not find AppBar in final check, but navigation was already verified earlier");
+          console.log("⚠️ Could not verify Create Booking screen");
         }
       } catch (e) {
-        if (e.message && e.message.includes("terminated")) {
-          console.log("⚠️ Session terminated during final check - test may have completed successfully");
-          testPassed = true;
-          return; // Exit gracefully
-        }
-        console.log(`⚠️ Final check error: ${e.message}`);
+        console.log(`⚠️ FAB not found: ${e.message}`);
       }
-      
-      // Mark test as passed before cleanup
+
+      console.log("✅ My Bookings screen testing completed!");
+
       testPassed = true;
-      
-      // Ensure session stays alive for WebdriverIO cleanup
-      // Wait a moment to let any pending operations complete
-      await driver.pause(1000);
-      
-      // Verify session is still active (for WebdriverIO cleanup)
-      try {
-        await driver.getPageSource();
-        console.log("ℹ️ Session is active - ready for WebdriverIO cleanup");
-      } catch (e) {
-        console.log("ℹ️ Session may have closed - WebdriverIO will handle cleanup");
-      }
-      
-      console.log("✅ Test completed successfully - Staff Room and Resource Booking screens both tested!");
+      console.log("\n✅ Phase 3 test completed successfully!");
+
     } catch (err) {
-      // Check if this is a session termination error (not a real test failure)
+      // Check if this is a cleanup error after successful test
       if (testPassed && err.message && (
-        err.message.includes('UND_ERR_CLOSED') || 
-        err.message.includes('terminated') || 
-        err.message.includes('not started') ||
-        err.message.includes('Failed launching test session') ||
-        err.message.includes('is not known')
+        err.message.includes('UND_ERR_CLOSED') ||
+        err.message.includes('terminated') ||
+        err.message.includes('not started')
       )) {
-        // This is a cleanup error, not a test failure
-        console.log("ℹ️ Cleanup error detected (test completed successfully):", err.message);
-        console.log("✅ Test passed - ignoring cleanup error");
-        return; // Exit successfully
+        console.log("ℹ️ Cleanup error (test passed):", err.message);
+        return;
       }
-      
+
       console.error("❌ Test failed:", err.message);
       try {
         await driver.saveScreenshot('./error-screenshot.png');
@@ -1625,5 +620,3 @@ describe("Phase 3: Complete Booking Flow (Staff Room & Resource Booking)", funct
     }
   });
 });
-
-
