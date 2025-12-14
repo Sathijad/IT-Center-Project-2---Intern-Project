@@ -58,8 +58,73 @@ describe("Phase 4: Complete Schedule Flow (Schedule & Tasks)", function () {
 
   before(async () => {
     console.log("🚀 Starting Appium session...");
-    driver = await remote(opts);
-    await driver.pause(3000);
+    let sessionCreated = false;
+    let retries = 0;
+    const maxRetries = 3;
+
+    while (!sessionCreated && retries < maxRetries) {
+      try {
+        driver = await remote(opts);
+        await driver.pause(3000);
+
+        // Verify session is actually working by trying to get page source
+        let sessionStable = false;
+        try {
+          await driver.getPageSource();
+          sessionStable = true;
+          console.log("✅ Appium session created and verified as stable");
+        } catch (verifyError) {
+          console.warn(`⚠️ Session created but not stable: ${verifyError.message}`);
+          // Try one more time to verify
+          try {
+            await driver.pause(2000);
+            await driver.getPageSource();
+            sessionStable = true;
+            console.log("✅ Appium session verified as stable on second attempt");
+          } catch (verifyError2) {
+            console.error(`❌ Session still not stable: ${verifyError2.message}`);
+          }
+        }
+
+        if (sessionStable) {
+          sessionCreated = true;
+        } else {
+          // Session created but not stable - try to close and retry
+          try {
+            await driver.deleteSession();
+          } catch (e) {
+            // Ignore cleanup errors - session may already be closed
+            if (!e.message || !(e.message.includes('UND_ERR_CLOSED') || e.message.includes('not started'))) {
+              console.warn(`⚠️ Session cleanup warning: ${e.message}`);
+            }
+          }
+          driver = null;
+          retries++;
+        }
+      } catch (error) {
+        console.error(`❌ Failed to create/verify Appium session (attempt ${retries + 1}/${maxRetries}):`, error.message);
+        if (driver) {
+          try {
+            await driver.deleteSession();
+          } catch (e) {
+            // Ignore cleanup errors - session may already be closed
+            if (!e.message || !(e.message.includes('UND_ERR_CLOSED') || e.message.includes('not started'))) {
+              console.warn(`⚠️ Session cleanup warning: ${e.message}`);
+            }
+          }
+          driver = null;
+        }
+        retries++;
+
+        if (retries >= maxRetries) {
+          throw new Error(`Failed to create stable Appium session after ${maxRetries} attempts. Please ensure Appium server is running correctly and no other instances are running. Last error: ${error.message}`);
+        }
+
+        // Wait before retrying to give system time to stabilize
+        console.log(`⏳ Waiting 3 seconds before retry ${retries + 1}...`);
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+    }
   });
 
   after(async () => {
@@ -113,11 +178,26 @@ describe("Phase 4: Complete Schedule Flow (Schedule & Tasks)", function () {
           emailField = await driver.$('//android.widget.EditText[1]');
           await emailField.waitForDisplayed({ timeout: 10000 });
         } catch (e2) {
-          const allEditTexts = await driver.$$('//android.widget.EditText');
-          if (allEditTexts.length > 0) {
-            emailField = allEditTexts[0];
-          } else {
-            throw new Error("Could not find email field");
+          // Try to find all EditText elements as fallback
+          try {
+            const allEditTexts = await driver.$$('//android.widget.EditText');
+            if (allEditTexts.length > 0) {
+              emailField = allEditTexts[0];
+            } else {
+              throw new Error("Could not find email field");
+            }
+          } catch (sessionError) {
+            // Check if this is a session error
+            if (sessionError.message && (
+              sessionError.message.includes('is not known') ||
+              sessionError.message.includes('session') ||
+              sessionError.message.includes('terminated')
+            )) {
+              console.error(`❌ Session lost while finding email field: ${sessionError.message}`);
+              console.error("   This usually means Appium crashed or the app failed to start");
+              throw new Error(`Session lost - Appium may have crashed. Please check Appium server status. Original error: ${sessionError.message}`);
+            }
+            throw new Error(`Could not find email field: ${sessionError.message}`);
           }
         }
       }
@@ -270,14 +350,41 @@ describe("Phase 4: Complete Schedule Flow (Schedule & Tasks)", function () {
       // === HOME SCREEN ===
       console.log("⏳ Waiting for Home screen to load...");
       await driver.pause(5000);
-      
+
       try {
         const homeIndicator = await findElementByText(driver, "Home", 10000);
         console.log("🏠 On Home screen");
       } catch (e) {
         console.log("⚠️ Could not verify home screen, but continuing...");
       }
-      
+
+      // Add extra wait for home screen cards to fully render
+      console.log("⏳ Waiting for home screen cards to fully render...");
+      await driver.pause(3000);
+
+      // Try pull-to-refresh gesture to ensure cards are loaded
+      console.log("🔄 Performing pull-to-refresh gesture to ensure cards are loaded...");
+      try {
+        await driver.performActions([
+          {
+            type: 'pointer',
+            id: 'finger1',
+            parameters: { pointerType: 'touch' },
+            actions: [
+              { type: 'pointerMove', duration: 0, x: 200, y: 300 },
+              { type: 'pointerDown', button: 0 },
+              { type: 'pause', duration: 100 },
+              { type: 'pointerMove', duration: 500, x: 200, y: 700 },
+              { type: 'pointerUp', button: 0 }
+            ]
+          }
+        ]);
+        await driver.pause(3000);
+        console.log("✅ Performed pull-to-refresh gesture");
+      } catch (e) {
+        console.log("⚠️ Pull-to-refresh gesture failed, but continuing...");
+      }
+
       // === NAVIGATE TO MY SCHEDULE CARD ===
       console.log("➡️ Navigating to 'My Schedule' card on home screen...");
       
